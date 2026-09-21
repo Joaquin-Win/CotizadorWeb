@@ -11,20 +11,21 @@ use Inertia\Inertia;
 use Inertia\Response;
 
 /**
- * CRUD de clientes (cuentas empresariales) scoperado por equipo.
+ * Maneja los clientes de cada equipo.
  *
- * Todas las rutas viven bajo `/{current_team}/clients` y exigen
- * pertenencia al equipo (EnsureTeamMembership). El email es único
- * por equipo y la baja es lógica (SoftDeletes en el modelo).
+ * Todo cuelga de `/{current_team}/clients`, así un equipo nunca ve
+ * los clientes de otro. El equipo y el cliente ya llegan verificados
+ * por los bindings de ruta, acá no se chequea nada. La baja es
+ * lógica, nada se borra de verdad.
  */
 class ClientController extends Controller
 {
     /**
-     * Display a listing of the team's clients.
+     * Lista los clientes del equipo, del más nuevo al más viejo.
      */
-    public function index(Request $request, string $current_team): Response
+    public function index(Request $request, Team $current_team): Response
     {
-        $team = Team::where('slug', $current_team)->firstOrFail();
+        $team = $current_team;
 
         $clients = Client::query()
             ->where('team_id', $team->id)
@@ -39,12 +40,11 @@ class ClientController extends Controller
     }
 
     /**
-     * Show a single client (detail view).
+     * Muestra un cliente. Si no es de este equipo, 404.
      */
-    public function show(string $current_team, Client $client): Response
+    public function show(Team $current_team, Client $client): Response
     {
-        $team = Team::where('slug', $current_team)->firstOrFail();
-        abort_if($client->team_id !== $team->id, 404);
+        $team = $current_team;
 
         return Inertia::render('clients/show', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
@@ -53,11 +53,11 @@ class ClientController extends Controller
     }
 
     /**
-     * Store a newly created client.
+     * Da de alta un cliente en el equipo y vuelve a la lista.
      */
-    public function store(Request $request, string $current_team): RedirectResponse
+    public function store(Request $request, Team $current_team): RedirectResponse
     {
-        $team = Team::where('slug', $current_team)->firstOrFail();
+        $team = $current_team;
 
         $validated = $request->validate($this->rules($team->id));
 
@@ -69,12 +69,11 @@ class ClientController extends Controller
     }
 
     /**
-     * Update the specified client.
+     * Actualiza los datos de un cliente del equipo.
      */
-    public function update(Request $request, string $current_team, Client $client): RedirectResponse
+    public function update(Request $request, Team $current_team, Client $client): RedirectResponse
     {
-        $team = Team::where('slug', $current_team)->firstOrFail();
-        abort_if($client->team_id !== $team->id, 404);
+        $team = $current_team;
 
         $validated = $request->validate($this->rules($team->id, $client->id));
 
@@ -86,12 +85,11 @@ class ClientController extends Controller
     }
 
     /**
-     * Remove the specified client.
+     * Da de baja un cliente. Queda en la BD por el soft delete.
      */
-    public function destroy(string $current_team, Client $client): RedirectResponse
+    public function destroy(Team $current_team, Client $client): RedirectResponse
     {
-        $team = Team::where('slug', $current_team)->firstOrFail();
-        abort_if($client->team_id !== $team->id, 404);
+        $team = $current_team;
 
         $client->delete();
 
@@ -101,7 +99,8 @@ class ClientController extends Controller
     }
 
     /**
-     * Validation rules for store/update.
+     * Reglas del alta y la edición. El email se puede repetir entre
+     * equipos, pero no dos veces en el mismo.
      *
      * @return array<string, mixed>
      */
@@ -124,7 +123,7 @@ class ClientController extends Controller
     }
 
     /**
-     * Serialize a client for Inertia.
+     * Arma lo que le pasamos a React, sin exponer de más.
      *
      * @return array<string, mixed>
      */
@@ -142,5 +141,97 @@ class ClientController extends Controller
             'notas' => $client->notas,
             'is_active' => $client->is_active,
         ];
+    }
+
+    /**
+     * Muestra el portal de empresa para un cliente específico.
+     *
+     * @param Team $current_team El equipo actual, ya verificado.
+     * @param Client $client El cliente, que sí o sí es de este equipo.
+     * @return Response La respuesta Inertia con los datos del portal.
+     */
+    public function portalEmpresa(Team $current_team, Client $client): Response
+    {
+        $team = $current_team;
+
+        return Inertia::render('clients/portal/resumen', [
+            'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
+            'client' => $this->serialize($client),
+            'pedidos' => [],
+            'seguimientos' => [],
+            'documentos' => [],
+        ]);
+    }
+
+    /**
+     * Página de pedidos de la empresa. La lista llega vacía hasta
+     * que el módulo de pedidos conecte los datos reales.
+     */
+    public function portalPedidos(Team $current_team, Client $client): Response
+    {
+        $team = $current_team;
+
+        return Inertia::render('clients/portal/pedidos', [
+            'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
+            'client' => $this->serialize($client),
+            'pedidos' => [],
+        ]);
+    }
+
+    /**
+     * Página de seguimientos de la empresa. Vacía hasta que el
+     * módulo de seguimientos conecte los datos reales.
+     */
+    public function portalSeguimientos(Team $current_team, Client $client): Response
+    {
+        $team = $current_team;
+
+        return Inertia::render('clients/portal/seguimientos', [
+            'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
+            'client' => $this->serialize($client),
+            'seguimientos' => [],
+        ]);
+    }
+
+    /**
+     * Página de documentos de la empresa. Vacía hasta que el
+     * módulo de documentos conecte los datos reales.
+     */
+    public function portalDocumentos(Team $current_team, Client $client): Response
+    {
+        $team = $current_team;
+
+        return Inertia::render('clients/portal/documentos', [
+            'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
+            'client' => $this->serialize($client),
+            'documentos' => [],
+        ]);
+    }
+
+    /**
+     * Perfil público de la empresa dentro del portal.
+     */
+    public function portalPerfil(Team $current_team, Client $client): Response
+    {
+        $team = $current_team;
+
+        return Inertia::render('clients/portal/perfil', [
+            'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
+            'client' => $this->serialize($client),
+        ]);
+    }
+
+    /**
+     * Configuración de la cuenta de la empresa: sus datos, su
+     * seguridad y sus usuarios. Todo en un solo lugar.
+     */
+    public function portalMiCuenta(Team $current_team, Client $client): Response
+    {
+        $team = $current_team;
+
+        return Inertia::render('clients/portal/mi-cuenta', [
+            'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
+            'client' => $this->serialize($client),
+        ]);
     }
 }

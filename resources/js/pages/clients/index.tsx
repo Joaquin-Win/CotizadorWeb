@@ -43,7 +43,7 @@ function initials(empresa: string) {
         .join('');
 }
 
-/** Campos compartidos por los modales de alta y edición. */
+/** Los mismos campos para el modal de nuevo y el de editar. */
 function ClientFields({
     client,
     errors,
@@ -143,7 +143,7 @@ function ClientFields({
     );
 }
 
-/** Lista de clientes del equipo con buscador y modales de alta/edición/baja. */
+/** Pantalla principal: lista con buscador y alta/edición/baja en modales. */
 export default function ClientsIndex({ team, clients }: Props) {
     const [search, setSearch] = useState(EMPTY_FILTER);
     const [createOpen, setCreateOpen] = useState(false);
@@ -315,7 +315,7 @@ export default function ClientsIndex({ team, clients }: Props) {
                     )}
                 </div>
             </div>
-
+ 
             <Dialog
                 open={editing !== null}
                 onOpenChange={(o) => !o && setEditing(null)}

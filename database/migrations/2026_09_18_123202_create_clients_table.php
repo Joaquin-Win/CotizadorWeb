@@ -9,9 +9,9 @@ return new class extends Migration
     /**
      * Run the migrations.
      *
-     * Crea la tabla de cuentas empresariales cliente. Cada cliente
-     * pertenece a un equipo (team_id) y su email es único dentro
-     * del equipo para no tocar código al dar altas/bajas.
+     * Tabla de clientes. Cada uno es de un equipo (team_id) y el email
+     * no se repite dentro del mismo equipo. Así se dan altas y bajas
+     * sin tocar código.
      */
     public function up(): void
     {

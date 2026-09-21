@@ -60,7 +60,7 @@ const KPIS = [
     },
 ];
 
-/** Detalle interno del cliente estilo imagen 2 (hero + KPIs + datos). Los KPIs son placeholder hasta conectar pedidos/documentos. */
+/** Detalle del cliente (vista interna de SET). Los KPIs quedan en 0 hasta conectar pedidos y documentos. */
 export default function ClientShow({ team, client }: Props) {
     const contactName =
         [client.nombre_contacto, client.apellido_contacto]
