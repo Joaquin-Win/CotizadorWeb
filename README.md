@@ -3,6 +3,7 @@
 Sistema de cotizaciones, portal de clientes y panel administrativo.
 
 ## Stack
+
 - Laravel 13 + PHP 8.3
 - Inertia.js + React + TypeScript
 - MySQL
@@ -10,6 +11,7 @@ Sistema de cotizaciones, portal de clientes y panel administrativo.
 - Vite
 
 ## Requisitos previos
+
 - PHP 8.3+
 - Composer
 - Node.js 20+
@@ -29,6 +31,7 @@ php artisan key:generate
 ```
 
 Edita `.env` con tus credenciales locales:
+
 ```
 DB_CONNECTION=mysql
 DB_HOST=127.0.0.1
@@ -42,11 +45,13 @@ REDIS_PORT=6379
 ```
 
 Crea la base de datos en MySQL:
+
 ```sql
 CREATE DATABASE cotizador_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 ```
 
 Migra y arranca:
+
 ```bash
 php artisan migrate
 composer run dev
@@ -61,6 +66,7 @@ App en http://localhost:8000
 - Todo cambio va por **Pull Request** con al menos 1 aprobación.
 
 ### Ciclo diario
+
 ```bash
 git checkout main
 git pull origin main
