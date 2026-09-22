@@ -32,12 +32,17 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property-read Collection<int, Membership> $teamMemberships
  * @property-read Collection<int, Team> $teams
  */
-#[Fillable(['name', 'email', 'password', 'current_team_id'])]
+#[Fillable(['name', 'email', 'password', 'rol_id', 'cliente_id', 'telefono', 'activo', 'current_team_id'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, HasTeams, Notifiable, TwoFactorAuthenticatable;
+
+    /**
+     * La tabla real en la BD es `usuarios`.
+     */
+    protected $table = 'usuarios';
 
     /**
      * Get the attributes that should be cast.
@@ -47,9 +52,11 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
+            'email_verified_at'      => 'datetime',
+            'password'               => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'ultimo_acceso'          => 'datetime',
+            'activo'                 => 'boolean',
         ];
     }
 }
