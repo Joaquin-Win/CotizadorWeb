@@ -3,7 +3,10 @@
 namespace App\Providers;
 
 use App\Models\Client;
+use App\Models\Documento;
+use App\Models\Invitacion;
 use App\Models\Team;
+use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -42,10 +45,29 @@ class AppServiceProvider extends ServiceProvider
         Route::bind('current_team', fn (string $slug) => Team::where('slug', $slug)->firstOrFail());
 
         Route::bind('client', function (string $id) {
-            $team = request()->route('current_team');
-            abort_if(! $team instanceof Team, 404);
+            // Sin equipos: el cliente se busca directo por id (o 404).
+            return Client::where('id', $id)->firstOrFail();
+        });
 
-            return Client::where('id', $id)->where('team_id', $team->id)->firstOrFail();
+        Route::bind('invitacion', function (string $id) {
+            $client = request()->route('client');
+            abort_if(! $client instanceof Client, 404);
+
+            return Invitacion::where('id', $id)->where('client_id', $client->id)->firstOrFail();
+        });
+
+        Route::bind('usuario', function (string $id) {
+            $client = request()->route('client');
+            abort_if(! $client instanceof Client, 404);
+
+            return User::where('id', $id)->where('cliente_id', $client->id)->firstOrFail();
+        });
+
+        Route::bind('documento', function (string $id) {
+            $client = request()->route('client');
+            abort_if(! $client instanceof Client, 404);
+
+            return Documento::where('id', $id)->where('cliente_id', $client->id)->firstOrFail();
         });
     }
 

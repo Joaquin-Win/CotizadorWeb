@@ -3,7 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Models\Documento;
+use App\Models\EstadoCliente;
+use App\Models\Invitacion;
 use App\Models\Team;
+use App\Models\TipoCliente;
+use App\Models\TipoDocumento;
+use App\Models\User;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -21,14 +27,13 @@ use Inertia\Response;
 class ClientController extends Controller
 {
     /**
-     * Lista los clientes del equipo, del más nuevo al más viejo.
+     * Lista los clientes, del más nuevo al más viejo.
      */
     public function index(Request $request, Team $current_team): Response
     {
         $team = $current_team;
 
         $clients = Client::query()
-            ->where('team_id', $team->id)
             ->latest()
             ->get()
             ->map(fn (Client $client) => $this->serialize($client));
@@ -36,6 +41,8 @@ class ClientController extends Controller
         return Inertia::render('clients/index', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'clients' => $clients,
+            'tipos' => TipoCliente::orderBy('nombre')->get(['id', 'nombre']),
+            'estados' => EstadoCliente::orderBy('nombre')->get(['id', 'nombre']),
         ]);
     }
 
@@ -49,19 +56,20 @@ class ClientController extends Controller
         return Inertia::render('clients/show', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'client' => $this->serialize($client),
+            'esAdmin' => ($u = request()->user()) && $u->cliente_id === null,
         ]);
     }
 
     /**
-     * Da de alta un cliente en el equipo y vuelve a la lista.
+     * Da de alta un cliente y vuelve a la lista.
      */
     public function store(Request $request, Team $current_team): RedirectResponse
     {
         $team = $current_team;
 
-        $validated = $request->validate($this->rules($team->id));
+        $validated = $request->validate($this->rules());
 
-        $team->clients()->create($validated);
+        Client::create($validated);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Cliente creado.']);
 
@@ -75,13 +83,35 @@ class ClientController extends Controller
     {
         $team = $current_team;
 
-        $validated = $request->validate($this->rules($team->id, $client->id));
+        $validated = $request->validate($this->rules($client->id));
 
         $client->update($validated);
 
         Inertia::flash('toast', ['type' => 'success', 'message' => 'Cliente actualizado.']);
 
         return to_route('clients.index', ['current_team' => $team->slug]);
+    }
+
+    /**
+     * Actualiza los datos de la empresa desde su portal.
+     * Solo el contacto principal o el personal SET.
+     */
+    public function updateEmpresa(Request $request, Team $current_team, Client $client): RedirectResponse
+    {
+        $team = $current_team;
+        $user = $request->user();
+
+        abort_if(! $user || ($user->cliente_id !== null
+            && strtolower($user->email) !== strtolower($client->email ?? '')
+            && strtolower($user->email) !== strtolower($client->contactoPrincipal?->email ?? '')), 403);
+
+        $validated = $request->validate($this->rules($client->id));
+
+        $client->update($validated);
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => 'Datos actualizados.']);
+
+        return to_route('portal.mi-cuenta', ['current_team' => $team->slug, 'client' => $client->id]);
     }
 
     /**
@@ -99,31 +129,34 @@ class ClientController extends Controller
     }
 
     /**
-     * Reglas del alta y la edición. El email se puede repetir entre
-     * equipos, pero no dos veces en el mismo.
+     * Reglas del alta y la edición, según la tabla real.
+     * El CUIT tiene formato fijo y es único entre activos.
      *
      * @return array<string, mixed>
      */
-    protected function rules(int $teamId, ?int $ignoreId = null): array
+    protected function rules(?int $ignoreId = null): array
     {
         return [
-            'empresa' => ['required', 'string', 'max:255'],
-            'cuit' => ['nullable', 'string', 'max:20'],
-            'nombre_contacto' => ['required', 'string', 'max:255'],
-            'apellido_contacto' => ['nullable', 'string', 'max:255'],
-            'email' => [
-                'required', 'email', 'max:255',
-                Rule::unique('clients', 'email')->where('team_id', $teamId)->ignore($ignoreId),
+            'razon_social' => ['required', 'string', 'max:255'],
+            'nombre_fantasia' => ['nullable', 'string', 'max:255'],
+            'cuit' => [
+                'required', 'string', 'regex:/^[0-9]{2}-[0-9]{8}-[0-9]{1}$/',
+                Rule::unique('clientes', 'cuit')->whereNull('deleted_at')->ignore($ignoreId),
             ],
+            'tipo_cliente_id' => ['required', 'integer', 'exists:tipos_cliente,id'],
+            'estado_id' => ['required', 'integer', 'exists:estados_cliente,id'],
+            'email' => ['nullable', 'email', 'max:255'],
             'telefono' => ['nullable', 'string', 'max:50'],
             'direccion' => ['nullable', 'string', 'max:255'],
-            'notas' => ['nullable', 'string'],
-            'is_active' => ['sometimes', 'boolean'],
+            'localidad_id' => ['nullable', 'integer', 'exists:localidades,id'],
+            'observaciones' => ['nullable', 'string'],
         ];
     }
 
     /**
      * Arma lo que le pasamos a React, sin exponer de más.
+     * Las claves viejas (empresa, nombre_contacto, is_active) salen
+     * de los accessors para no reescribir el frontend.
      *
      * @return array<string, mixed>
      */
@@ -132,13 +165,19 @@ class ClientController extends Controller
         return [
             'id' => $client->id,
             'empresa' => $client->empresa,
+            'razon_social' => $client->razon_social,
+            'nombre_fantasia' => $client->nombre_fantasia,
             'cuit' => $client->cuit,
             'nombre_contacto' => $client->nombre_contacto,
-            'apellido_contacto' => $client->apellido_contacto,
-            'email' => $client->email,
-            'telefono' => $client->telefono,
+            'apellido_contacto' => null,
+            'email' => $client->email ?? $client->contactoPrincipal?->email,
+            'telefono' => $client->telefono ?? $client->contactoPrincipal?->telefono,
             'direccion' => $client->direccion,
-            'notas' => $client->notas,
+            'tipo' => $client->tipo?->nombre,
+            'estado' => $client->estado?->nombre,
+            'tipo_id' => $client->tipo_cliente_id,
+            'estado_id' => $client->estado_id,
+            'observaciones' => $client->observaciones,
             'is_active' => $client->is_active,
         ];
     }
@@ -157,6 +196,7 @@ class ClientController extends Controller
         return Inertia::render('clients/portal/resumen', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'client' => $this->serialize($client),
+            'esAdmin' => ($u = request()->user()) && $u->cliente_id === null,
             'pedidos' => [],
             'seguimientos' => [],
             'documentos' => [],
@@ -174,6 +214,7 @@ class ClientController extends Controller
         return Inertia::render('clients/portal/pedidos', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'client' => $this->serialize($client),
+            'esAdmin' => ($u = request()->user()) && $u->cliente_id === null,
             'pedidos' => [],
         ]);
     }
@@ -189,6 +230,7 @@ class ClientController extends Controller
         return Inertia::render('clients/portal/seguimientos', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'client' => $this->serialize($client),
+            'esAdmin' => ($u = request()->user()) && $u->cliente_id === null,
             'seguimientos' => [],
         ]);
     }
@@ -204,7 +246,15 @@ class ClientController extends Controller
         return Inertia::render('clients/portal/documentos', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'client' => $this->serialize($client),
-            'documentos' => [],
+            'esAdmin' => ($u = request()->user()) && $u->cliente_id === null,
+            'documentos' => $client->documentos()->with('tipo')->latest()->get()->map(fn (Documento $documento) => [
+                'id' => $documento->id,
+                'tipo' => $documento->tipo->nombre,
+                'categoria' => str_starts_with($documento->tipo->codigo, 'REMITO') ? 'Remito' : (str_starts_with($documento->tipo->codigo, 'FACTURA') ? 'Factura' : 'Otro'),
+                'nro' => $documento->numero_documento,
+                'fecha' => $documento->fecha,
+            ])->values(),
+            'tipos' => TipoDocumento::where('activo', true)->orderBy('nombre')->get(['id', 'nombre']),
         ]);
     }
 
@@ -218,6 +268,7 @@ class ClientController extends Controller
         return Inertia::render('clients/portal/perfil', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'client' => $this->serialize($client),
+            'esAdmin' => ($u = request()->user()) && $u->cliente_id === null,
         ]);
     }
 
@@ -232,6 +283,23 @@ class ClientController extends Controller
         return Inertia::render('clients/portal/mi-cuenta', [
             'team' => ['id' => $team->id, 'name' => $team->name, 'slug' => $team->slug],
             'client' => $this->serialize($client),
+            'esAdmin' => ($u = request()->user()) && $u->cliente_id === null,
+            // La administradora (contacto principal) no se lista: administra, no figura.
+            'usuarios' => $client->users()->latest()->get()->reject(fn (User $user) => strtolower($user->email) === strtolower($client->contactoPrincipal?->email ?? ''))->map(fn (User $user) => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ])->values(),
+            'invitaciones' => $client->invitaciones()->whereNull('accepted_at')->latest()->get()->map(fn (Invitacion $invitacion) => [
+                'id' => $invitacion->id,
+                'email' => $invitacion->email,
+                'expires_at' => $invitacion->expires_at->format('d/m/Y'),
+            ])->values(),
+            // El invitado común ve la lista pero sin botones.
+            'puedeGestionarUsuarios' => ($user = request()->user())
+                && ($user->cliente_id === null
+                    || strtolower($user->email) === strtolower($client->email ?? '')
+                    || strtolower($user->email) === strtolower($client->contactoPrincipal?->email ?? '')),
         ]);
     }
 }

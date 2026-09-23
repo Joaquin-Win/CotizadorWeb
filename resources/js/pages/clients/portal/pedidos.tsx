@@ -14,13 +14,15 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { empresa } from '@/routes/portal';
+import { dashboard } from '@/routes';
 import type { Client, ClientTeam } from '@/types/clients';
 
-/** Contrato con ClientController@portalPedidos. La lista es de prueba en memoria hasta que el módulo de pedidos conecte la BD real. */
+/** Contrato con ClientController@portalPedidos. La lista llega vacía hasta que el módulo de pedidos conecte sus datos. */
 type Props = {
     team: ClientTeam;
     client: Client;
     pedidos: unknown[];
+    esAdmin: boolean;
 };
 
 type Pedido = {
@@ -38,7 +40,7 @@ function estadoPill(estado: Pedido['estado']) {
     return 'bg-amber-50 text-amber-600';
 }
 
-export default function PortalPedidos({ team, client }: Props) {
+export default function PortalPedidos({ esAdmin, team, client }: Props) {
     const [lista] = useState<Pedido[]>([]);
     const [filtro, setFiltro] = useState<Filtro>('todos');
 
@@ -65,6 +67,7 @@ export default function PortalPedidos({ team, client }: Props) {
                         clientId={client.id}
                         clientEmpresa={client.empresa}
                         active="pedidos"
+                        volverAdmin={esAdmin ? dashboard(team.slug).url : null}
                     />
 
                     <main className="min-w-0 flex-1">

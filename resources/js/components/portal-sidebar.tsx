@@ -1,14 +1,16 @@
-import { Link } from '@inertiajs/react';
+import { Link, router } from '@inertiajs/react';
 import {
     Building2,
     ChevronRight,
     FileText,
     Headset,
     Home,
+    LogOut,
     Package,
     Truck,
     UserRound,
 } from 'lucide-react';
+import { logout } from '@/routes';
 import {
     documentos,
     empresa,
@@ -40,10 +42,11 @@ type Props = {
     clientId: number;
     clientEmpresa: string;
     active: PortalSection;
+    volverAdmin?: string | null;
 };
 
 /** Barra lateral compartida del portal empresa. Seguridad no está acá: vive dentro de Mi Cuenta. */
-export default function PortalSidebar({ team, clientId, clientEmpresa, active }: Props) {
+export default function PortalSidebar({ team, clientId, clientEmpresa, active, volverAdmin }: Props) {
     const args = { current_team: team.slug, client: clientId };
 
     const items = [
@@ -57,6 +60,15 @@ export default function PortalSidebar({ team, clientId, clientEmpresa, active }:
 
     return (
         <aside className="hidden w-60 shrink-0 flex-col gap-1 md:flex">
+            {volverAdmin && (
+                <Link
+                    href={volverAdmin}
+                    className="mb-3 flex items-center gap-2 rounded-lg bg-[#0A3D91] px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-[#062858]"
+                >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                    Volver a administración
+                </Link>
+            )}
             <Link
                 href={miCuenta.url(args)}
                 className="mb-3 flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-3 transition-colors hover:border-[#0A3D91]/40"
@@ -103,6 +115,14 @@ export default function PortalSidebar({ team, clientId, clientEmpresa, active }:
                     Contactarnos
                 </a>
             </div>
+
+            <button
+                onClick={() => router.post(logout().url)}
+                className="flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700"
+            >
+                <LogOut className="h-4 w-4" />
+                Cerrar sesión
+            </button>
         </aside>
     );
 }

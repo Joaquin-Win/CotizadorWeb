@@ -28,6 +28,7 @@ import {
     perfil as perfilRoute,
     seguimientos as seguimientosRoute,
 } from '@/routes/portal';
+import { dashboard } from '@/routes';
 import type { Client, ClientTeam } from '@/types/clients';
 
 /** Contrato con ClientController@portalEmpresa. Todo sale del cliente real: como aún no se cargó nada, KPIs y tablas llegan vacíos. */
@@ -37,9 +38,10 @@ type Props = {
     pedidos: unknown[];
     seguimientos: unknown[];
     documentos: unknown[];
+    esAdmin: boolean;
 };
 
-export default function PortalClientesEmpresa({ team, client, pedidos, seguimientos, documentos }: Props) {
+export default function PortalClientesEmpresa({ esAdmin, team, client, pedidos, seguimientos, documentos }: Props) {
     const args = { current_team: team.slug, client: client.id };
     const contactName =
         [client.nombre_contacto, client.apellido_contacto]
@@ -47,10 +49,10 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
             .join(' ') || '—';
 
     const kpis = [
-        { title: 'Pedidos totales', value: String(pedidos.length), hint: 'Últimos 30 días', icon: Package },
-        { title: 'En tránsito', value: '0', hint: 'En seguimiento', icon: Truck },
-        { title: 'Entregados', value: '0', hint: 'Últimos 30 días', icon: Package },
-        { title: 'Documentos recientes', value: String(documentos.length), hint: 'Remitos / Facturas', icon: FileText },
+        { title: 'Pedidos totales', value: String(pedidos.length), hint: 'Últimos 30 días', icon: Package, href: pedidosRoute.url(args) },
+        { title: 'En tránsito', value: '0', hint: 'En seguimiento', icon: Truck, href: seguimientosRoute.url(args) },
+        { title: 'Entregados', value: '0', hint: 'Últimos 30 días', icon: Package, href: pedidosRoute.url(args) },
+        { title: 'Documentos recientes', value: String(documentos.length), hint: 'Remitos / Facturas', icon: FileText, href: documentosRoute.url(args) },
     ];
 
     return (
@@ -64,6 +66,7 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
                         clientId={client.id}
                         clientEmpresa={client.empresa}
                         active="resumen"
+                        volverAdmin={esAdmin ? dashboard(team.slug).url : null}
                     />
 
                     <main className="min-w-0 flex-1">
@@ -158,7 +161,11 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
 
                         <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                             {kpis.map((kpi) => (
-                                <div key={kpi.title} className="rounded-xl border border-slate-200 bg-white p-4">
+                                <Link
+                                    key={kpi.title}
+                                    href={kpi.href}
+                                    className="rounded-xl border border-slate-200 bg-white p-4 transition-colors hover:border-[#0A3D91]/40"
+                                >
                                     <div className="flex items-center gap-2 text-sm font-medium text-slate-500">
                                         <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-50">
                                             <kpi.icon className="h-4 w-4 text-[#0A3D91]" />
@@ -170,7 +177,7 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
                                         {kpi.hint}
                                         <ChevronRight className="h-4 w-4" />
                                     </p>
-                                </div>
+                                </Link>
                             ))}
                         </div>
 
@@ -181,13 +188,19 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
                                         <Package className="h-4 w-4 text-[#0A3D91]" />
                                         Mis pedidos
                                     </h3>
-                                    <Link href={pedidosRoute.url(args)} className="text-xs font-semibold text-[#0A3D91]">
-                                        Ver todos →
+                                    <Link href={pedidosRoute.url(args)} className="flex items-center gap-1 text-xs font-semibold text-[#0A3D91] transition-colors hover:text-[#062858]">
+                                        Ver todos <ChevronRight className="h-3.5 w-3.5" />
                                     </Link>
                                 </div>
-                                <p className="py-6 text-center text-sm text-slate-400">
-                                    Todavía no tienes pedidos. Aparecerán aquí cuando el equipo comercial los cargue.
-                                </p>
+                                <div className="flex flex-col items-center py-6 text-center">
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                                        <Package className="h-5 w-5 text-slate-400" />
+                                    </span>
+                                    <p className="mt-2 text-sm font-semibold text-slate-500">Sin pedidos todavía</p>
+                                    <p className="mt-0.5 max-w-xs text-xs text-slate-400">
+                                        Aparecerán aquí cuando el equipo comercial los cargue.
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="rounded-xl border border-slate-200 bg-white p-4 xl:col-span-2">
@@ -196,13 +209,19 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
                                         <MapPin className="h-4 w-4 text-[#0A3D91]" />
                                         Seguimientos
                                     </h3>
-                                    <Link href={seguimientosRoute.url(args)} className="text-xs font-semibold text-[#0A3D91]">
-                                        Ver todos →
+                                    <Link href={seguimientosRoute.url(args)} className="flex items-center gap-1 text-xs font-semibold text-[#0A3D91] transition-colors hover:text-[#062858]">
+                                        Ver todos <ChevronRight className="h-3.5 w-3.5" />
                                     </Link>
                                 </div>
-                                <p className="py-6 text-center text-sm text-slate-400">
-                                    Sin seguimientos por ahora. El estado de tus envíos se verá aquí.
-                                </p>
+                                <div className="flex flex-col items-center py-6 text-center">
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                                        <MapPin className="h-5 w-5 text-slate-400" />
+                                    </span>
+                                    <p className="mt-2 text-sm font-semibold text-slate-500">Sin seguimientos</p>
+                                    <p className="mt-0.5 max-w-xs text-xs text-slate-400">
+                                        El estado de tus envíos se verá aquí.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
@@ -213,13 +232,19 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
                                         <FileText className="h-4 w-4 text-[#0A3D91]" />
                                         Documentos recientes
                                     </h3>
-                                    <Link href={documentosRoute.url(args)} className="text-xs font-semibold text-[#0A3D91]">
-                                        Ver todos →
+                                    <Link href={documentosRoute.url(args)} className="flex items-center gap-1 text-xs font-semibold text-[#0A3D91] transition-colors hover:text-[#062858]">
+                                        Ver todos <ChevronRight className="h-3.5 w-3.5" />
                                     </Link>
                                 </div>
-                                <p className="py-6 text-center text-sm text-slate-400">
-                                    Sin documentos por ahora. Tus remitos y facturas se verán aquí.
-                                </p>
+                                <div className="flex flex-col items-center py-6 text-center">
+                                    <span className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-100">
+                                        <FileText className="h-5 w-5 text-slate-400" />
+                                    </span>
+                                    <p className="mt-2 text-sm font-semibold text-slate-500">Sin documentos</p>
+                                    <p className="mt-0.5 max-w-xs text-xs text-slate-400">
+                                        Tus remitos y facturas se verán aquí.
+                                    </p>
+                                </div>
                             </div>
 
                             <div className="rounded-xl border border-slate-200 bg-white p-4 xl:col-span-2">
@@ -243,28 +268,6 @@ export default function PortalClientesEmpresa({ team, client, pedidos, seguimien
                                     ))}
                                 </div>
                             </div>
-                        </div>
-
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
-                            <h3 className="text-sm font-extrabold">Mi cuenta</h3>
-                            <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
-                                <div>
-                                    <dt className="text-xs text-slate-400">Contacto</dt>
-                                    <dd className="font-semibold">{contactName}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-slate-400">Email</dt>
-                                    <dd className="font-semibold">{client.email}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-slate-400">Teléfono</dt>
-                                    <dd className="font-semibold">{client.telefono ?? '—'}</dd>
-                                </div>
-                                <div>
-                                    <dt className="text-xs text-slate-400">Dirección</dt>
-                                    <dd className="font-semibold">{client.direccion ?? '—'}</dd>
-                                </div>
-                            </dl>
                         </div>
 
                         <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">

@@ -25,11 +25,13 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { destroy, index, show, store, update } from '@/routes/clients';
-import type { Client, ClientTeam } from '@/types/clients';
+import type { Client, ClientOption, ClientTeam } from '@/types/clients';
 
 type Props = {
     team: ClientTeam;
     clients: Client[];
+    tipos: ClientOption[];
+    estados: ClientOption[];
 };
 
 const EMPTY_FILTER = '';
@@ -43,71 +45,96 @@ function initials(empresa: string) {
         .join('');
 }
 
-/** Los mismos campos para el modal de nuevo y el de editar. */
+/** Los mismos campos para el modal de nuevo y el de editar, calcados de la tabla real. */
 function ClientFields({
     client,
     errors,
     prefix,
+    tipos,
+    estados,
 }: {
     client?: Client | null;
     errors: Record<string, string>;
     prefix: string;
+    tipos: ClientOption[];
+    estados: ClientOption[];
 }) {
     return (
         <div className="grid gap-4 sm:grid-cols-2">
             <div className="grid gap-2">
-                <Label htmlFor={`${prefix}-empresa`}>Empresa *</Label>
+                <Label htmlFor={`${prefix}-razon`}>Razón social *</Label>
                 <Input
-                    id={`${prefix}-empresa`}
-                    name="empresa"
-                    defaultValue={client?.empresa ?? ''}
-                    placeholder="Nombre Empresa"
+                    id={`${prefix}-razon`}
+                    name="razon_social"
+                    defaultValue={client?.razon_social ?? ''}
+                    placeholder="Mueblería López S.R.L."
                     required
                 />
-                <InputError message={errors.empresa} />
+                <InputError message={errors.razon_social} />
             </div>
             <div className="grid gap-2">
-                <Label htmlFor={`${prefix}-cuit`}>CUIT</Label>
+                <Label htmlFor={`${prefix}-fantasia`}>Nombre fantasía</Label>
+                <Input
+                    id={`${prefix}-fantasia`}
+                    name="nombre_fantasia"
+                    defaultValue={client?.nombre_fantasia ?? ''}
+                    placeholder="Mueblería López"
+                />
+                <InputError message={errors.nombre_fantasia} />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor={`${prefix}-cuit`}>CUIT *</Label>
                 <Input
                     id={`${prefix}-cuit`}
                     name="cuit"
                     defaultValue={client?.cuit ?? ''}
                     placeholder="XX-XXXXXXXX-X"
+                    required
                 />
                 <InputError message={errors.cuit} />
             </div>
             <div className="grid gap-2">
-                <Label htmlFor={`${prefix}-nombre`}>Nombre contacto *</Label>
-                <Input
-                    id={`${prefix}-nombre`}
-                    name="nombre_contacto"
-                    defaultValue={client?.nombre_contacto ?? ''}
-                    placeholder="Juan"
-                    required
-                />
-                <InputError message={errors.nombre_contacto} />
-            </div>
-            <div className="grid gap-2">
-                <Label htmlFor={`${prefix}-apellido`}>Apellido contacto</Label>
-                <Input
-                    id={`${prefix}-apellido`}
-                    name="apellido_contacto"
-                    defaultValue={client?.apellido_contacto ?? ''}
-                    placeholder="Pérez"
-                />
-                <InputError message={errors.apellido_contacto} />
-            </div>
-            <div className="grid gap-2">
-                <Label htmlFor={`${prefix}-email`}>Email *</Label>
+                <Label htmlFor={`${prefix}-email`}>Email</Label>
                 <Input
                     id={`${prefix}-email`}
                     name="email"
                     type="email"
                     defaultValue={client?.email ?? ''}
-                    placeholder="juan.perez@email.com"
-                    required
+                    placeholder="contacto@empresa.com"
                 />
                 <InputError message={errors.email} />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor={`${prefix}-tipo`}>Tipo *</Label>
+                <select
+                    id={`${prefix}-tipo`}
+                    name="tipo_cliente_id"
+                    defaultValue={tipos.find((t) => t.nombre === client?.tipo)?.id ?? ''}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                    required
+                >
+                    <option value="" disabled>Elegir tipo</option>
+                    {tipos.map((t) => (
+                        <option key={t.id} value={t.id}>{t.nombre}</option>
+                    ))}
+                </select>
+                <InputError message={errors.tipo_cliente_id} />
+            </div>
+            <div className="grid gap-2">
+                <Label htmlFor={`${prefix}-estado`}>Estado *</Label>
+                <select
+                    id={`${prefix}-estado`}
+                    name="estado_id"
+                    defaultValue={estados.find((e) => e.nombre === client?.estado)?.id ?? ''}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                    required
+                >
+                    <option value="" disabled>Elegir estado</option>
+                    {estados.map((e) => (
+                        <option key={e.id} value={e.id}>{e.nombre}</option>
+                    ))}
+                </select>
+                <InputError message={errors.estado_id} />
             </div>
             <div className="grid gap-2">
                 <Label htmlFor={`${prefix}-telefono`}>Teléfono</Label>
@@ -119,7 +146,7 @@ function ClientFields({
                 />
                 <InputError message={errors.telefono} />
             </div>
-            <div className="grid gap-2 sm:col-span-2">
+            <div className="grid gap-2">
                 <Label htmlFor={`${prefix}-direccion`}>Dirección</Label>
                 <Input
                     id={`${prefix}-direccion`}
@@ -130,21 +157,20 @@ function ClientFields({
                 <InputError message={errors.direccion} />
             </div>
             <div className="grid gap-2 sm:col-span-2">
-                <Label htmlFor={`${prefix}-notas`}>Notas</Label>
+                <Label htmlFor={`${prefix}-obs`}>Observaciones</Label>
                 <Input
-                    id={`${prefix}-notas`}
-                    name="notas"
-                    defaultValue={client?.notas ?? ''}
+                    id={`${prefix}-obs`}
+                    name="observaciones"
                     placeholder="Notas internas..."
                 />
-                <InputError message={errors.notas} />
+                <InputError message={errors.observaciones} />
             </div>
         </div>
     );
 }
 
 /** Pantalla principal: lista con buscador y alta/edición/baja en modales. */
-export default function ClientsIndex({ team, clients }: Props) {
+export default function ClientsIndex({ team, clients, tipos, estados }: Props) {
     const [search, setSearch] = useState(EMPTY_FILTER);
     const [createOpen, setCreateOpen] = useState(false);
     const [editing, setEditing] = useState<Client | null>(null);
@@ -201,6 +227,8 @@ export default function ClientsIndex({ team, clients }: Props) {
                                         <ClientFields
                                             errors={errors}
                                             prefix="new"
+                                            tipos={tipos}
+                                            estados={estados}
                                         />
                                         <DialogFooter className="gap-2">
                                             <DialogClose asChild>
@@ -263,8 +291,10 @@ export default function ClientsIndex({ team, clients }: Props) {
                                         )}
                                     </div>
                                     <p className="truncate text-sm text-ink-400">
-                                        {c.nombre_contacto} · {c.email}
+                                        {c.nombre_contacto}
+                                        {c.email ? ` · ${c.email}` : ''}
                                         {c.cuit ? ` · CUIT ${c.cuit}` : ''}
+                                        {c.tipo ? ` · ${c.tipo}` : ''}
                                     </p>
                                 </div>
                             </div>
@@ -346,6 +376,8 @@ export default function ClientsIndex({ team, clients }: Props) {
                                         client={editing}
                                         errors={errors}
                                         prefix="edit"
+                                        tipos={tipos}
+                                        estados={estados}
                                     />
                                     <DialogFooter className="gap-2">
                                         <DialogClose asChild>

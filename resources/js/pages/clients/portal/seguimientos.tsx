@@ -2,6 +2,7 @@ import { Head, Link } from '@inertiajs/react';
 import { Construction, MapPin } from 'lucide-react';
 import PortalSidebar from '@/components/portal-sidebar';
 import { empresa } from '@/routes/portal';
+import { dashboard } from '@/routes';
 import type { Client, ClientTeam } from '@/types/clients';
 
 /** Contrato con ClientController@portalSeguimientos. Página en desarrollo hasta que el módulo conecte la BD real. */
@@ -9,9 +10,10 @@ type Props = {
     team: ClientTeam;
     client: Client;
     seguimientos: unknown[];
+    esAdmin: boolean;
 };
 
-export default function PortalSeguimientos({ team, client }: Props) {
+export default function PortalSeguimientos({ esAdmin, team, client }: Props) {
     return (
         <>
             <Head title={`Seguimientos · ${client.empresa}`} />
@@ -23,6 +25,7 @@ export default function PortalSeguimientos({ team, client }: Props) {
                         clientId={client.id}
                         clientEmpresa={client.empresa}
                         active="seguimientos"
+                        volverAdmin={esAdmin ? dashboard(team.slug).url : null}
                     />
 
                     <main className="min-w-0 flex-1">

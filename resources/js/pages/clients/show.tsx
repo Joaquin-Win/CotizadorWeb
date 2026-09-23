@@ -3,6 +3,7 @@ import {
     ArrowLeft,
     Building2,
     CheckCircle2,
+    Eye,
     FileText,
     Package,
     Truck,
@@ -21,6 +22,7 @@ import {
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { index } from '@/routes/clients';
+import { empresa as portalEmpresa } from '@/routes/portal';
 import type { Client, ClientTeam } from '@/types/clients';
 
 type Props = { team: ClientTeam; client: Client };
@@ -75,6 +77,15 @@ export default function ClientShow({ team, client }: Props) {
                 <Button variant="secondary" size="sm" asChild className="w-fit">
                     <Link href={index(team.slug).url}>
                         <ArrowLeft /> Volver a clientes
+                    </Link>
+                </Button>
+                <Button size="sm" asChild className="w-fit bg-brand-green hover:bg-brand-green/90">
+                    <Link
+                        href={
+                            portalEmpresa({ current_team: team.slug, client: client.id }).url
+                        }
+                    >
+                        <Eye /> Ver portal del cliente
                     </Link>
                 </Button>
 
@@ -234,7 +245,7 @@ export default function ClientShow({ team, client }: Props) {
                     <div className="rounded-xl border bg-white p-6 shadow-sm">
                         <h3 className="font-bold">Notas</h3>
                         <p className="mt-4 text-sm text-ink-600">
-                            {client.notas ?? 'Sin notas registradas.'}
+                                   {client.observaciones ?? 'Sin notas registradas.'}
                         </p>
                     </div>
                 </div>
