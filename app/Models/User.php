@@ -2,61 +2,112 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use App\Concerns\HasTeams;
-use Database\Factories\UserFactory;
-use Illuminate\Database\Eloquent\Attributes\Fillable;
-use Illuminate\Database\Eloquent\Attributes\Hidden;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Illuminate\Support\Carbon;
-use Laravel\Fortify\TwoFactorAuthenticatable;
 
 /**
- * @property int $id
- * @property string $name
- * @property string $email
- * @property Carbon|null $email_verified_at
- * @property string $password
- * @property string|null $two_factor_secret
- * @property string|null $two_factor_recovery_codes
- * @property Carbon|null $two_factor_confirmed_at
- * @property string|null $remember_token
- * @property int|null $current_team_id
- * @property Carbon|null $created_at
- * @property Carbon|null $updated_at
- * @property-read Team|null $currentTeam
- * @property-read Collection<int, Team> $ownedTeams
- * @property-read Collection<int, Membership> $teamMemberships
- * @property-read Collection<int, Team> $teams
+ * Modelo de autenticación.
+ * Tabla: usuarios (del SQL cotizador_set, NO la tabla 'users' estándar de Laravel).
+ *
+ * Columnas notables:
+ *  - rol_id          → FK a roles
+ *  - cliente_id      → FK a clientes (NULL para ADMIN)
+ *  - activo          → suspensión temporal sin borrar cuenta
+ *  - ultimo_acceso   → timestamp
+ *  - email_unico     → columna GENERADA (STORED), no fillable
+ *
+ * @property int         $id
+ * @property int         $rol_id
+ * @property int|null    $cliente_id
+ * @property string      $name
+ * @property string      $email
+ * @property string|null $telefono
+ * @property bool        $activo
+ * @property \Illuminate\Support\Carbon|null $email_verified_at
+ * @property \Illuminate\Support\Carbon|null $ultimo_acceso
+ * @property \Illuminate\Support\Carbon|null $created_at
+ * @property \Illuminate\Support\Carbon|null $updated_at
+ * @property \Illuminate\Support\Carbon|null $deleted_at
+ * @property-read Rol|null      $rol
+ * @property-read Cliente|null  $cliente
  */
-#[Fillable(['name', 'email', 'password', 'rol_id', 'cliente_id', 'telefono', 'activo', 'current_team_id'])]
-#[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
 class User extends Authenticatable
 {
-    /** @use HasFactory<UserFactory> */
-    use HasFactory, HasTeams, Notifiable, TwoFactorAuthenticatable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
-     * La tabla real en la BD es `usuarios`.
+     * Tabla real en la BD (cotizador_set).
      */
     protected $table = 'usuarios';
 
     /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
+     * Campos asignables masivamente.
+     * email_unico es columna GENERADA por MySQL → NO incluir.
+     */
+    protected $fillable = [
+        'rol_id',
+        'cliente_id',
+        'name',
+        'email',
+        'password',
+        'telefono',
+        'activo',
+        'ultimo_acceso',
+        'created_by',
+        'updated_by',
+    ];
+
+    /**
+     * Campos ocultos en serialización.
+     */
+    protected $hidden = [
+        'password',
+        'remember_token',
+    ];
+
+    /**
+     * Casts de atributos.
      */
     protected function casts(): array
     {
         return [
-            'email_verified_at'      => 'datetime',
-            'password'               => 'hashed',
-            'two_factor_confirmed_at' => 'datetime',
-            'ultimo_acceso'          => 'datetime',
-            'activo'                 => 'boolean',
+            'email_verified_at' => 'datetime',
+            'password'          => 'hashed',
+            'activo'            => 'boolean',
+            'ultimo_acceso'     => 'datetime',
         ];
+    }
+
+    // ---------------------------------------------------------------
+    // Relaciones
+    // ---------------------------------------------------------------
+
+    public function rol(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Rol::class, 'rol_id');
+    }
+
+    public function cliente(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+    {
+        return $this->belongsTo(Cliente::class, 'cliente_id');
+    }
+
+    // ---------------------------------------------------------------
+    // Helpers
+    // ---------------------------------------------------------------
+
+    /** @return bool */
+    public function esAdmin(): bool
+    {
+        // rol_id = 1 → ADMIN (ver tabla roles)
+        return $this->rol_id === 1;
+    }
+
+    /** @return bool */
+    public function esCliente(): bool
+    {
+        return $this->rol_id === 2;
     }
 }
