@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Calculator, FolderGit2, LayoutGrid } from 'lucide-react';
+import { BookOpen, FolderGit2, LayoutGrid, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
@@ -15,12 +15,16 @@ import {
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
 import { dashboard } from '@/routes';
+import { index as clientsIndex } from '@/routes/clients';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const page = usePage();
     const dashboardUrl = page.props.currentTeam
         ? dashboard(page.props.currentTeam.slug)
+        : '/';
+    const clientsUrl = page.props.currentTeam
+        ? clientsIndex(page.props.currentTeam.slug).url
         : '/';
 
     const mainNavItems: NavItem[] = [
@@ -30,9 +34,9 @@ export function AppSidebar() {
             icon: LayoutGrid,
         },
         {
-            title: 'Cotizador',
-            href: '/cotizador/envio',
-            icon: Calculator,
+            title: 'Clientes',
+            href: clientsUrl,
+            icon: Users,
         },
     ];
 
