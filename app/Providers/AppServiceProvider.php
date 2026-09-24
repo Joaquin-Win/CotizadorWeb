@@ -5,6 +5,7 @@ namespace App\Providers;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -24,6 +25,18 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->defineGates();
+    }
+
+    /**
+     * Define gates de autorización por rol (tabla roles, rol_id en usuarios).
+     * rol_id = 1 → ADMIN (personal SET)
+     * rol_id = 2 → CLIENTE
+     */
+    protected function defineGates(): void
+    {
+        Gate::define('esAdmin',   fn ($user) => $user->rol_id === 1);
+        Gate::define('esCliente', fn ($user) => $user->rol_id === 2);
     }
 
     /**
