@@ -35,4 +35,15 @@ return [
         ],
     ],
 
+    'transoft' => [
+        'base_url'            => env('TRANSOFT_BASE_URL'),
+        'username'            => env('TRANSOFT_USERNAME'),
+        'password'            => env('TRANSOFT_PASSWORD'),
+        'operation_id'        => env('TRANSOFT_OPERATION_ID'),
+        'dador_cuit'          => env('TRANSOFT_DADOR_CUIT'),
+        'transportista_cuit'  => env('TRANSOFT_TRANSPORTISTA_CUIT'),
+        'webhook_secret'      => env('TRANSOFT_WEBHOOK_SECRET'),
+        'timeout'             => env('TRANSOFT_TIMEOUT', 15),
+    ],
+
 ];
