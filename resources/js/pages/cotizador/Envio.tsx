@@ -1,5 +1,4 @@
 import { Head, useForm } from '@inertiajs/react';
-import { store } from '@/routes/cotizador/envio';
 
 interface Props {
     ciudades: string[];
@@ -17,7 +16,7 @@ export default function Envio({ ciudades }: Props) {
 
     const submit = (e: React.FormEvent<HTMLFormElement>) => {
         e.preventDefault();
-        post(store().url);
+        post(route('cotizador.calcular'));
     };
 
     return (
