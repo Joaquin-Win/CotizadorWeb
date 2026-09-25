@@ -16,9 +16,6 @@ class Cliente extends Model
     ];
 
     // cuit_unico es columna GENERADA (STORED), nunca fillable
-    protected $guarded = ['cuit_unico'];
-
-    protected $casts = ['activo' => 'boolean'];
 
     // -----------------------------------------------
     // Relaciones

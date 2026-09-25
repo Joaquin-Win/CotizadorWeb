@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Cotizacion extends Model
 {
     use SoftDeletes;
-
+    protected $table = "cotizaciones";
     protected $fillable = [
         'origen_id', 'tipo_cliente_id', 'cliente_id',
         'usuario_id', 'acuerdo_id', 'estado_id',
