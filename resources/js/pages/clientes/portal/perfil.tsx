@@ -1,31 +1,26 @@
 import { Head, Link } from '@inertiajs/react';
 import { Building2, Mail, MapPin, Phone, UserRound } from 'lucide-react';
 import PortalSidebar, { initials } from '@/components/portal-sidebar';
-import { empresa } from '@/routes/portal';
-import { dashboard } from '@/routes';
-import type { Client, ClientTeam } from '@/types/clients';
+import { contactoPrincipal, nombreCliente, type PortalCliente } from '@/types/portal';
 
-/** Contrato con ClientController@portalPerfil. Ficha pública con los datos reales de la empresa. */
+/** Ficha pública de la empresa con sus datos reales. */
 type Props = {
-    team: ClientTeam;
-    client: Client;
+    cliente: PortalCliente;
     esAdmin: boolean;
 };
 
-export default function PortalPerfil({ esAdmin, team, client }: Props) {
+export default function PortalPerfil({ cliente, esAdmin }: Props) {
+    const nombre = nombreCliente(cliente);
+    const contacto = contactoPrincipal(cliente);
+    const base = `/clientes/${cliente.id}/portal`;
+
     return (
         <>
-            <Head title={`Perfil · ${client.empresa}`} />
+            <Head title={`Perfil · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
                 <div className="mx-auto flex max-w-[1400px] gap-5 px-4 py-5">
-                    <PortalSidebar
-                        team={team}
-                        clientId={client.id}
-                        clientEmpresa={client.empresa}
-                        active="perfil"
-                        volverAdmin={esAdmin ? dashboard(team.slug).url : null}
-                    />
+                    <PortalSidebar clienteId={cliente.id} nombre={nombre} active="perfil" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -35,43 +30,36 @@ export default function PortalPerfil({ esAdmin, team, client }: Props) {
                                     Perfil de empresa
                                 </h1>
                                 <p className="mt-0.5 text-sm text-slate-500">
-                                    Ficha pública de {client.empresa} dentro del portal.
+                                    Ficha pública de {nombre} dentro del portal.
                                 </p>
                             </div>
-                            <Link
-                                href={empresa.url({ current_team: team.slug, client: client.id })}
-                                className="text-xs font-semibold text-[#0A3D91]"
-                            >
+                            <Link href={`${base}/resumen`} className="text-xs font-semibold text-[#0A3D91]">
                                 ← Volver al resumen
                             </Link>
                         </div>
 
                         <div className="mt-4 flex flex-col items-center gap-4 rounded-xl border border-slate-200 bg-white p-6 text-center sm:flex-row sm:text-left">
                             <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#0A3D91]/10 text-2xl font-extrabold text-[#0A3D91]">
-                                {client.empresa ? (
-                                    initials(client.empresa)
-                                ) : (
-                                    <Building2 className="h-8 w-8" />
-                                )}
+                                {nombre ? initials(nombre) : <Building2 className="h-8 w-8" />}
                             </span>
                             <div className="min-w-0">
-                                <h2 className="text-lg font-extrabold text-slate-900">{client.empresa}</h2>
-                                <p className="mt-0.5 text-sm text-slate-500">
-                                    CUIT: {client.cuit ?? 'XX-XXXXXXXX-X'}
-                                </p>
+                                <h2 className="text-lg font-extrabold text-slate-900">{nombre}</h2>
+                                <p className="mt-0.5 text-sm text-slate-500">CUIT: {cliente.cuit}</p>
                                 <div className="mt-2 flex flex-wrap justify-center gap-2 sm:justify-start">
-                                    {client.tipo && (
+                                    {cliente.tipoCliente && (
                                         <span className="rounded-full bg-sky-50 px-2.5 py-1 text-xs font-bold text-sky-600">
-                                            {client.tipo}
+                                            {cliente.tipoCliente.nombre}
                                         </span>
                                     )}
-                                    {client.is_active ? (
-                                        <span className="rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600">
-                                            {client.estado ?? 'Activo'}
-                                        </span>
-                                    ) : (
-                                        <span className="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600">
-                                            {client.estado ?? 'Inactivo'}
+                                    {cliente.estado && (
+                                        <span
+                                            className={
+                                                cliente.estado.permite_operar !== false
+                                                    ? 'rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-bold text-emerald-600'
+                                                    : 'rounded-full bg-amber-50 px-2.5 py-1 text-xs font-bold text-amber-600'
+                                            }
+                                        >
+                                            {cliente.estado.nombre}
                                         </span>
                                     )}
                                 </div>
@@ -84,15 +72,15 @@ export default function PortalPerfil({ esAdmin, team, client }: Props) {
                                 <dl className="mt-3 grid gap-3 text-sm">
                                     <div>
                                         <dt className="text-xs text-slate-400">Razón social</dt>
-                                        <dd className="font-semibold">{client.razon_social}</dd>
+                                        <dd className="font-semibold">{cliente.razon_social}</dd>
                                     </div>
                                     <div>
                                         <dt className="text-xs text-slate-400">Nombre fantasía</dt>
-                                        <dd className="font-semibold">{client.nombre_fantasia ?? '—'}</dd>
+                                        <dd className="font-semibold">{cliente.nombre_fantasia ?? '—'}</dd>
                                     </div>
                                     <div>
                                         <dt className="text-xs text-slate-400">CUIT</dt>
-                                        <dd className="font-semibold">{client.cuit}</dd>
+                                        <dd className="font-semibold">{cliente.cuit}</dd>
                                     </div>
                                 </dl>
                             </div>
@@ -102,28 +90,28 @@ export default function PortalPerfil({ esAdmin, team, client }: Props) {
                                 <ul className="mt-3 grid gap-3 text-sm">
                                     <li className="flex items-center gap-2">
                                         <UserRound className="h-4 w-4 shrink-0 text-[#0A3D91]" />
-                                        <span className="font-semibold">{client.nombre_contacto}</span>
+                                        <span className="font-semibold">{contacto?.nombre ?? '—'}</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Mail className="h-4 w-4 shrink-0 text-[#0A3D91]" />
-                                        <span className="font-semibold">{client.email ?? '—'}</span>
+                                        <span className="font-semibold">{cliente.email_facturacion ?? contacto?.email ?? '—'}</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <Phone className="h-4 w-4 shrink-0 text-[#0A3D91]" />
-                                        <span className="font-semibold">{client.telefono ?? '—'}</span>
+                                        <span className="font-semibold">{cliente.telefono ?? contacto?.telefono ?? '—'}</span>
                                     </li>
                                     <li className="flex items-center gap-2">
                                         <MapPin className="h-4 w-4 shrink-0 text-[#0A3D91]" />
-                                        <span className="font-semibold">{client.direccion ?? '—'}</span>
+                                        <span className="font-semibold">{cliente.direccion ?? '—'}</span>
                                     </li>
                                 </ul>
                             </div>
                         </div>
 
-                        {client.observaciones && (
+                        {cliente.observaciones && (
                             <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
                                 <h3 className="text-sm font-extrabold">Observaciones</h3>
-                                <p className="mt-2 text-sm text-slate-600">{client.observaciones}</p>
+                                <p className="mt-2 text-sm text-slate-600">{cliente.observaciones}</p>
                             </div>
                         )}
                     </main>

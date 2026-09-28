@@ -15,4 +15,9 @@ class Localidad extends Model
     {
         return $this->hasMany(Cliente::class, 'localidad_id');
     }
+
+    public function provincia()
+    {
+        return $this->belongsTo(Provincia::class, 'provincia_id');
+    }
 }

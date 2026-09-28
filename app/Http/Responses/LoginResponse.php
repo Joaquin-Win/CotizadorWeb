@@ -17,10 +17,14 @@ class LoginResponse implements LoginResponseContract
             return new JsonResponse(['two_factor' => false], 200);
         }
 
-        // Redirigir según rol
+        // Redirigir según rol. El cliente va a su portal: se resuelve
+        // su empresa porque las rutas del portal llevan el id.
+        if ((int) $user->rol_id === 2 && $user->cliente_id) {
+            return redirect()->route('clientes.portal.resumen', ['cliente' => $user->cliente_id]);
+        }
+
         $target = match ((int) $user->rol_id) {
             1       => '/dashboard',       // Administrador
-            2       => '/portal',          // Cliente
             default => '/',
         };
 

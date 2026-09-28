@@ -23,7 +23,7 @@ return new class extends Migration
             // Unicidad de CUIT entre proveedores activos (NULL cuando deleted_at IS NOT NULL)
             $table->string('cuit_unico', 13)
                   ->nullable()
-                  ->storedAs('IF(deleted_at IS NULL, cuit, NULL)');
+                  ->storedAs('CASE WHEN deleted_at IS NULL THEN cuit END');
             $table->unique('cuit_unico', 'uq_proveedores_cuit_activo');
             $table->index('nombre');
         });

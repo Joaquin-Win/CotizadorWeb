@@ -35,9 +35,9 @@ class Invitacion extends Model
     }
 
     /** Empresa que invita. */
-    public function client(): BelongsTo
+    public function cliente(): BelongsTo
     {
-        return $this->belongsTo(Client::class);
+        return $this->belongsTo(Cliente::class, 'client_id');
     }
 
     /** Vale si no se usó ni venció. */

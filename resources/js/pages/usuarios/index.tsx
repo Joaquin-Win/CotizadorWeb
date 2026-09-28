@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Building2, Eye, Plus, Search, Trash2 } from 'lucide-react';
+import { Building2, Eye, MonitorPlay, Plus, Search, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -23,7 +23,7 @@ import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
-    { title: 'Clientes', href: '/clientes' },
+    { title: 'Usuarios', href: '/usuarios' },
 ];
 
 interface TipoCliente {
@@ -67,7 +67,7 @@ const estadoBadgeClass = (codigo: string | undefined) => {
     return map[codigo ?? ''] ?? 'bg-zinc-100 text-zinc-600';
 };
 
-export default function ClientesIndex({ clientes, tipos }: Props) {
+export default function UsuariosIndex({ clientes, tipos }: Props) {
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
 
@@ -104,7 +104,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
-            <Head title="Clientes" />
+            <Head title="Usuarios" />
 
             <div className="flex flex-1 flex-col gap-6 p-6">
                 {/* Header */}
@@ -112,7 +112,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                     <div className="flex items-center gap-3">
                         <Building2 className="text-primary h-7 w-7" />
                         <div>
-                            <h1 className="text-2xl font-bold tracking-tight">Clientes</h1>
+                            <h1 className="text-2xl font-bold tracking-tight">Usuarios</h1>
                             <p className="text-muted-foreground text-sm">
                                 {clientes.length} cliente{clientes.length !== 1 ? 's' : ''} registrado{clientes.length !== 1 ? 's' : ''}
                             </p>
@@ -246,9 +246,10 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                 </div>
 
                 {/* Tabla manual */}
-                <div className="rounded-xl border overflow-hidden">
+                <div className="overflow-x-auto rounded-xl border">
+                    <div className="min-w-[900px]">
                     {/* Encabezado */}
-                    <div className="bg-muted/50 grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <div className="bg-muted/50 grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_120px] gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         <span>Razón social</span>
                         <span>CUIT</span>
                         <span>Tipo</span>
@@ -267,7 +268,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                         filtered.map((cliente, i) => (
                             <div
                                 key={cliente.id}
-                                className={`grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 items-center text-sm ${
+                                className={`grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_120px] gap-4 px-4 py-3 items-center text-sm ${
                                     i % 2 === 0 ? '' : 'bg-muted/20'
                                 } hover:bg-muted/40 transition-colors`}
                             >
@@ -291,6 +292,11 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                                 <div className="text-center">{cliente.cotizaciones_count}</div>
                                 <div className="text-center">{cliente.pedidos_count}</div>
                                 <div className="flex justify-end gap-1">
+                                    <Button variant="ghost" size="icon" asChild title="Ver plataforma del cliente">
+                                        <Link href={`/clientes/${cliente.id}/portal/resumen`}>
+                                            <MonitorPlay className="h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                     <Button variant="ghost" size="icon" asChild title="Ver detalle">
                                         <Link href={`/clientes/${cliente.id}`}>
                                             <Eye className="h-4 w-4" />
@@ -308,6 +314,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                             </div>
                         ))
                     )}
+                    </div>
                 </div>
             </div>
         </AppLayout>

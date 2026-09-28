@@ -16,38 +16,31 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { destroy as destroyInvitacion, store as storeInvitacion } from '@/routes/invitaciones';
-import { empresa, empresaUpdate } from '@/routes/portal';
-import { quitarAcceso, cambiarClave as cambiarClaveRoute } from '@/routes/usuarios';
-import { dashboard } from '@/routes';
-import type { Client, ClientTeam } from '@/types/clients';
+import { nombreCliente, type PortalCliente } from '@/types/portal';
 
-/** Contrato con ClientController@portalMiCuenta. Usuarios, invitaciones y clave son reales. */
+/** Mi Cuenta: datos editables, clave, usuarios y preferencias. */
 type Props = {
-    team: ClientTeam;
-    client: Client;
-    usuarios: { id: number; name: string; email: string }[];
+    cliente: PortalCliente;
+    esAdmin: boolean;
+    usuarios: { id: number; name: string; email: string; activo: boolean; ultimo_acceso: string | null }[];
     invitaciones: { id: number; email: string; expires_at: string }[];
     puedeGestionarUsuarios: boolean;
-    esAdmin: boolean;
 };
 
-export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invitaciones, puedeGestionarUsuarios }: Props) {
+export default function PortalMiCuenta({ cliente, esAdmin, usuarios, invitaciones, puedeGestionarUsuarios }: Props) {
+    const nombre = nombreCliente(cliente);
+    const base = `/clientes/${cliente.id}`;
     const datos = useForm({
-        razon_social: client.razon_social,
-        nombre_fantasia: client.nombre_fantasia ?? '',
-        cuit: client.cuit,
-        email: client.email ?? '',
-        telefono: client.telefono ?? '',
-        direccion: client.direccion ?? '',
-        tipo_cliente_id: String(client.tipo_id),
-        estado_id: String(client.estado_id),
+        nombre_fantasia: cliente.nombre_fantasia ?? '',
+        email_facturacion: cliente.email_facturacion ?? '',
+        telefono: cliente.telefono ?? '',
+        direccion: cliente.direccion ?? '',
     });
     const clave = useForm({ password: '', password_confirmation: '' });
     const [notifPedido, setNotifPedido] = useState(true);
     const [notifDoc, setNotifDoc] = useState(true);
 
-    function campo(key: 'razon_social' | 'nombre_fantasia' | 'cuit' | 'email' | 'telefono' | 'direccion') {
+    function campo(key: 'nombre_fantasia' | 'email_facturacion' | 'telefono' | 'direccion') {
         return {
             value: datos.data[key],
             disabled: !puedeGestionarUsuarios,
@@ -57,14 +50,12 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
 
     function guardarDatos(e: React.FormEvent) {
         e.preventDefault();
-        datos.put(empresaUpdate({ current_team: team.slug, client: client.id }).url, {
-            preserveScroll: true,
-        });
+        datos.put(`${base}/portal/empresa`, { preserveScroll: true });
     }
 
     function cambiarClave(e: React.FormEvent) {
         e.preventDefault();
-        clave.put(cambiarClaveRoute({ current_team: team.slug, client: client.id }).url, {
+        clave.put(`${base}/clave`, {
             preserveScroll: true,
             onSuccess: () => clave.reset(),
         });
@@ -72,17 +63,11 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
 
     return (
         <>
-            <Head title={`Mi Cuenta · ${client.empresa}`} />
+            <Head title={`Mi Cuenta · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
                 <div className="mx-auto flex max-w-[1400px] gap-5 px-4 py-5">
-                    <PortalSidebar
-                        team={team}
-                        clientId={client.id}
-                        clientEmpresa={client.empresa}
-                        active="mi-cuenta"
-                        volverAdmin={esAdmin ? dashboard(team.slug).url : null}
-                    />
+                    <PortalSidebar clienteId={cliente.id} nombre={nombre} active="mi-cuenta" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -95,32 +80,29 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
                                     Datos de la empresa, seguridad, usuarios y preferencias.
                                 </p>
                             </div>
-                            <Link
-                                href={empresa.url({ current_team: team.slug, client: client.id })}
-                                className="text-xs font-semibold text-[#0A3D91]"
-                            >
+                            <Link href={`${base}/portal/resumen`} className="text-xs font-semibold text-[#0A3D91]">
                                 ← Volver al resumen
                             </Link>
                         </div>
 
-                        <form
-                            onSubmit={guardarDatos}
-                            className="mt-4 rounded-xl border border-slate-200 bg-white p-5"
-                        >
+                        <form onSubmit={guardarDatos} className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
                             <h2 className="text-sm font-extrabold">Datos de la empresa</h2>
                             <p className="text-xs text-slate-400">
                                 {puedeGestionarUsuarios
                                     ? 'Edita los datos de la empresa.'
                                     : 'Solo el contacto principal puede modificar estos datos.'}
                             </p>
-                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="mc-razon">Razón social</Label>
-                                    <Input id="mc-razon" {...campo('razon_social')} />
-                                    {datos.errors.razon_social && (
-                                        <p className="text-xs text-red-600">{datos.errors.razon_social}</p>
-                                    )}
+                            <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                                <div>
+                                    <dt className="text-xs text-slate-400">Razón social</dt>
+                                    <dd className="font-semibold">{cliente.razon_social}</dd>
                                 </div>
+                                <div>
+                                    <dt className="text-xs text-slate-400">CUIT</dt>
+                                    <dd className="font-semibold">{cliente.cuit}</dd>
+                                </div>
+                            </dl>
+                            <div className="mt-3 grid gap-3 sm:grid-cols-2">
                                 <div className="grid gap-1.5">
                                     <Label htmlFor="mc-fantasia">Nombre fantasía</Label>
                                     <Input id="mc-fantasia" {...campo('nombre_fantasia')} />
@@ -129,17 +111,10 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
                                     )}
                                 </div>
                                 <div className="grid gap-1.5">
-                                    <Label htmlFor="mc-cuit">CUIT</Label>
-                                    <Input id="mc-cuit" {...campo('cuit')} placeholder="XX-XXXXXXXX-X" />
-                                    {datos.errors.cuit && (
-                                        <p className="text-xs text-red-600">{datos.errors.cuit}</p>
-                                    )}
-                                </div>
-                                <div className="grid gap-1.5">
-                                    <Label htmlFor="mc-email">Email</Label>
-                                    <Input id="mc-email" type="email" {...campo('email')} />
-                                    {datos.errors.email && (
-                                        <p className="text-xs text-red-600">{datos.errors.email}</p>
+                                    <Label htmlFor="mc-email">Email de facturación</Label>
+                                    <Input id="mc-email" type="email" {...campo('email_facturacion')} />
+                                    {datos.errors.email_facturacion && (
+                                        <p className="text-xs text-red-600">{datos.errors.email_facturacion}</p>
                                     )}
                                 </div>
                                 <div className="grid gap-1.5">
@@ -175,10 +150,7 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
                             </div>
                         </form>
 
-                        <form
-                            onSubmit={cambiarClave}
-                            className="mt-4 rounded-xl border border-slate-200 bg-white p-5"
-                        >
+                        <form onSubmit={cambiarClave} className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
                             <h2 className="text-sm font-extrabold">Seguridad</h2>
                             <p className="text-xs text-slate-400">Cambia la clave de acceso de tu cuenta.</p>
                             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -238,7 +210,7 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
                                                     Le llega un email con el link. Vale 7 días y un solo uso.
                                                 </DialogDescription>
                                             </DialogHeader>
-                                            <InviteForm teamSlug={team.slug} clientId={client.id} />
+                                            <InviteForm clienteId={cliente.id} />
                                         </DialogContent>
                                     </Dialog>
                                 )}
@@ -254,16 +226,10 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
                                         key={`u-${u.id}`}
                                         name={u.name}
                                         email={u.email}
-                                        badge="Con acceso"
+                                        badge={u.activo ? 'Con acceso' : 'Suspendido'}
                                         mostrarQuitar={puedeGestionarUsuarios}
                                         onRemove={() =>
-                                            router.delete(
-                                                quitarAcceso({
-                                                    current_team: team.slug,
-                                                    client: client.id,
-                                                    usuario: u.id,
-                                                }).url,
-                                            )
+                                            router.delete(`${base}/usuarios/${u.id}`, { preserveScroll: true })
                                         }
                                     />
                                 ))}
@@ -275,13 +241,7 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
                                         badge="Invitado"
                                         mostrarQuitar={puedeGestionarUsuarios}
                                         onRemove={() =>
-                                            router.delete(
-                                                destroyInvitacion({
-                                                    current_team: team.slug,
-                                                    client: client.id,
-                                                    invitacion: inv.id,
-                                                }).url,
-                                            )
+                                            router.delete(`${base}/invitaciones/${inv.id}`, { preserveScroll: true })
                                         }
                                     />
                                 ))}
@@ -313,12 +273,13 @@ export default function PortalMiCuenta({ esAdmin, team, client, usuarios, invita
     );
 }
 
-function InviteForm({ teamSlug, clientId }: { teamSlug: string; clientId: number }) {
+function InviteForm({ clienteId }: { clienteId: number }) {
     const { data, setData, post, processing, errors, reset } = useForm({ email: '' });
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(storeInvitacion({ current_team: teamSlug, client: clientId }).url, {
+        post(`/clientes/${clienteId}/invitaciones`, {
+            preserveScroll: true,
             onSuccess: () => reset(),
         });
     }
@@ -378,26 +339,26 @@ function UserRow({
                 {mostrarQuitar &&
                     (confirmando ? (
                         <span className="flex items-center gap-1.5 text-xs">
-                        <span className="font-semibold text-slate-600">¿Quitar a {name}?</span>
+                            <span className="font-semibold text-slate-600">¿Quitar a {name}?</span>
+                            <button
+                                onClick={onRemove}
+                                className="rounded-md bg-red-600 px-2 py-1 font-bold text-white transition-colors hover:bg-red-700"
+                            >
+                                Sí, quitar
+                            </button>
+                            <button
+                                onClick={() => setConfirmando(false)}
+                                className="rounded-md border border-slate-200 px-2 py-1 font-medium text-slate-500"
+                            >
+                                No
+                            </button>
+                        </span>
+                    ) : (
                         <button
-                            onClick={onRemove}
-                            className="rounded-md bg-red-600 px-2 py-1 font-bold text-white transition-colors hover:bg-red-700"
+                            onClick={() => setConfirmando(true)}
+                            className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-500 transition-colors hover:border-red-300 hover:text-red-600"
                         >
-                            Sí, quitar
-                        </button>
-                        <button
-                            onClick={() => setConfirmando(false)}
-                            className="rounded-md border border-slate-200 px-2 py-1 font-medium text-slate-500"
-                        >
-                            No
-                        </button>
-                    </span>
-                ) : (
-                    <button
-                        onClick={() => setConfirmando(true)}
-                        className="rounded-md border border-slate-200 px-2 py-1 text-xs font-medium text-slate-500 transition-colors hover:border-red-300 hover:text-red-600"
-                    >
-                        Quitar
+                            Quitar
                         </button>
                     ))}
             </div>

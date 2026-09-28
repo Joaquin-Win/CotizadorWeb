@@ -3,7 +3,6 @@ import { Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { login } from '@/routes';
 
 /** Página pública para aceptar la invitación a una empresa. El link vale un uso y 7 días. */
 type Props = {
@@ -22,7 +21,7 @@ export default function AceptarInvitacion({ valida, empresa, email, token }: Pro
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(route('invitaciones.confirmar', { token }));
+        post(`/invitacion/${token}`);
     }
 
     return (
@@ -43,7 +42,7 @@ export default function AceptarInvitacion({ valida, empresa, email, token }: Pro
                                 El link venció o ya fue usado. Pedí que te inviten de nuevo.
                             </p>
                             <Button asChild className="mt-4 bg-[#0A3D91] hover:bg-[#0A3D91]/90">
-                                <Link href={login().url}>Ir al login</Link>
+                                <Link href="/login">Ir al login</Link>
                             </Button>
                         </div>
                     ) : (

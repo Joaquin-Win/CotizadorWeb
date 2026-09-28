@@ -19,10 +19,11 @@ return new class extends Migration
             $table->string('razon_social', 255);
             $table->string('nombre_fantasia', 255)->nullable();
             $table->string('cuit', 13)->comment('Formato: XX-XXXXXXXX-X');
-            // Columna GENERADA: unicidad de CUIT entre clientes activos
+            // Columna GENERADA: unicidad de CUIT entre clientes activos.
+            // CASE WHEN en vez de IF para que corra igual en MySQL y en SQLite (tests).
             $table->string('cuit_unico', 13)
                   ->nullable()
-                  ->storedAs('IF(deleted_at IS NULL, cuit, NULL)');
+                  ->storedAs('CASE WHEN deleted_at IS NULL THEN cuit END');
             $table->unique('cuit_unico', 'uq_clientes_cuit_activo');
             $table->string('email_facturacion', 255)->nullable();
             $table->string('telefono', 50)->nullable();

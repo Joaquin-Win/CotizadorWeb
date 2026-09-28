@@ -2,9 +2,13 @@
 
 namespace App\Providers;
 
+use App\Auth\ActivosUserProvider;
 use Carbon\CarbonImmutable;
+use Illuminate\Auth\Events\Login;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -26,6 +30,20 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->defineGates();
+        $this->configureAuth();
+    }
+
+    /**
+     * Login solo para cuentas activas y registro del acceso.
+     * El resto del flujo (incluido 2FA) lo maneja Fortify.
+     */
+    protected function configureAuth(): void
+    {
+        Auth::provider('activos', fn ($app, array $config) => new ActivosUserProvider($app['hash'], $config['model']));
+
+        Event::listen(Login::class, function (Login $event) {
+            $event->user->forceFill(['ultimo_acceso' => now()])->saveQuietly();
+        });
     }
 
     /**
