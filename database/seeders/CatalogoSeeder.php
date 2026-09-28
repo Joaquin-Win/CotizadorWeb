@@ -2,212 +2,172 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class CatalogoSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        //roles
-        DB::table('roles')->insert([
-        [
-            'id' => 1,
-            'nombre'=> 'ADMIN',
-            'codigo'=> 'ADMIN',
-        ],
-        [
-            'id' => 2,
-            'nombre'=> 'CLIENTE',
-            'codigo'=> 'CLIENTE',
-        ],
-    ]);
+        $now = now();
 
-     //tipos de cliente
-        DB::table('tipos_cliente')->insert([
-        [
-            'id' => 1,
-            'nombre'=> 'Publico',
-            'codigo'=> 'PUBLICO',
-            'nivel'=>0,
-            'descuento_base'=> 0,
-        ],
-        [
-            'id' => 2,
-            'nombre'=> 'B2B',
-            'codigo'=> 'B2b',
-            'nivel'=>1,
-            'descuento_base'=> 0,
-        ],
-        [
-            'id' => 3,
-            'nombre'=> 'B2B Premium',
-            'codigo'=> 'B2B_PREMIUM',
-            'nivel'=>2,
-            'descuento_base'=> 5,
-        ],
-    ]);
+        // -------------------------------------------------------
+        // roles
+        // -------------------------------------------------------
+        DB::table('roles')->insertOrIgnore([
+            ['id' => 1, 'codigo' => 'ADMIN',   'nombre' => 'Administrador', 'es_interno' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 2, 'codigo' => 'CLIENTE', 'nombre' => 'Cliente',       'es_interno' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    //Tipos de servicio
-    DB::table('tipos_servicio')->insert([
-        [
-            'codigo' => 'TRONCAL',
-            'activo' => true
-        ],
-        [
-            'codigo' => 'PRIMERA_MILLA',
-            'activo' => true
-        ],
-        [
-            'codigo' => 'ULTIMA_MILLA',
-            'activo' => true
-        ],
-        [
-            'codigo' => 'PUERTA_PUERTA',
-            'activo' => true
-        ],
-        [
-            'codigo' => 'EXPRESO',
-            'activo' => true
-        ],
-        [
-            'codigo' => 'FLEX',
-            'activo' => false
-        ],
-    ]);
-    
-    // unidades de medida
-    DB::table('unidades_medida')->insert([
-        ['codigo' => 'KG'],
-        ['codigo' => 'M3'],
-        ['codigo' => 'PALLET'],
-        ['codigo' => 'BULTO'],
-        ['codigo' => 'VIAJE'],
-        ['codigo' => 'KM'],
-    ]);
+        // -------------------------------------------------------
+        // tipos_cliente
+        // -------------------------------------------------------
+        DB::table('tipos_cliente')->insertOrIgnore([
+            [
+                'id' => 1, 'codigo' => 'PUBLICO', 'nombre' => 'Público', 'nivel' => 0,
+                'requiere_usuario' => false, 'permite_acuerdo_comercial' => false,
+                'descuento_base_porcentaje' => 0, 'activo' => true,
+                'created_at' => $now, 'updated_at' => $now,
+            ],
+            [
+                'id' => 2, 'codigo' => 'B2B', 'nombre' => 'B2B', 'nivel' => 1,
+                'requiere_usuario' => true, 'permite_acuerdo_comercial' => true,
+                'descuento_base_porcentaje' => 0, 'activo' => true,
+                'created_at' => $now, 'updated_at' => $now,
+            ],
+            [
+                'id' => 3, 'codigo' => 'B2B_PREMIUM', 'nombre' => 'B2B Premium', 'nivel' => 2,
+                'requiere_usuario' => true, 'permite_acuerdo_comercial' => true,
+                'descuento_base_porcentaje' => 5, 'activo' => true,
+                'created_at' => $now, 'updated_at' => $now,
+            ],
+        ]);
 
-    // tipos de bulto
+        // -------------------------------------------------------
+        // tipos_servicio — solo EXPRESO y FLEX activos per dump
+        // -------------------------------------------------------
+        DB::table('tipos_servicio')->insertOrIgnore([
+            ['codigo' => 'TRONCAL',       'nombre' => 'Troncal',         'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PRIMERA_MILLA', 'nombre' => 'Primera milla',   'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'ULTIMA_MILLA',  'nombre' => 'Última milla',    'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PUERTA_PUERTA', 'nombre' => 'Puerta a puerta', 'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'EXPRESO',       'nombre' => 'Expreso',         'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'FLEX',          'nombre' => 'Flex',            'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    DB::table('tipos_bulto')->insert([
-        [
-            'codigo' => 'CAJA',
-            'activo' => true,
-        ],
-        [   'codigo' => 'PALLET',
-            'activo' => true,
-        ],
-        [   'codigo' => 'BOLSA',
-            'activo' => true,
-        ],
-        [
-            'codigo'=> 'TAMBOR',
-            'activo' => true,
-        ],
-        [
-            'codigo'=> 'MUEBLE',
-            'activo' => true,
-        ],
-        [
-            'codigo'=> 'GRANEL',
-            'activo' => true,
-        ],
-    ]);
+        // -------------------------------------------------------
+        // unidades_medida
+        // -------------------------------------------------------
+        DB::table('unidades_medida')->insertOrIgnore([
+            ['codigo' => 'KG',     'nombre' => 'Kilogramo',    'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'M3',     'nombre' => 'Metro cúbico', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PALLET', 'nombre' => 'Pallet',       'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'BULTO',  'nombre' => 'Bulto',        'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'VIAJE',  'nombre' => 'Viaje',        'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'KM',     'nombre' => 'Kilómetro',    'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    // tipos de condicion comercial
-    DB::table('tipos_condicion_comercial')->insert([
-        ['codigo' => 'MINIMO_ENVIOS'],
-        ['codigo' => 'VOLUMEN_MINIMO'],
-        ['codigo' => 'PLAZO_PAGO'],
-        ['codigo' => 'ZONA_COBERTURA'],
-        ['codigo' => 'TIPO_CARGA'],
-        ['codigo' => 'SERVICIO_INCLUIDO'],
-        ['codigo' => 'RETIRO_DOMICIO'],
-        ['codigo' => 'ENTREGA_DOMICILIO'],
-        ['codigo' => 'SEGURO_INCLUIDO'],
-    ]);
-    
-    // ORIGENES DE COTIZACION
-    DB::table('origenes_cotizacion')->insert([
-        [
-            'id'=> '1',
-            'codigo' => 'WEB_PUBLICA',
-        ],
-        [
-            'id'=> '2',
-            'codigo' => 'PANEL_CLIENTE',
-        ],
-        [
-            'id'=> '3',
-            'codigo'=> 'BACKOFFICE',
-        ],
-        [
-            'id'=> '4',
-            'codigo'=> 'API',
-        ],
-    ]);
+        // -------------------------------------------------------
+        // tipos_bulto
+        // -------------------------------------------------------
+        DB::table('tipos_bulto')->insertOrIgnore([
+            ['codigo' => 'CAJA',   'nombre' => 'Caja',   'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PALLET', 'nombre' => 'Pallet', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'BOLSA',  'nombre' => 'Bolsa',  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'TAMBOR', 'nombre' => 'Tambor', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'MUEBLE', 'nombre' => 'Mueble', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'GRANEL', 'nombre' => 'Granel', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    // ESTADOS DE COTIZACION
+        // -------------------------------------------------------
+        // tipos_condicion_comercial
+        // -------------------------------------------------------
+        DB::table('tipos_condicion_comercial')->insertOrIgnore([
+            ['codigo' => 'MINIMO_ENVIOS',     'nombre' => 'Mínimo de envíos',     'tipo_dato' => 'NUMERO',   'unidad' => 'envíos', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'VOLUMEN_MINIMO',    'nombre' => 'Volumen mínimo',       'tipo_dato' => 'NUMERO',   'unidad' => 'm3',     'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PLAZO_PAGO',        'nombre' => 'Plazo de pago',        'tipo_dato' => 'NUMERO',   'unidad' => 'días',   'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'ZONA_COBERTURA',    'nombre' => 'Zona de cobertura',    'tipo_dato' => 'ZONA',     'unidad' => null,     'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'TIPO_CARGA',        'nombre' => 'Tipo de carga',        'tipo_dato' => 'TEXTO',    'unidad' => null,     'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'SERVICIO_INCLUIDO', 'nombre' => 'Servicio incluido',    'tipo_dato' => 'SERVICIO', 'unidad' => null,     'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'RETIRO_DOMICILIO',  'nombre' => 'Retiro en domicilio',  'tipo_dato' => 'BOOLEANO', 'unidad' => null,     'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'ENTREGA_DOMICILIO', 'nombre' => 'Entrega en domicilio', 'tipo_dato' => 'BOOLEANO', 'unidad' => null,     'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'SEGURO_INCLUIDO',   'nombre' => 'Seguro incluido',      'tipo_dato' => 'BOOLEANO', 'unidad' => null,     'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    DB::table('estados_cotizacion')->insert([
-        ['codigo' => 'BORRADOR'],
-        ['codigo' => 'CALCULADA'],
-        ['codigo' => 'SOLICITADA'],
-        ['codigo' => 'EN_REVISION'],
-        ['codigo' => 'RESPONDIDA'],
-        ['codigo' => 'ACEPTADA'],
-        ['codigo' => 'RECHAZADA'],
-        ['codigo'=> 'VENCIDA'],
-        ['codigo'=> 'CONVERTIDA_PEDIDO'],
-    ]);
-    
-    // ESTADOS PEDIDO
+        // -------------------------------------------------------
+        // origenes_cotizacion
+        // -------------------------------------------------------
+        DB::table('origenes_cotizacion')->insertOrIgnore([
+            ['id' => 1, 'codigo' => 'WEB_PUBLICA',   'nombre' => 'Web pública',   'requiere_login' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 2, 'codigo' => 'PANEL_CLIENTE', 'nombre' => 'Panel cliente', 'requiere_login' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 3, 'codigo' => 'BACKOFFICE',    'nombre' => 'Backoffice',    'requiere_login' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['id' => 4, 'codigo' => 'API',           'nombre' => 'API',           'requiere_login' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    DB::table('estados_pedido')->insert([
-        ['codigo' => 'PENDIENTE'],
-        ['codigo' => 'CONFIRMADO'],
-        ['codigo' => 'RETIRADO'],
-        ['codigo' => 'EN_TRANSITO'],
-        ['codigo' => 'EN_DEPOSITO'],
-        ['codigo' => 'ENTREGADO'],
-        ['codigo' => 'CANCELADO'],
-    ]);
+        // -------------------------------------------------------
+        // estados_cotizacion — 6 estados del dump
+        // -------------------------------------------------------
+        DB::table('estados_cotizacion')->insertOrIgnore([
+            ['codigo' => 'BORRADOR',    'nombre' => 'Borrador',    'orden' => 1, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'ENVIADA',     'nombre' => 'Enviada',     'orden' => 2, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'EN_REVISION', 'nombre' => 'En revisión', 'orden' => 3, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'ACEPTADA',    'nombre' => 'Aceptada',    'orden' => 4, 'es_final' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'RECHAZADA',   'nombre' => 'Rechazada',   'orden' => 5, 'es_final' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'VENCIDA',     'nombre' => 'Vencida',     'orden' => 6, 'es_final' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    // ESTADOS DE CLIENTE
+        // -------------------------------------------------------
+        // estados_pedido — 7 estados del dump
+        // -------------------------------------------------------
+        DB::table('estados_pedido')->insertOrIgnore([
+            ['codigo' => 'PENDIENTE',   'nombre' => 'Pendiente',   'orden' => 1, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'CONFIRMADO',  'nombre' => 'Confirmado',  'orden' => 2, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'RETIRADO',    'nombre' => 'Retirado',    'orden' => 3, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'EN_TRANSITO', 'nombre' => 'En tránsito', 'orden' => 4, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'EN_DESTINO',  'nombre' => 'En destino',  'orden' => 5, 'es_final' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'ENTREGADO',   'nombre' => 'Entregado',   'orden' => 6, 'es_final' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'CANCELADO',   'nombre' => 'Cancelado',   'orden' => 7, 'es_final' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    DB::table('estados_cliente')->insert([
-        ['codigo' => 'ACTIVO'],
-        ['codigo' => 'INACTIVO'],
-        ['codigo' => 'SUSPENDIDO'],
-    ]);
+        // -------------------------------------------------------
+        // estados_cliente — 5 estados del dump con permite_operar
+        // -------------------------------------------------------
+        DB::table('estados_cliente')->insertOrIgnore([
+            ['codigo' => 'ACTIVO',     'nombre' => 'Activo',     'permite_operar' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'INACTIVO',   'nombre' => 'Inactivo',   'permite_operar' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'SUSPENDIDO', 'nombre' => 'Suspendido', 'permite_operar' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'MOROSO',     'nombre' => 'Moroso',     'permite_operar' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PROSPECTO',  'nombre' => 'Prospecto',  'permite_operar' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    //ZONAS
-    DB::table('zonas')->insert([
-        ['codigo'=> 'NORTE'],
-        ['codigo'=> 'CENTRO'],
-        ['codigo'=> 'CUYO'],
-        ['codigo'=> 'SUR'],
-        ['codigo'=> 'AMBA'],
-        ['codigo'=> 'NEA'],
-    ]);
+        // -------------------------------------------------------
+        // estados_integracion
+        // -------------------------------------------------------
+        DB::table('estados_integracion')->insertOrIgnore([
+            ['codigo' => 'NO_CONECTADO', 'nombre' => 'No conectado',              'es_operativo' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PENDIENTE',    'nombre' => 'Pendiente de autorización', 'es_operativo' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'CONECTADO',    'nombre' => 'Conectado',                 'es_operativo' => true,  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'ERROR',        'nombre' => 'Con error',                 'es_operativo' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'REVOCADO',     'nombre' => 'Revocado',                  'es_operativo' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    //COSTOS ADICIONALES
+        // -------------------------------------------------------
+        // estados_importacion
+        // -------------------------------------------------------
+        DB::table('estados_importacion')->insertOrIgnore([
+            ['codigo' => 'PENDIENTE',   'nombre' => 'Pendiente',              'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PROCESANDO',  'nombre' => 'Procesando',             'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'COMPLETADA',  'nombre' => 'Completada',             'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'CON_ERRORES', 'nombre' => 'Completada con errores', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'FALLIDA',     'nombre' => 'Fallida',                'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
 
-    DB::table('costos_adicionales')->insert([
-        [
-            'nombre'=> 'Carga',
-            'monto'=> '12500',
-            'unidad'=> '$',
-            'activo'=> true,
-        ],
-        [
-            'nombre'=> 'Descarga',
-            'monto'=> '12500',
-            'unidad'=> '$',
-            'activo'=> true,
-        ],
-    ]);
+        // -------------------------------------------------------
+        // costos_adicionales — datos de ejemplo
+        // -------------------------------------------------------
+        DB::table('costos_adicionales')->insertOrIgnore([
+            ['codigo' => 'CARGA',    'nombre' => 'Carga',    'monto' => 12500, 'unidad' => '$', 'es_obligatorio' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'DESCARGA', 'nombre' => 'Descarga', 'monto' => 12500, 'unidad' => '$', 'es_obligatorio' => false, 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+        ]);
     }
 }

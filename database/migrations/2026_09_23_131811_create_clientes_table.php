@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /** clientes + seed de prueba */
@@ -37,16 +36,7 @@ return new class extends Migration
             $table->index('razon_social');
         });
 
-        // Seed: cliente de prueba
-        DB::table('clientes')->insert([
-            'tipo_cliente_id' => 2, // B2B
-            'estado_id'       => 1, // ACTIVO
-            'razon_social'    => 'Mueblería López S.R.L.',
-            'nombre_fantasia'  => 'Mueblería López',
-            'cuit'            => '20-12345678-9',
-        ]);
-
-        // Resuelve FK circular: ahora que clientes existe, agregamos la FK en usuarios
+         // Resuelve FK circular: ahora que clientes existe, agregamos la FK en usuarios
         Schema::table('usuarios', function (Blueprint $table) {
             $table->foreign('cliente_id')
                   ->references('id')
@@ -54,15 +44,7 @@ return new class extends Migration
                   ->restrictOnDelete();
         });
 
-        // Seed: usuario cliente vinculado al cliente de prueba
-        DB::table('usuarios')->insert([
-            'rol_id'     => 2, // CLIENTE
-            'cliente_id' => 1,
-            'name'       => 'Martín López',
-            'email'      => 'mlopez@muebleria.com',
-            'password'   => bcrypt('password'),
-            'activo'     => true,
-        ]);
+        
     }
 
     public function down(): void

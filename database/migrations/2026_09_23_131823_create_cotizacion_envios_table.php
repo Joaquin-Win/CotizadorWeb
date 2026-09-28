@@ -6,7 +6,6 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * cotizacion_envios — datos de origen/destino del envío (1:1 con cotizaciones).
- * Esta tabla está SEPARADA de cotizaciones en el diseño del SQL.
  */
 return new class extends Migration
 {
@@ -14,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('cotizacion_envios', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cotizacion_id')->unique()->constrained('cotizaciones')->cascadeOnDelete();
+            $table->unsignedBigInteger('cotizacion_id')->unique();
+            // FK se omite: cotizaciones es particionada y MySQL no soporta FKs en ellas
             // Origen
             $table->foreignId('provincia_origen_id')->constrained('provincias')->restrictOnDelete();
             $table->foreignId('localidad_origen_id')->nullable()->constrained('localidades')->restrictOnDelete();
@@ -22,12 +22,12 @@ return new class extends Migration
             $table->foreignId('provincia_destino_id')->constrained('provincias')->restrictOnDelete();
             $table->foreignId('localidad_destino_id')->nullable()->constrained('localidades')->restrictOnDelete();
             // Modalidades
-            $table->boolean('solicita_retiro')->default(false)->comment('Cliente pide que SET retire en su domicilio');
-            $table->boolean('solicita_entrega')->default(false)->comment('Cliente pide entrega a domicilio en destino');
-            $table->boolean('retira_en_sucursal')->default(false)->comment('Destinatario retira en sucursal SET');
+            $table->boolean('solicita_retiro')->default(false);
+            $table->boolean('solicita_entrega')->default(false);
+            $table->boolean('retira_en_sucursal')->default(false);
             // Carga
-            $table->decimal('valor_declarado', 14, 2)->nullable()->comment('Para cálculo de seguro');
-            $table->unsignedSmallInteger('dias_almacenamiento')->default(0)->comment('Días en depósito (si aplica)');
+            $table->decimal('valor_declarado', 12, 2)->nullable();
+            $table->unsignedSmallInteger('dias_almacenamiento')->default(0);
             $table->timestamps();
             $table->index('cotizacion_id');
             $table->index('provincia_origen_id');
