@@ -48,6 +48,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('dashboard', DashboardController::class)->name('dashboard');
 
+    // Gestión de usuarios (admin): empresas + accesos + ver plataforma.
+    Route::get('usuarios', [ClienteController::class, 'usuarios'])->name('usuarios.index');
+
     // -------------------------------------------------------
     // Mis cotizaciones (panel de cliente logueado)
     // -------------------------------------------------------
@@ -72,6 +75,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('pedidos',     [ClienteController::class, 'portalPedidos'])->name('pedidos');
             Route::get('documentos',  [ClienteController::class, 'portalDocumentos'])->name('documentos');
             Route::get('perfil',      [ClienteController::class, 'portalPerfil'])->name('perfil');
+            Route::get('cotizador',   [ClienteController::class, 'portalCotizador'])->name('cotizador');
             Route::get('mi-cuenta',   [ClienteController::class, 'portalMiCuenta'])->name('mi-cuenta');
             Route::put('empresa',     [ClienteController::class, 'updateEmpresa'])->name('empresa-update');
         });

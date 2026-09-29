@@ -28,8 +28,10 @@ class InvitacionEmpresa extends Mailable
      */
     public function envelope(): Envelope
     {
+        $cliente = $this->invitacion->cliente;
+
         return new Envelope(
-            subject: "Te invitaron al portal de {$this->invitacion->client->empresa}",
+            subject: 'Te invitaron al portal de '.($cliente->nombre_fantasia ?: $cliente->razon_social),
         );
     }
 

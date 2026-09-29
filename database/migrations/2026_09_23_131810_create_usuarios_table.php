@@ -21,10 +21,11 @@ return new class extends Migration
             $table->unsignedBigInteger('cliente_id')->nullable();
             $table->string('name');
             $table->string('email');
-            // Columna GENERADA: unicidad de email entre cuentas vivas (NULL para eliminadas)
+            // Columna GENERADA: unicidad de email entre cuentas vivas (NULL para eliminadas).
+            // CASE WHEN en vez de IF para que corra igual en MySQL y en SQLite (tests).
             $table->string('email_unico', 255)
                   ->nullable()
-                  ->storedAs('IF(deleted_at IS NULL, LOWER(email), NULL)');
+                  ->storedAs('CASE WHEN deleted_at IS NULL THEN LOWER(email) END');
             $table->unique('email_unico', 'uq_usuarios_email_activo');
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->comment('Hash bcrypt/argon2. Nunca texto plano.');
@@ -32,6 +33,10 @@ return new class extends Migration
             $table->boolean('activo')->default(true)->comment('Suspensión temporal sin borrar la cuenta.');
             $table->timestamp('ultimo_acceso')->nullable();
             $table->rememberToken();
+            // Columnas del starter-kit (2FA la usan sus tests).
+            $table->text('two_factor_secret')->nullable();
+            $table->text('two_factor_recovery_codes')->nullable();
+            $table->timestamp('two_factor_confirmed_at')->nullable();
             $table->foreignId('created_by')->nullable()->constrained('usuarios')->nullOnDelete();
             $table->foreignId('updated_by')->nullable()->constrained('usuarios')->nullOnDelete();
             $table->timestamps();

@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('cargo', 100)->nullable();
             $table->string('email', 255)->nullable();
             $table->string('telefono', 50)->nullable();
-            $table->boolean('principal')->default(false);
+            $table->boolean('es_principal')->default(false);
             $table->timestamps();
             $table->softDeletes();
             $table->index('cliente_id');
@@ -29,19 +29,20 @@ return new class extends Migration
             // no con constraint de BD (MySQL no soporta partial indexes).
         });
 
-        // Trigger BEFORE INSERT/UPDATE para garantizar 1 principal por cliente
-        // Más robusto que un índice parcial.
+        // Triggers BEFORE INSERT/UPDATE para garantizar 1 principal por cliente.
+        // Solo MySQL: SQLite (tests) no entiende esta sintaxis y no los necesita.
+        if (DB::getDriverName() === 'mysql') {
         DB::unprepared("
             CREATE TRIGGER trg_contacto_principal_ins
             BEFORE INSERT ON cliente_contactos
             FOR EACH ROW
             BEGIN
-                IF NEW.principal = 1 THEN
+                IF NEW.es_principal = 1 THEN
                     UPDATE cliente_contactos
-                    SET principal = 0
+                    SET es_principal = 0
                     WHERE cliente_id = NEW.cliente_id
                       AND deleted_at IS NULL
-                      AND principal = 1;
+                      AND es_principal = 1;
                 END IF;
             END
         ");
@@ -51,16 +52,17 @@ return new class extends Migration
             BEFORE UPDATE ON cliente_contactos
             FOR EACH ROW
             BEGIN
-                IF NEW.principal = 1 AND OLD.principal = 0 THEN
+                IF NEW.es_principal = 1 AND OLD.es_principal = 0 THEN
                     UPDATE cliente_contactos
-                    SET principal = 0
+                    SET es_principal = 0
                     WHERE cliente_id = NEW.cliente_id
                       AND deleted_at IS NULL
-                      AND principal = 1
+                      AND es_principal = 1
                       AND id != NEW.id;
                 END IF;
             END
         ");
+        }
 
         // -------------------------------------------------------
         // cliente_integraciones

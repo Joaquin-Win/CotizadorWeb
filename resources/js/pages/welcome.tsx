@@ -1,9 +1,8 @@
 import { Head, Link, usePage } from '@inertiajs/react';
-import { dashboard, login } from '@/routes';
 
 export default function Welcome() {
-    const { auth, currentTeam } = usePage().props;
-    const dashboardUrl = currentTeam ? dashboard(currentTeam.slug) : '/';
+    const { auth } = usePage().props;
+    const dashboardUrl = '/dashboard';
 
     return (
         <>
@@ -21,7 +20,7 @@ export default function Welcome() {
                         ) : (
                             <>
                                 <Link
-                                    href={login()}
+                                    href="/login"
                                     className="inline-block rounded-sm border border-transparent px-5 py-1.5 text-sm leading-normal text-[#1b1b18] hover:border-[#19140035] dark:text-[#EDEDEC] dark:hover:border-[#3E3E3A]"
                                 >
                                     Log in

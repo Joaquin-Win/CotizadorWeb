@@ -29,7 +29,7 @@ return new class extends Migration
             // Unicidad de código entre acuerdos activos (NULL cuando deleted_at IS NOT NULL)
             $table->string('codigo_unico', 40)
                   ->nullable()
-                  ->storedAs('IF(deleted_at IS NULL, codigo, NULL)');
+                  ->storedAs('CASE WHEN deleted_at IS NULL THEN codigo END');
             $table->unique('codigo_unico', 'uq_acuerdos_codigo_activo');
             $table->index('cliente_id');
         });

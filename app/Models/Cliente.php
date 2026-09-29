@@ -29,6 +29,7 @@ class Cliente extends Model
     public function acuerdos()     { return $this->hasMany(AcuerdoComercial::class); }
     public function cotizaciones() { return $this->hasMany(Cotizacion::class); }
     public function pedidos()      { return $this->hasMany(Pedido::class); }
+    public function documentos()   { return $this->hasMany(Documento::class); }
 
     // -----------------------------------------------
     // Helpers

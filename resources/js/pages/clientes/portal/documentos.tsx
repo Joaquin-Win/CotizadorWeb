@@ -15,21 +15,23 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { descargar, destroy as destroyDocumento, store as storeDocumento } from '@/routes/documentos';
-import { empresa } from '@/routes/portal';
-import { dashboard } from '@/routes';
-import type { Client, ClientTeam } from '@/types/clients';
+import { nombreCliente, type PortalCliente } from '@/types/portal';
 
-/** Contrato con ClientController@portalDocumentos. Documentos y tipos son reales, de la tabla `documentos`. */
+/** Documentos reales: ver, subir (pdf/png/jpg), descargar y eliminar. */
 type Props = {
-    team: ClientTeam;
-    client: Client;
-    documentos: { id: number; tipo: string; categoria: string; nro: string; fecha: string }[];
-    tipos: { id: number; nombre: string }[];
+    cliente: PortalCliente;
     esAdmin: boolean;
+    documentos: { id: number; numero_documento: string; fecha: string; tipo: { nombre: string; codigo: string } }[];
+    tipos: { id: number; nombre: string; codigo: string }[];
 };
 
-export default function PortalDocumentos({ esAdmin, team, client, documentos, tipos }: Props) {
+function categoriaDe(codigo: string) {
+    if (codigo.startsWith('REMITO')) return 'Remito';
+    if (codigo.startsWith('FACTURA')) return 'Factura';
+    return 'Otro';
+}
+
+export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }: Props) {
     const [filtro, setFiltro] = useState('todos');
     const [abierto, setAbierto] = useState(false);
     const [eliminando, setEliminando] = useState<number | null>(null);
@@ -40,12 +42,14 @@ export default function PortalDocumentos({ esAdmin, team, client, documentos, ti
         archivo: null as File | null,
     });
 
-    const categorias = ['todos', ...Array.from(new Set(documentos.map((d) => d.categoria)))];
-    const visibles = documentos.filter((d) => filtro === 'todos' || d.categoria === filtro);
+    const nombre = nombreCliente(cliente);
+    const base = `/clientes/${cliente.id}`;
+    const categorias = ['todos', ...Array.from(new Set(documentos.map((d) => categoriaDe(d.tipo.codigo))))];
+    const visibles = documentos.filter((d) => filtro === 'todos' || categoriaDe(d.tipo.codigo) === filtro);
 
     function agregar(e: React.FormEvent) {
         e.preventDefault();
-        form.post(storeDocumento({ current_team: team.slug, client: client.id }).url, {
+        form.post(`${base}/documentos`, {
             forceFormData: true,
             preserveScroll: true,
             onSuccess: () => {
@@ -57,17 +61,11 @@ export default function PortalDocumentos({ esAdmin, team, client, documentos, ti
 
     return (
         <>
-            <Head title={`Documentos · ${client.empresa}`} />
+            <Head title={`Documentos · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
                 <div className="mx-auto flex max-w-[1400px] gap-5 px-4 py-5">
-                    <PortalSidebar
-                        team={team}
-                        clientId={client.id}
-                        clientEmpresa={client.empresa}
-                        active="documentos"
-                        volverAdmin={esAdmin ? dashboard(team.slug).url : null}
-                    />
+                    <PortalSidebar clienteId={cliente.id} nombre={nombre} active="documentos" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -77,14 +75,11 @@ export default function PortalDocumentos({ esAdmin, team, client, documentos, ti
                                     Documentos
                                 </h1>
                                 <p className="mt-0.5 text-sm text-slate-500">
-                                    Remitos y facturas de {client.empresa}.
+                                    Remitos y facturas de {nombre}.
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
-                                <Link
-                                    href={empresa.url({ current_team: team.slug, client: client.id })}
-                                    className="text-xs font-semibold text-[#0A3D91]"
-                                >
+                                <Link href={`${base}/portal/resumen`} className="text-xs font-semibold text-[#0A3D91]">
                                     ← Volver al resumen
                                 </Link>
                                 <Dialog open={abierto} onOpenChange={setAbierto}>
@@ -215,15 +210,15 @@ export default function PortalDocumentos({ esAdmin, team, client, documentos, ti
                                             <tr key={doc.id} className="border-t border-slate-100">
                                                 <td className="py-2.5">
                                                     <span className="rounded-full bg-sky-50 px-2 py-0.5 font-semibold text-sky-600">
-                                                        {doc.tipo}
+                                                        {doc.tipo.nombre}
                                                     </span>
                                                 </td>
-                                                <td className="font-bold">{doc.nro}</td>
+                                                <td className="font-bold">{doc.numero_documento}</td>
                                                 <td className="text-slate-500">{doc.fecha}</td>
                                                 <td>
                                                     <div className="flex items-center gap-1">
                                                         <a
-                                                            href={descargar({ current_team: team.slug, client: client.id, documento: doc.id }).url}
+                                                            href={`${base}/documentos/${doc.id}/descargar`}
                                                             className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 font-medium text-slate-500 hover:border-[#0A3D91]/40"
                                                         >
                                                             <Download className="h-3 w-3" />
@@ -233,10 +228,10 @@ export default function PortalDocumentos({ esAdmin, team, client, documentos, ti
                                                             <span className="flex items-center gap-1">
                                                                 <button
                                                                     onClick={() =>
-                                                                        router.delete(
-                                                                            destroyDocumento({ current_team: team.slug, client: client.id, documento: doc.id }).url,
-                                                                            { preserveScroll: true },
-                                                                        )
+                                                                        router.delete(`${base}/documentos/${doc.id}`, {
+                                                                            preserveScroll: true,
+                                                                            onFinish: () => setEliminando(null),
+                                                                        })
                                                                     }
                                                                     className="rounded-md bg-red-600 px-2 py-1 font-bold text-white hover:bg-red-700"
                                                                 >

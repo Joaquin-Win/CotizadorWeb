@@ -13,40 +13,33 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
-import { empresa } from '@/routes/portal';
-import { dashboard } from '@/routes';
-import type { Client, ClientTeam } from '@/types/clients';
+import { nombreCliente, type PortalCliente } from '@/types/portal';
 
-/** Contrato con ClientController@portalPedidos. La lista llega vacía hasta que el módulo de pedidos conecte sus datos. */
+/** Lista de pedidos con filtros por estado y detalle en modal. */
 type Props = {
-    team: ClientTeam;
-    client: Client;
-    pedidos: unknown[];
+    cliente: PortalCliente;
     esAdmin: boolean;
-};
-
-type Pedido = {
-    nro: string;
-    fecha: string;
-    destino: string;
-    estado: 'Entregado' | 'En tránsito' | 'Pendiente';
+    pedidos: {
+        data: {
+            id: number;
+            numero_pedido: string;
+            fecha: string;
+            estado: { nombre: string };
+            localidadDestino: { nombre: string; provincia?: { nombre: string } | null };
+        }[];
+    };
 };
 
 type Filtro = 'todos' | 'entregados' | 'pendientes';
 
-function estadoPill(estado: Pedido['estado']) {
-    if (estado === 'Entregado') return 'bg-emerald-50 text-emerald-600';
-    if (estado === 'En tránsito') return 'bg-sky-50 text-sky-600';
-    return 'bg-amber-50 text-amber-600';
-}
-
-export default function PortalPedidos({ esAdmin, team, client }: Props) {
-    const [lista] = useState<Pedido[]>([]);
+export default function PortalPedidos({ cliente, esAdmin, pedidos }: Props) {
     const [filtro, setFiltro] = useState<Filtro>('todos');
+    const lista = pedidos.data;
 
+    const esEntregado = (nombre: string) => nombre.toLowerCase().includes('entreg');
     const visibles = lista.filter((p) => {
-        if (filtro === 'entregados') return p.estado === 'Entregado';
-        if (filtro === 'pendientes') return p.estado !== 'Entregado';
+        if (filtro === 'entregados') return esEntregado(p.estado.nombre);
+        if (filtro === 'pendientes') return !esEntregado(p.estado.nombre);
         return true;
     });
 
@@ -56,19 +49,16 @@ export default function PortalPedidos({ esAdmin, team, client }: Props) {
         { key: 'pendientes', label: 'Pendientes y en tránsito' },
     ];
 
+    const nombre = nombreCliente(cliente);
+    const base = `/clientes/${cliente.id}/portal`;
+
     return (
         <>
-            <Head title={`Pedidos · ${client.empresa}`} />
+            <Head title={`Pedidos · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
                 <div className="mx-auto flex max-w-[1400px] gap-5 px-4 py-5">
-                    <PortalSidebar
-                        team={team}
-                        clientId={client.id}
-                        clientEmpresa={client.empresa}
-                        active="pedidos"
-                        volverAdmin={esAdmin ? dashboard(team.slug).url : null}
-                    />
+                    <PortalSidebar clienteId={cliente.id} nombre={nombre} active="pedidos" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
@@ -78,13 +68,10 @@ export default function PortalPedidos({ esAdmin, team, client }: Props) {
                                     Mis pedidos
                                 </h1>
                                 <p className="mt-0.5 text-sm text-slate-500">
-                                    Pedidos de {client.empresa}: entregados, pendientes y en tránsito.
+                                    Pedidos de {nombre}: entregados, pendientes y en tránsito.
                                 </p>
                             </div>
-                            <Link
-                                href={empresa.url({ current_team: team.slug, client: client.id })}
-                                className="flex items-center gap-1 text-xs font-semibold text-[#0A3D91]"
-                            >
+                            <Link href={`${base}/resumen`} className="text-xs font-semibold text-[#0A3D91]">
                                 ← Volver al resumen
                             </Link>
                         </div>
@@ -128,13 +115,22 @@ export default function PortalPedidos({ esAdmin, team, client }: Props) {
                                     </thead>
                                     <tbody>
                                         {visibles.map((ped) => (
-                                            <tr key={ped.nro} className="border-t border-slate-100">
-                                                <td className="py-2.5 font-bold">{ped.nro}</td>
+                                            <tr key={ped.id} className="border-t border-slate-100">
+                                                <td className="py-2.5 font-bold">{ped.numero_pedido}</td>
                                                 <td className="text-slate-500">{ped.fecha}</td>
-                                                <td className="text-slate-500">{ped.destino}</td>
+                                                <td className="text-slate-500">
+                                                    {ped.localidadDestino.nombre}
+                                                    {ped.localidadDestino.provincia ? `, ${ped.localidadDestino.provincia.nombre}` : ''}
+                                                </td>
                                                 <td>
-                                                    <span className={`rounded-full px-2 py-0.5 font-semibold ${estadoPill(ped.estado)}`}>
-                                                        {ped.estado}
+                                                    <span
+                                                        className={
+                                                            esEntregado(ped.estado.nombre)
+                                                                ? 'rounded-full bg-emerald-50 px-2 py-0.5 font-semibold text-emerald-600'
+                                                                : 'rounded-full bg-sky-50 px-2 py-0.5 font-semibold text-sky-600'
+                                                        }
+                                                    >
+                                                        {ped.estado.nombre}
                                                     </span>
                                                 </td>
                                                 <td>
@@ -146,9 +142,9 @@ export default function PortalPedidos({ esAdmin, team, client }: Props) {
                                                         </DialogTrigger>
                                                         <DialogContent>
                                                             <DialogHeader>
-                                                                <DialogTitle>Pedido {ped.nro}</DialogTitle>
+                                                                <DialogTitle>Pedido {ped.numero_pedido}</DialogTitle>
                                                                 <DialogDescription>
-                                                                    Detalle del pedido de {client.empresa}.
+                                                                    Detalle del pedido de {nombre}.
                                                                 </DialogDescription>
                                                             </DialogHeader>
                                                             <dl className="grid gap-3 text-sm sm:grid-cols-2">
@@ -158,11 +154,11 @@ export default function PortalPedidos({ esAdmin, team, client }: Props) {
                                                                 </div>
                                                                 <div>
                                                                     <dt className="text-xs text-slate-400">Destino</dt>
-                                                                    <dd className="font-semibold">{ped.destino}</dd>
+                                                                    <dd className="font-semibold">{ped.localidadDestino.nombre}</dd>
                                                                 </div>
                                                                 <div>
                                                                     <dt className="text-xs text-slate-400">Estado</dt>
-                                                                    <dd className="font-semibold">{ped.estado}</dd>
+                                                                    <dd className="font-semibold">{ped.estado.nombre}</dd>
                                                                 </div>
                                                             </dl>
                                                             <DialogFooter>
@@ -178,6 +174,9 @@ export default function PortalPedidos({ esAdmin, team, client }: Props) {
                                     </tbody>
                                 </table>
                             )}
+                            <Link href={`${base}/resumen`} className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#0A3D91]">
+                                <ChevronRight className="h-3.5 w-3.5 rotate-180" /> Volver
+                            </Link>
                         </div>
                     </main>
                 </div>

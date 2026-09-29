@@ -26,6 +26,24 @@ class ClienteController extends Controller
         ]);
     }
 
+    /**
+     * Gestión de usuarios (admin): las empresas con sus accesos
+     * y el botón para ver su plataforma. Misma data que clientes.
+     */
+    public function usuarios(): \Inertia\Response
+    {
+        $clientes = Cliente::with(['tipoCliente', 'estado'])
+            ->withCount(['cotizaciones', 'pedidos'])
+            ->latest()
+            ->get();
+
+        return Inertia::render('usuarios/index', [
+            'clientes' => $clientes,
+            'tipos'    => TipoCliente::where('activo', true)->get(['id', 'nombre', 'codigo']),
+            'estados'  => EstadoCliente::where('activo', true)->get(['id', 'nombre', 'codigo']),
+        ]);
+    }
+
     public function store(Request $request): \Illuminate\Http\RedirectResponse
     {
         $data = $request->validate([
@@ -105,6 +123,7 @@ class ClienteController extends Controller
 
         return Inertia::render('clientes/portal/resumen', [
             'cliente'         => $cliente,
+            'esAdmin'         => auth()->user()?->esAdmin() ?? false,
             'pedidosPorEstado'=> $pedidosPorEstado,
             'ultimasCotizaciones' => $cliente->cotizaciones()->with('estado')->latest()->limit(5)->get(),
         ]);
@@ -114,6 +133,7 @@ class ClienteController extends Controller
     {
         return Inertia::render('clientes/portal/pedidos', [
             'cliente' => $cliente,
+            'esAdmin' => auth()->user()?->esAdmin() ?? false,
             'pedidos' => $cliente->pedidos()->with(['estado', 'localidadDestino.provincia'])->latest()->paginate(20),
         ]);
     }
@@ -122,7 +142,9 @@ class ClienteController extends Controller
     {
         return Inertia::render('clientes/portal/documentos', [
             'cliente'    => $cliente,
-            'documentos' => $cliente->documentos()->latest()->get(),
+            'esAdmin'    => auth()->user()?->esAdmin() ?? false,
+            'documentos' => $cliente->documentos()->with('tipo')->latest()->get(),
+            'tipos'      => \App\Models\TipoDocumento::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'codigo']),
         ]);
     }
 
@@ -132,16 +154,39 @@ class ClienteController extends Controller
 
         return Inertia::render('clientes/portal/perfil', [
             'cliente' => $cliente,
+            'esAdmin' => auth()->user()?->esAdmin() ?? false,
+        ]);
+    }
+
+    /**
+     * Cotizador dentro del portal. El wizard lo implementa el
+     * módulo cotizador; acá vive con el layout del portal.
+     */
+    public function portalCotizador(Cliente $cliente): \Inertia\Response
+    {
+        return Inertia::render('clientes/portal/cotizador', [
+            'cliente' => $cliente,
+            'esAdmin' => auth()->user()?->esAdmin() ?? false,
         ]);
     }
 
     public function portalMiCuenta(Cliente $cliente): \Inertia\Response
     {
-        $cliente->load(['usuarios']);
+        $user = request()->user();
+        $principalEmail = strtolower($cliente->contactos()->where('es_principal', true)->value('email') ?? '');
 
         return Inertia::render('clientes/portal/mi-cuenta', [
             'cliente'  => $cliente,
-            'usuarios' => $cliente->usuarios()->get(['id', 'name', 'email', 'activo', 'ultimo_acceso']),
+            'esAdmin'  => $user?->esAdmin() ?? false,
+            'usuarios' => $cliente->usuarios()
+                ->whereRaw('LOWER(email) != ?', [$principalEmail])
+                ->get(['id', 'name', 'email', 'activo', 'ultimo_acceso']),
+            'invitaciones' => \App\Models\Invitacion::where('client_id', $cliente->id)
+                ->whereNull('accepted_at')->latest()->get(['id', 'email', 'expires_at']),
+            // El invitado común ve la lista pero sin botones.
+            'puedeGestionarUsuarios' => $user && ($user->esAdmin()
+                || strtolower($user->email) === strtolower($cliente->email_facturacion ?? '')
+                || strtolower($user->email) === $principalEmail),
         ]);
     }
 

@@ -1,5 +1,5 @@
 <x-mail::message>
-# Te invitaron al portal de {{ $invitacion->client->empresa }}
+# Te invitaron al portal de {{ $invitacion->cliente->nombre_fantasia ?: $invitacion->cliente->razon_social }}
 
 Vas a poder ver tus pedidos, seguimientos y documentos desde un solo lugar. El link vence en 7 días y se puede usar una sola vez.
 

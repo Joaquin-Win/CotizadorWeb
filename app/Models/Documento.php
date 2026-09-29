@@ -30,9 +30,9 @@ class Documento extends Model
     ];
 
     /** Empresa dueña del comprobante. */
-    public function client(): BelongsTo
+    public function cliente(): BelongsTo
     {
-        return $this->belongsTo(Client::class, 'cliente_id');
+        return $this->belongsTo(Cliente::class, 'cliente_id');
     }
 
     /** Tipo (remito, factura...). */
