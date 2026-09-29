@@ -64,13 +64,13 @@ export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }
             <Head title={`Documentos · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
-                <div className="mx-auto flex max-w-[1400px] gap-5 px-4 py-5">
-                    <PortalSidebar clienteId={cliente.id} nombre={nombre} active="documentos" esAdmin={esAdmin} />
+                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:gap-5 md:py-5">
+                    <PortalSidebar clienteId={cliente.id} nombre={nombre} cuit={cliente.cuit} tipo={cliente.tipoCliente?.nombre ?? null} active="documentos" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+                                <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900 md:text-2xl">
                                     <FileText className="h-5 w-5 text-[#0A3D91]" />
                                     Documentos
                                 </h1>
@@ -185,7 +185,7 @@ export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }
                             ))}
                         </div>
 
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 md:p-6">
                             {visibles.length === 0 ? (
                                 <div className="flex flex-col items-center py-10 text-center">
                                     <Upload className="h-8 w-8 text-slate-300" />

@@ -66,13 +66,13 @@ export default function PortalMiCuenta({ cliente, esAdmin, usuarios, invitacione
             <Head title={`Mi Cuenta · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
-                <div className="mx-auto flex max-w-[1400px] gap-5 px-4 py-5">
-                    <PortalSidebar clienteId={cliente.id} nombre={nombre} active="mi-cuenta" esAdmin={esAdmin} />
+                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:gap-5 md:py-5">
+                    <PortalSidebar clienteId={cliente.id} nombre={nombre} cuit={cliente.cuit} tipo={cliente.tipoCliente?.nombre ?? null} active="mi-cuenta" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+                                <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900 md:text-2xl">
                                     <UserRound className="h-5 w-5 text-[#0A3D91]" />
                                     Mi Cuenta
                                 </h1>
@@ -85,7 +85,7 @@ export default function PortalMiCuenta({ cliente, esAdmin, usuarios, invitacione
                             </Link>
                         </div>
 
-                        <form onSubmit={guardarDatos} className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+                        <form onSubmit={guardarDatos} className="mt-4 rounded-xl border border-slate-200 bg-white p-4 md:p-6">
                             <h2 className="text-sm font-extrabold">Datos de la empresa</h2>
                             <p className="text-xs text-slate-400">
                                 {puedeGestionarUsuarios
@@ -150,7 +150,7 @@ export default function PortalMiCuenta({ cliente, esAdmin, usuarios, invitacione
                             </div>
                         </form>
 
-                        <form onSubmit={cambiarClave} className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+                        <form onSubmit={cambiarClave} className="mt-4 rounded-xl border border-slate-200 bg-white p-4 md:p-6">
                             <h2 className="text-sm font-extrabold">Seguridad</h2>
                             <p className="text-xs text-slate-400">Cambia la clave de acceso de tu cuenta.</p>
                             <div className="mt-3 grid gap-3 sm:grid-cols-2">
@@ -188,7 +188,7 @@ export default function PortalMiCuenta({ cliente, esAdmin, usuarios, invitacione
                             </div>
                         </form>
 
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 md:p-6">
                             <div className="flex flex-wrap items-center justify-between gap-2">
                                 <div>
                                     <h2 className="text-sm font-extrabold">Usuarios de la empresa</h2>
@@ -248,7 +248,7 @@ export default function PortalMiCuenta({ cliente, esAdmin, usuarios, invitacione
                             </div>
                         </div>
 
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 md:p-6">
                             <h2 className="text-sm font-extrabold">Preferencias</h2>
                             <p className="text-xs text-slate-400">Avisos por email de tu cuenta.</p>
                             <label className="mt-3 flex cursor-pointer items-center gap-2 text-sm">
