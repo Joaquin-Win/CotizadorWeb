@@ -40,14 +40,6 @@ return new class extends Migration
             $table->index('cliente_id');
         });
 
-        // Seed: admin inicial
-        DB::table('usuarios')->insert([
-            'rol_id'   => 1,
-            'name'     => 'Administrador SET',
-            'email'    => 'admin@setlogistica.com',
-            'password' => bcrypt('password'),
-            'activo'   => true,
-        ]);
     }
 
     public function down(): void

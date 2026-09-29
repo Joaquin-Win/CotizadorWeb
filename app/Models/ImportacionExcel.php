@@ -6,5 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class ImportacionExcel extends Model
 {
-    //
+    protected $table = 'importaciones_excel';
+
 }

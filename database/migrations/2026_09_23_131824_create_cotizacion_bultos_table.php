@@ -6,7 +6,8 @@ use Illuminate\Support\Facades\Schema;
 
 /**
  * cotizacion_bultos — líneas de bultos de una cotización.
- * volumen_m3 y peso_total_kg son columnas GENERADAS inline.
+ * volumen_m3: GENERATED STORED = ((largo_cm/100)*(ancho_cm/100)*(alto_cm/100))*cantidad
+ * peso_total_kg: GENERATED STORED = peso_kg * cantidad
  */
 return new class extends Migration
 {
@@ -14,24 +15,21 @@ return new class extends Migration
     {
         Schema::create('cotizacion_bultos', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cotizacion_id')->constrained('cotizaciones')->cascadeOnDelete();
+            $table->unsignedBigInteger('cotizacion_id');
+            // FK omitida: cotizaciones es particionada
             $table->unsignedSmallInteger('tipo_bulto_id');
             $table->foreign('tipo_bulto_id')->references('id')->on('tipos_bulto')->restrictOnDelete();
-            $table->unsignedSmallInteger('cantidad')->default(1);
-            // Dimensiones
-            $table->decimal('largo_cm', 8, 2);
-            $table->decimal('ancho_cm', 8, 2);
-            $table->decimal('alto_cm', 8, 2);
-            $table->decimal('peso_kg', 8, 3);
-            $table->boolean('palletizado')->default(false);
-            // Columnas GENERADAS inline
-            $table->decimal('volumen_m3', 10, 6)
-                  ->storedAs('(largo_cm * ancho_cm * alto_cm) / 1000000');
-            $table->decimal('peso_total_kg', 10, 3)
+            $table->unsignedInteger('cantidad')->default(1);
+            // Dimensiones — decimal(10,2) per dump
+            $table->decimal('largo_cm', 10, 2);
+            $table->decimal('ancho_cm', 10, 2);
+            $table->decimal('alto_cm', 10, 2);
+            $table->decimal('peso_kg', 10, 2);
+            // Columnas GENERADAS
+            $table->decimal('volumen_m3', 12, 4)
+                  ->storedAs('((largo_cm / 100) * (ancho_cm / 100) * (alto_cm / 100)) * cantidad');
+            $table->decimal('peso_total_kg', 12, 2)
                   ->storedAs('peso_kg * cantidad');
-            // Calculados por la app (no generados)
-            $table->decimal('pallets_equivalentes', 8, 4)->nullable()->comment('Calculado: volumen / 1.1 m3 por pallet');
-            $table->decimal('costo_individual', 12, 2)->nullable()->comment('Snapshot del costo por este bulto');
             $table->timestamps();
             $table->index('cotizacion_id');
         });

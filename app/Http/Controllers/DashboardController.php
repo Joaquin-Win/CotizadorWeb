@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\TeamInvitation;
+use App\Models\Cliente;
+use App\Models\Cotizacion;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Schema;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -11,28 +13,25 @@ class DashboardController extends Controller
 {
     public function __invoke(Request $request): Response
     {
-        $email = strtolower($request->user()->email);
+        $stats = [
+            'total_clientes'     => Cliente::count(),
+            'clientes_activos'   => Cliente::whereHas('estado', fn($q) => $q->where('codigo', 'ACTIVO'))->count(),
+            'total_cotizaciones' => Schema::hasTable('cotizaciones') ? Cotizacion::count() : 0,
+            'cotizaciones_mes'   => Schema::hasTable('cotizaciones')
+                ? Cotizacion::whereMonth('created_at', now()->month)
+                             ->whereYear('created_at', now()->year)
+                             ->count()
+                : 0,
+        ];
 
-        $pendingInvitations = TeamInvitation::query()
-            ->with(['inviter', 'team'])
-            ->whereRaw('LOWER(email) = ?', [$email])
-            ->whereNull('accepted_at')
-            ->where(fn ($query) => $query
-                ->whereNull('expires_at')
-                ->orWhere('expires_at', '>=', now()))
+        $ultimosClientes = Cliente::with(['tipoCliente', 'estado'])
             ->latest()
-            ->get()
-            ->map(fn (TeamInvitation $invitation) => [
-                'code' => $invitation->code,
-                'inviterName' => $invitation->inviter->name,
-                'team' => [
-                    'name' => $invitation->team->name,
-                    'slug' => $invitation->team->slug,
-                ],
-            ]);
+            ->limit(5)
+            ->get(['id', 'razon_social', 'nombre_fantasia', 'cuit', 'tipo_cliente_id', 'estado_id', 'created_at']);
 
         return Inertia::render('dashboard', [
-            'pendingInvitations' => $pendingInvitations,
+            'stats'          => $stats,
+            'ultimosClientes'=> $ultimosClientes,
         ]);
     }
 }

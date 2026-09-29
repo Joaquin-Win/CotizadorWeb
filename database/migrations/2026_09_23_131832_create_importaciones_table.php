@@ -42,10 +42,21 @@ return new class extends Migration
             $table->timestamp('created_at')->useCurrent();
             $table->index('importacion_id');
         });
+
+        // FK diferida: pedidos.importacion_id → importaciones_excel (pedidos se crea en 131830)
+        Schema::table('pedidos', function (\Illuminate\Database\Schema\Blueprint $table) {
+            $table->foreign('importacion_id')
+                  ->references('id')
+                  ->on('importaciones_excel')
+                  ->nullOnDelete();
+        });
     }
 
     public function down(): void
     {
+        Schema::table('pedidos', function (\Illuminate\Database\Schema\Blueprint $table) {
+            $table->dropForeign(['importacion_id']);
+        });
         Schema::dropIfExists('importaciones_errores');
         Schema::dropIfExists('importaciones_excel');
     }

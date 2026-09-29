@@ -3,7 +3,6 @@ import { Building2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { confirmar } from '@/routes/invitaciones';
 import { login } from '@/routes';
 
 /** Página pública para aceptar la invitación a una empresa. El link vale un uso y 7 días. */
@@ -23,7 +22,7 @@ export default function AceptarInvitacion({ valida, empresa, email, token }: Pro
 
     function submit(e: React.FormEvent) {
         e.preventDefault();
-        post(confirmar(token).url);
+        post(route('invitaciones.confirmar', { token }));
     }
 
     return (

@@ -110,13 +110,7 @@ return new class extends Migration
             $table->index(['tipo_cliente_id', 'tipo_servicio_id', 'vigente_desde', 'vigente_hasta'], 'idx_margenes_busqueda');
         });
 
-        // Seed margenes del SQL original
-        \Illuminate\Support\Facades\DB::table('margenes_ganancia')->insert([
-            ['tipo_cliente_id' => null, 'tipo_servicio_id' => null, 'porcentaje' => 30.00, 'vigente_desde' => '2026-01-01', 'vigente_hasta' => null,         'motivo' => 'Margen base de lista (público).'],
-            ['tipo_cliente_id' => 2,    'tipo_servicio_id' => null, 'porcentaje' => 20.00, 'vigente_desde' => '2026-01-01', 'vigente_hasta' => '2026-06-30', 'motivo' => 'Margen B2B inicial.'],
-            ['tipo_cliente_id' => 2,    'tipo_servicio_id' => null, 'porcentaje' => 22.00, 'vigente_desde' => '2026-07-01', 'vigente_hasta' => null,         'motivo' => 'Ajuste por suba de combustible.'],
-            ['tipo_cliente_id' => 3,    'tipo_servicio_id' => null, 'porcentaje' => 18.00, 'vigente_desde' => '2026-01-01', 'vigente_hasta' => null,         'motivo' => 'Cuentas clave: margen reducido.'],
-        ]);
+    
     }
 
     public function down(): void

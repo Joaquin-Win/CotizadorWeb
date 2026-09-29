@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
+
 use Illuminate\Support\Facades\Schema;
 
 /** zonas + zona_provincias + zona_localidades con seed */
@@ -45,25 +45,6 @@ return new class extends Migration
             $table->index('localidad_id');
         });
 
-        // -------------------------------------------------------
-        // SEED
-        // -------------------------------------------------------
-        DB::table('zonas')->insert([
-            ['codigo' => 'NORTE',  'nombre' => 'Zona Norte',  'descripcion' => 'Provincias del norte del país.'],
-            ['codigo' => 'CENTRO', 'nombre' => 'Zona Centro', 'descripcion' => 'Región centro.'],
-            ['codigo' => 'CUYO',   'nombre' => 'Zona Cuyo',   'descripcion' => 'Región de Cuyo.'],
-            ['codigo' => 'SUR',    'nombre' => 'Zona Sur',    'descripcion' => 'Patagonia.'],
-            ['codigo' => 'AMBA',   'nombre' => 'AMBA',        'descripcion' => 'CABA y conurbano bonaerense.'],
-            ['codigo' => 'NEA',    'nombre' => 'NEA',         'descripcion' => 'Nordeste argentino.'],
-        ]);
-
-        // Zona NORTE agrupa provincias: Misiones(1), Corrientes(2), Chaco(3), Salta(4)
-        DB::table('zona_provincias')->insert([
-            ['zona_id' => 1, 'provincia_id' => 1],
-            ['zona_id' => 1, 'provincia_id' => 2],
-            ['zona_id' => 1, 'provincia_id' => 3],
-            ['zona_id' => 1, 'provincia_id' => 4],
-        ]);
     }
 
     public function down(): void
