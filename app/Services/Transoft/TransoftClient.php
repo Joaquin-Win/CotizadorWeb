@@ -135,6 +135,85 @@ class TransoftClient
     }
 
     // ---------------------------------------------------------------
+    // Cargas v3 legacy (username/operationId en URL)
+    // Documentación: Transoftweb Integraciones v1.4.1
+    // ---------------------------------------------------------------
+
+    /**
+     * POST /api/v3/cargas/add/{username}/{operationId}
+     *
+     * Crea una carga nueva en Transoft.
+     */
+    public function crearCargaV3(array $payload): array
+    {
+        return $this->httpLegacy()->post(
+            "api/v3/cargas/add/{$this->username}/{$this->operationId}",
+            $payload
+        )->json();
+    }
+
+    /**
+     * PUT /api/cargas/edit/{tracking}/{username}/{operationId}
+     *
+     * Actualiza una carga existente.
+     */
+    public function actualizarCargaLegacy(string $tracking, array $payload): array
+    {
+        return $this->httpLegacy()->put(
+            "api/cargas/edit/{$tracking}/{$this->username}/{$this->operationId}",
+            $payload
+        )->json();
+    }
+
+    /**
+     * GET /api/cargas/v2/{username}/{operationId}/{tracking}
+     *
+     * Consulta una carga por tracking (datos extendidos).
+     */
+    public function getCargaV2(string $tracking): array
+    {
+        return $this->httpLegacy()->get(
+            "api/cargas/v2/{$this->username}/{$this->operationId}/{$tracking}"
+        )->json();
+    }
+
+    /**
+     * GET /api/cargas/{username}/{operationId}/{tracking}
+     *
+     * Consulta una carga por tracking (datos básicos).
+     */
+    public function getCargaLegacy(string $tracking): array
+    {
+        return $this->httpLegacy()->get(
+            "api/cargas/{$this->username}/{$this->operationId}/{$tracking}"
+        )->json();
+    }
+
+    /**
+     * GET /api/cargas/find/document/{username}/{operationId}/{documentNumber}
+     *
+     * Busca una carga por número de documento (remito, guía, etc.).
+     */
+    public function buscarCargaPorDocumentoLegacy(string $documentNumber): array
+    {
+        return $this->httpLegacy()->get(
+            "api/cargas/find/document/{$this->username}/{$this->operationId}/{$documentNumber}"
+        )->json();
+    }
+
+    /**
+     * GET /api/cargas/{tracking}/states/{username}/{operationId}
+     *
+     * Retorna el historial de estados de una carga.
+     */
+    public function obtenerEstadosLegacy(string $tracking): array
+    {
+        return $this->httpLegacy()->get(
+            "api/cargas/{$tracking}/states/{$this->username}/{$this->operationId}"
+        )->json();
+    }
+
+    // ---------------------------------------------------------------
     // Webhooks
     // ---------------------------------------------------------------
 
@@ -218,9 +297,12 @@ class TransoftClient
             throw $e;
         }
 
+        $timeout = (int) config('services.transoft.timeout', 15);
+
         return Http::baseUrl($this->baseUrl)
             ->withToken($token)
             ->acceptJson()
+            ->timeout($timeout)
             ->retry(2, 500, function (\Exception $e, PendingRequest $request) {
                 // Si el servidor responde 401, renovar token y reintentar
                 if ($e instanceof \Illuminate\Http\Client\RequestException && $e->response?->status() === 401) {
@@ -235,10 +317,15 @@ class TransoftClient
 
     /**
      * HTTP client para endpoints legacy (sin versión / con username+operationId en URL).
+     * Sin token Bearer — usa usuario/operationId en la URL.
      */
     private function httpLegacy(): PendingRequest
     {
-        return Http::baseUrl($this->baseUrl)->acceptJson();
+        $timeout = (int) config('services.transoft.timeout', 15);
+
+        return Http::baseUrl($this->baseUrl)
+            ->acceptJson()
+            ->timeout($timeout);
     }
 
     /**
