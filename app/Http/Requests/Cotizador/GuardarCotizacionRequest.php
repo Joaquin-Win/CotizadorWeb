@@ -2,28 +2,32 @@
 
 namespace App\Http\Requests\Cotizador;
 
-use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Valida el request para guardar una cotización ya calculada.
+ *
+ * authorize() = true para cotizadores públicos.
+ * La cotización se identifica por el codigo generado por el motor.
+ */
 class GuardarCotizacionRequest extends FormRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array<string, ValidationRule|array<mixed>|string>
-     */
     public function rules(): array
     {
         return [
-            //
+            // El mismo payload del cotizar, más los datos de contacto para el lead
+            'nombre_cliente'    => ['nullable', 'string', 'max:255'],
+            'email_cliente'     => ['nullable', 'email', 'max:255'],
+            'telefono_cliente'  => ['nullable', 'string', 'max:50'],
+            'empresa'           => ['nullable', 'string', 'max:255'],
+
+            // Origen del request
+            'origen_cotizacion_id' => ['nullable', 'integer', 'exists:origenes_cotizacion,id'],
         ];
     }
 }

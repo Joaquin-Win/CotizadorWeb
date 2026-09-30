@@ -1,14 +1,13 @@
 <?php
 
-namespace App;
+namespace App\Data\Cotizador;
 
-class Cotizador
+class OrigenData
 {
-    /**
-     * Create a new class instance.
-     */
-    public function __construct()
-    {
-        //
+    public function __construct(
+        public readonly int   $provinciaId,
+        public readonly ?int  $localidadId,
+        public readonly bool  $solicitaRetiro,
+    ) {
     }
 }

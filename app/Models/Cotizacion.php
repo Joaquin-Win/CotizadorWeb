@@ -10,8 +10,9 @@ class Cotizacion extends Model
     use SoftDeletes;
     protected $table = "cotizaciones";
     protected $fillable = [
-        'origen_id', 'tipo_cliente_id', 'cliente_id',
+        'codigo', 'origen_id', 'tipo_cliente_id', 'cliente_id',
         'usuario_id', 'acuerdo_id', 'estado_id',
+        'created_by', 'updated_by',
     ];
 
     protected $casts = [];
@@ -30,8 +31,9 @@ class Cotizacion extends Model
     public function bultos()       { return $this->hasMany(CotizacionBulto::class); }
     public function resultados()   { return $this->hasMany(CotizacionResultado::class); }
     public function seguimientos() { return $this->hasMany(CotizacionSeguimiento::class); }
-    public function codigo()       { return $this->hasOne(CotizacionCodigo::class); }
+    public function codigoRegistro(){ return $this->hasOne(CotizacionCodigo::class); }
     public function lead()         { return $this->hasOne(CotizacionLead::class); }
+    public function costosAdicionales() { return $this->hasMany(CotizacionCostoAdicional::class); }
 
     /** Último cálculo vigente */
     public function resultadoActual(): ?CotizacionResultado
