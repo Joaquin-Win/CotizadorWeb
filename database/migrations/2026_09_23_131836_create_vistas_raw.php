@@ -7,8 +7,7 @@ use Illuminate\Support\Facades\DB;
  * Vistas v_* — copiadas del dump cotizador_set.sql.
  * Se crean con DB::statement(). En down() se eliminan en orden inverso de dependencias.
  */
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         // v_cotizaciones_activas — cotizaciones no borradas con datos de envío
@@ -43,7 +42,6 @@ return new class extends Migration
                 ep.`codigo`  AS `estado_codigo`,
                 ep.`nombre`  AS `estado_nombre`,
                 p.`numero_pedido`,
-                p.`numero_unico`,
                 p.`fecha`,
                 p.`transoft_tracking`,
                 p.`transoft_estado_codigo`,

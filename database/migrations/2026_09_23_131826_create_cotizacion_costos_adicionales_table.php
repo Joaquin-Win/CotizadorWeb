@@ -4,26 +4,48 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-/**
- * cotizacion_costos_adicionales — snapshot de cada costo adicional aplicado.
- * Schema from dump: id, cotizacion_id, costo_adicional_id NOT NULL FK, monto_aplicado, created_at.
- * UNIQUE(cotizacion_id, costo_adicional_id). CHECK monto >= 0.
- */
 return new class extends Migration {
+    /**
+     * Run the migrations.
+     */
     public function up(): void
     {
         Schema::create('cotizacion_costos_adicionales', function (Blueprint $table) {
             $table->id();
+
+            /*
+             * cotizaciones está particionada por created_at.
+             *
+             * No se crea FK hacia cotizaciones.
+             * La integridad se controla desde la aplicación.
+             */
             $table->unsignedBigInteger('cotizacion_id');
-            $table->foreign('cotizacion_id')->references('id')->on('cotizaciones')->restrictOnDelete();
-            $table->foreignId('costo_adicional_id')->constrained('costos_adicionales')->restrictOnDelete();
-            $table->decimal('monto_aplicado', 12, 2);
-            $table->timestamp('created_at')->useCurrent();
-            $table->unique(['cotizacion_id', 'costo_adicional_id'], 'uq_cotcosto_cotizacion_costo');
+
+            $table->unsignedBigInteger('costo_adicional_id');
+
+            $table->decimal('importe', 15, 2)
+                ->default(0);
+
+            $table->timestamps();
+
             $table->index('cotizacion_id');
+
+            $table->foreign('costo_adicional_id')
+                ->references('id')
+                ->on('costos_adicionales')
+                ->restrictOnDelete();
+
+            $table->unique(
+                ['cotizacion_id', 'costo_adicional_id'],
+                'cotizacion_costo_adicional_unique'
+
+            );
         });
     }
 
+    /**
+     * Reverse the migrations.
+     */
     public function down(): void
     {
         Schema::dropIfExists('cotizacion_costos_adicionales');
