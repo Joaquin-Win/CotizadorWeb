@@ -21,7 +21,7 @@ return new class extends Migration {
             $table->unique(['cotizacion_id', 'costo_adicional_id'], 'uq_cotcosto_cotizacion_costo');
             $table->index('cotizacion_id');
             // CHECK constraint inline para SQLite
-            $table->check('`monto_aplicado` >= 0', 'chk_cotcosto_monto');
+            $table->check('monto_aplicado >= 0', 'chk_cotcosto_monto');
         });
     }
 
