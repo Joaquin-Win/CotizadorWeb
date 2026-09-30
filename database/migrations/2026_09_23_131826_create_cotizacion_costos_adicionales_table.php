@@ -15,13 +15,12 @@ return new class extends Migration {
         Schema::create('cotizacion_costos_adicionales', function (Blueprint $table) {
             $table->id();
             $table->unsignedBigInteger('cotizacion_id');
+            $table->foreign('cotizacion_id')->references('id')->on('cotizaciones')->restrictOnDelete();
             $table->foreignId('costo_adicional_id')->constrained('costos_adicionales')->restrictOnDelete();
             $table->decimal('monto_aplicado', 12, 2);
             $table->timestamp('created_at')->useCurrent();
             $table->unique(['cotizacion_id', 'costo_adicional_id'], 'uq_cotcosto_cotizacion_costo');
             $table->index('cotizacion_id');
-            // CHECK constraint inline para SQLite
-            $table->check('monto_aplicado >= 0', 'chk_cotcosto_monto');
         });
     }
 
