@@ -70,15 +70,15 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
 
                     <main className="min-w-0 flex-1">
                         <div className="flex items-start justify-between gap-3">
-                            <div className="min-w-0">
-                                <h1 className="text-lg font-bold tracking-tight text-slate-900 md:text-xl">
+                            <div className="min-w-0 flex-1 text-center">
+                                <h1 className="text-lg font-bold tracking-tight text-slate-900 md:text-left md:text-xl">
                                     ¡Hola, {nombre}!
                                 </h1>
                                 <p className="mt-0.5 text-sm text-slate-500">
                                     Gestiona tus pedidos, seguimientos y documentos desde un solo lugar.
                                 </p>
                             </div>
-                            <span className="shrink-0 self-start text-3xl font-black text-[#0A3D91] italic md:self-center md:text-4xl">
+                            <span className="hidden shrink-0 self-start text-3xl font-black text-[#0A3D91] italic md:inline md:self-center md:text-4xl">
                                 <span className="text-[#00A86B]">/</span>Set
                             </span>
                         </div>
@@ -162,15 +162,15 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                                 <Link
                                     key={kpi.title}
                                     href={kpi.href}
-                                    className="group flex aspect-square flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-3 text-center transition hover:border-[#0A3D91]/40 focus-visible:ring-2 focus-visible:ring-[#0A3D91] focus-visible:outline-none motion-safe:active:scale-[0.98] sm:aspect-auto sm:items-stretch sm:p-4 sm:text-left"
+                                    className="group flex aspect-square flex-col items-center justify-center rounded-xl border border-slate-200 bg-white p-2 text-center transition hover:border-[#0A3D91]/40 focus-visible:ring-2 focus-visible:ring-[#0A3D91] focus-visible:outline-none motion-safe:active:scale-[0.98] sm:aspect-auto sm:items-stretch sm:p-4 sm:text-left"
                                 >
-                                    <div className="flex flex-col items-center gap-1 text-xs font-medium text-slate-500 sm:flex-row sm:gap-2 sm:text-sm">
-                                        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-sky-50">
-                                            <kpi.icon className="h-4 w-4 text-[#0A3D91]" />
+                                    <div className="flex flex-col items-center gap-1 text-[13px] font-semibold text-slate-600 sm:flex-row sm:gap-2 sm:text-sm sm:font-medium">
+                                        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-sky-50 sm:h-7 sm:w-7">
+                                            <kpi.icon className="h-6 w-6 text-[#0A3D91] sm:h-4 sm:w-4" />
                                         </span>
                                         {kpi.title}
                                     </div>
-                                    <p className="mt-1 text-[28px] leading-none font-extrabold text-slate-900 md:text-4xl">{kpi.value}</p>
+                                    <p className="mt-1 text-2xl leading-none font-extrabold text-slate-900 md:text-3xl">{kpi.value}</p>
                                     <p className="mt-1 hidden items-center justify-between text-xs text-slate-500 sm:flex">
                                         {kpi.hint}
                                         <ChevronRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
@@ -180,10 +180,10 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                         </div>
 
                         <div className="mt-4 grid gap-4 xl:grid-cols-5">
-                            <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-5 xl:col-span-3">
+                            <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 xl:col-span-3">
                                 <div className="mb-2 flex items-center justify-between">
-                                    <h3 className="flex items-center gap-2 text-sm font-extrabold">
-                                        <Package className="h-4 w-4 text-[#0A3D91]" />
+                                    <h3 className="flex items-center gap-2 text-base font-extrabold">
+                                        <Package className="h-5 w-5 text-[#0A3D91]" />
                                         Últimas cotizaciones
                                     </h3>
                                     {ultimasCotizaciones.length > 0 && (
@@ -203,19 +203,19 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                                         </p>
                                     </div>
                                 ) : (
-                                    <ul className="divide-y divide-slate-100 text-sm">
+                                    <ul className="divide-y divide-slate-100 text-[15px]">
                                         {ultimasCotizaciones.map((c) => (
-                                            <li key={c.id} className="flex items-center justify-between py-2">
+                                            <li key={c.id} className="flex items-center justify-between py-2.5">
                                                 <span className="font-bold">{c.codigo}</span>
-                                                <span className="text-xs text-slate-500">{c.estado.nombre}</span>
+                                                <span className="text-sm text-slate-500">{c.estado.nombre}</span>
                                             </li>
                                         ))}
                                     </ul>
                                 )}
                             </div>
 
-                            <div className="rounded-xl border border-slate-200 bg-white p-4 md:p-5 xl:col-span-2">
-                                <h3 className="text-sm font-extrabold">Accesos rápidos</h3>
+                            <div className="rounded-xl border border-slate-200 bg-white p-3 md:p-4 xl:col-span-2">
+                                <h3 className="text-base font-extrabold">Accesos rápidos</h3>
                                 <div className="mt-2 grid grid-cols-2 gap-2">
                                     {[
                                         { icon: Package, label: 'Ver mis pedidos', href: `${base}/pedidos` },
@@ -226,9 +226,9 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                                         <Link
                                             key={a.label}
                                             href={a.href}
-                                            className="flex items-center gap-2 rounded-lg border border-slate-200 p-2.5 text-xs font-semibold text-slate-600 transition hover:border-[#0A3D91]/40 focus-visible:ring-2 focus-visible:ring-[#0A3D91] focus-visible:outline-none motion-safe:active:scale-[0.98]"
+                                            className="flex items-center gap-2 rounded-lg border border-slate-200 p-2.5 text-[13px] font-semibold text-slate-600 transition hover:border-[#0A3D91]/40 focus-visible:ring-2 focus-visible:ring-[#0A3D91] focus-visible:outline-none motion-safe:active:scale-[0.98]"
                                         >
-                                            <a.icon className="h-4 w-4 shrink-0 text-[#0A3D91]" />
+                                            <a.icon className="h-5 w-5 shrink-0 text-[#0A3D91]" />
                                             {a.label}
                                             <ChevronRight className="ml-auto h-3 w-3 text-slate-300" />
                                         </Link>
@@ -237,9 +237,9 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                             </div>
                         </div>
 
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 md:p-5">
-                            <h3 className="text-sm font-extrabold">Configuración de la cuenta</h3>
-                            <p className="text-xs text-slate-400">Gestiona los datos de tu empresa, usuarios y seguridad.</p>
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-3 md:p-4">
+                            <h3 className="text-base font-extrabold">Configuración de la cuenta</h3>
+                            <p className="text-sm text-slate-500">Gestiona los datos de tu empresa, usuarios y seguridad.</p>
                             <div className="mt-2 flex flex-wrap gap-2">
                                 {[
                                     { icon: Building2, label: 'Perfil de empresa', href: `${base}/perfil` },
@@ -249,10 +249,10 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                                     <Link
                                         key={c.label}
                                         href={c.href}
-                                        className="flex flex-1 items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-600 transition hover:border-[#0A3D91]/40 focus-visible:ring-2 focus-visible:ring-[#0A3D91] focus-visible:outline-none motion-safe:active:scale-[0.98]"
+                                        className="flex flex-1 items-center justify-between gap-2 rounded-lg border border-slate-200 px-3 py-2 text-[13px] font-semibold text-slate-600 transition hover:border-[#0A3D91]/40 focus-visible:ring-2 focus-visible:ring-[#0A3D91] focus-visible:outline-none motion-safe:active:scale-[0.98]"
                                     >
                                         <span className="flex items-center gap-2">
-                                            <c.icon className="h-4 w-4 text-[#0A3D91]" />
+                                            <c.icon className="h-5 w-5 text-[#0A3D91]" />
                                             {c.label}
                                         </span>
                                         <ChevronRight className="h-3 w-3 text-slate-300" />

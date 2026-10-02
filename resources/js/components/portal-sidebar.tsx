@@ -60,7 +60,7 @@ export default function PortalSidebar({ clienteId, nombre, cuit, tipo, active, e
 
     return (
         <>
-            <div className="sticky top-0 z-40 -mx-4 -mt-4 border-b border-slate-200/70 bg-[#F5F8FC]/90 px-4 py-2 backdrop-blur md:hidden">
+            <div className="sticky top-0 z-40 -mx-4 -mt-4 flex items-center justify-between border-b border-slate-200/70 bg-[#F5F8FC]/90 px-4 py-2 backdrop-blur md:hidden">
                 <button
                     onClick={() => setAbierto(true)}
                     aria-label="Abrir menú"
@@ -68,6 +68,9 @@ export default function PortalSidebar({ clienteId, nombre, cuit, tipo, active, e
                 >
                     <Menu className="h-5 w-5" />
                 </button>
+                <span className="text-xl font-black text-[#0A3D91] italic">
+                    <span className="text-[#00A86B]">/</span>Set
+                </span>
             </div>
 
             {abierto && (
@@ -119,7 +122,9 @@ export default function PortalSidebar({ clienteId, nombre, cuit, tipo, active, e
                                 ¿Necesitas ayuda?
                             </div>
                             <a
-                                href="mailto:contacto@setlogistica.com"
+                                href="https://api.whatsapp.com/send?phone=5493513849993"
+                                target="_blank"
+                                rel="noreferrer"
                                 className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#0A3D91]/30 px-3 py-2.5 text-sm font-bold text-[#0A3D91]"
                             >
                                 <Headset className="h-4 w-4" />
@@ -182,19 +187,21 @@ export default function PortalSidebar({ clienteId, nombre, cuit, tipo, active, e
                         <Headset className="h-4 w-4 text-slate-400" />
                         ¿Necesitas ayuda?
                     </div>
-                    <a
-                        href="mailto:contacto@setlogistica.com"
-                        className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#0A3D91]/30 px-3 py-2 text-sm font-bold text-[#0A3D91]"
-                    >
-                        <Headset className="h-4 w-4" />
-                        Contactarnos
-                    </a>
-                </div>
-
-                <button
-                    onClick={() => router.post('/logout')}
-                    className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700"
+                <a
+                    href="https://api.whatsapp.com/send?phone=5493513849993"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#0A3D91]/30 px-3 py-2 text-sm font-bold text-[#0A3D91]"
                 >
+                    <Headset className="h-4 w-4" />
+                    Contactarnos
+                </a>
+            </div>
+
+            <button
+                onClick={() => router.post('/logout')}
+                className="mt-2 flex items-center justify-center gap-2 rounded-lg bg-red-600 px-3 py-2 text-sm font-bold text-white transition-colors hover:bg-red-700"
+            >
                     <LogOut className="h-4 w-4" />
                     Cerrar sesión
                 </button>

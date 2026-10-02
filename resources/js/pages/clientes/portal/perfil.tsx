@@ -1,5 +1,6 @@
 import { Head, Link } from '@inertiajs/react';
-import { Building2, Mail, MapPin, Phone, UserRound } from 'lucide-react';
+import { Building2, Mail, MapPin, Phone, Printer, UserRound } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 import PortalSidebar, { initials } from '@/components/portal-sidebar';
 import { contactoPrincipal, nombreCliente, type PortalCliente } from '@/types/portal';
 
@@ -33,15 +34,33 @@ export default function PortalPerfil({ cliente, esAdmin }: Props) {
                                     Ficha pública de {nombre} dentro del portal.
                                 </p>
                             </div>
-                            <Link href={`${base}/resumen`} className="text-xs font-semibold text-[#0A3D91]">
-                                ← Volver al resumen
-                            </Link>
+                            <div className="flex items-center gap-2">
+                                <Link href={`${base}/resumen`} className="text-xs font-semibold text-[#0A3D91]">
+                                    ← Volver al resumen
+                                </Link>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => window.print()}
+                                    className="print:hidden"
+                                >
+                                    <Printer className="h-4 w-4" /> Imprimir / PDF
+                                </Button>
+                            </div>
                         </div>
 
                         <div className="mt-4 flex flex-col items-center gap-4 rounded-xl border border-slate-200 bg-white p-6 text-center sm:flex-row sm:text-left">
-                            <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#0A3D91]/10 text-2xl font-extrabold text-[#0A3D91]">
-                                {nombre ? initials(nombre) : <Building2 className="h-8 w-8" />}
-                            </span>
+                            {cliente.logo_url ? (
+                                <img
+                                    src={cliente.logo_url}
+                                    alt={`Logo de ${nombre}`}
+                                    className="h-20 w-20 shrink-0 rounded-2xl border border-slate-200 object-contain bg-white"
+                                />
+                            ) : (
+                                <span className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl bg-[#0A3D91]/10 text-2xl font-extrabold text-[#0A3D91]">
+                                    {nombre ? initials(nombre) : <Building2 className="h-8 w-8" />}
+                                </span>
+                            )}
                             <div className="min-w-0">
                                 <h2 className="text-lg font-extrabold text-slate-900">{nombre}</h2>
                                 <p className="mt-0.5 text-sm text-slate-500">CUIT: {cliente.cuit}</p>
