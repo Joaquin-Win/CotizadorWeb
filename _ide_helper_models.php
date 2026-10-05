@@ -13,9 +13,44 @@
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property int $cliente_id
+ * @property string $codigo
+ * @property numeric|null $descuento_porcentaje Descuento sobre precio de lista
+ * @property numeric|null $recargo_porcentaje Recargo adicional
+ * @property \Carbon\CarbonImmutable $vigente_desde
+ * @property \Carbon\CarbonImmutable|null $vigente_hasta
+ * @property string|null $observaciones
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $deleted_at
+ * @property string|null $codigo_unico
+ * @property-read \App\Models\Cliente|null $cliente
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\AcuerdoCondicion> $condiciones
+ * @property-read int|null $condiciones_count
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial vigente(?string $fecha = null)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereClienteId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereCodigo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereCodigoUnico($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereCreatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereDescuentoPorcentaje($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereObservaciones($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereRecargoPorcentaje($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereUpdatedBy($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereVigenteDesde($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial whereVigenteHasta($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoComercial withoutTrashed()
  */
 	class AcuerdoComercial extends \Eloquent {}
 }
@@ -27,11 +62,13 @@ namespace App\Models{
  * @property int $tipo_condicion_id
  * @property numeric|null $valor_numerico
  * @property string|null $valor_texto
- * @property int|null $valor_booleano
+ * @property bool|null $valor_booleano
  * @property int|null $zona_id
  * @property int|null $tipo_servicio_id
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\AcuerdoComercial|null $acuerdo
+ * @property-read \App\Models\TipoCondicionComercial $tipoCondicion
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoCondicion newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoCondicion newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|AcuerdoCondicion query()
@@ -73,6 +110,8 @@ namespace App\Models{
  * @property-read int|null $contactos_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Cotizacion> $cotizaciones
  * @property-read int|null $cotizaciones_count
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Documento> $documentos
+ * @property-read int|null $documentos_count
  * @property-read \App\Models\EstadoCliente $estado
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\ClienteIntegracion> $integraciones
  * @property-read int|null $integraciones_count
@@ -151,6 +190,7 @@ namespace App\Models{
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property string|null $deleted_at
+ * @property-read \App\Models\TipoIntegracion $tipoIntegracion
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ClienteIntegracion newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ClienteIntegracion newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|ClienteIntegracion query()
@@ -172,6 +212,40 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * Parámetros de configuración del motor de cotización, editables desde el panel admin.
+ *
+ * Claves disponibles:
+ *  - seguro_porcentaje  (NUMBER)
+ *  - iva_porcentaje     (NUMBER)
+ *  - algoritmo_version  (STRING, no editable)
+ *
+ * @property int $id
+ * @property string $clave Identificador único del parámetro
+ * @property string|null $valor Valor almacenado como string
+ * @property string $tipo STRING | NUMBER | BOOLEAN
+ * @property string|null $descripcion
+ * @property string|null $grupo Agrupación visual en el panel admin
+ * @property bool $editable Si false, solo se modifica por migraciones
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereClave($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereDescripcion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereEditable($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereGrupo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereTipo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|ConfiguracionCotizador whereValor($value)
+ */
+	class ConfiguracionCotizador extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
  * @property int $id
  * @property int|null $tipo_servicio_id
  * @property string $codigo
@@ -180,13 +254,15 @@ namespace App\Models{
  * @property numeric $monto
  * @property string $unidad $ = fijo | % = porcentaje
  * @property int $es_obligatorio
- * @property int $activo
+ * @property bool $activo
  * @property int|null $created_by
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
- * @property string|null $deleted_at
+ * @property \Carbon\CarbonImmutable|null $deleted_at
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional activo()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional whereActivo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional whereCodigo($value)
@@ -201,6 +277,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional whereTipoServicioId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional whereUnidad($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CostoAdicional withoutTrashed()
  */
 	class CostoAdicional extends \Eloquent {}
 }
@@ -208,29 +286,34 @@ namespace App\Models{
 namespace App\Models{
 /**
  * @property int $id
+ * @property string $codigo Código público legible. Se sincroniza via cotizacion_codigos.
  * @property int $origen_id
  * @property int $tipo_cliente_id
  * @property int|null $cliente_id
  * @property int|null $usuario_id
  * @property int|null $acuerdo_id
  * @property int $estado_id
- * @property \Carbon\CarbonImmutable|null $created_at
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Carbon\CarbonImmutable $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property \Carbon\CarbonImmutable|null $deleted_at
  * @property-read \App\Models\AcuerdoComercial|null $acuerdo
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CotizacionBulto> $bultos
  * @property-read int|null $bultos_count
  * @property-read \App\Models\Cliente|null $cliente
- * @property-read \App\Models\CotizacionCodigo|null $codigo
+ * @property-read \App\Models\CotizacionCodigo|null $codigoRegistro
+ * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CotizacionCostoAdicional> $costosAdicionales
+ * @property-read int|null $costos_adicionales_count
  * @property-read \App\Models\CotizacionEnvio|null $envio
- * @property-read \App\Models\EstadoCotizacion $estado
+ * @property-read \App\Models\EstadoCotizacion|null $estado
  * @property-read \App\Models\CotizacionLead|null $lead
- * @property-read \App\Models\OrigenCotizacion $origen
+ * @property-read \App\Models\OrigenCotizacion|null $origen
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CotizacionResultado> $resultados
  * @property-read int|null $resultados_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\CotizacionSeguimiento> $seguimientos
  * @property-read int|null $seguimientos_count
- * @property-read \App\Models\TipoCliente $tipoCliente
+ * @property-read \App\Models\TipoCliente|null $tipoCliente
  * @property-read \App\Models\User|null $usuario
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion newQuery()
@@ -238,13 +321,16 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereAcuerdoId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereClienteId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereCodigo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereEstadoId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereOrigenId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereTipoClienteId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereUpdatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion whereUsuarioId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion withTrashed(bool $withTrashed = true)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Cotizacion withoutTrashed()
@@ -258,30 +344,27 @@ namespace App\Models{
  * @property int $cotizacion_id
  * @property int $tipo_bulto_id
  * @property int $cantidad
+ * @property bool $palletizado Indica si el bulto está en pallet. Afecta la unidad de cobro.
  * @property numeric $largo_cm
  * @property numeric $ancho_cm
  * @property numeric $alto_cm
  * @property numeric $peso_kg
- * @property int $palletizado
  * @property numeric|null $volumen_m3
  * @property numeric|null $peso_total_kg
- * @property numeric|null $pallets_equivalentes Calculado: volumen / 1.1 m3 por pallet
- * @property numeric|null $costo_individual Snapshot del costo por este bulto
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\TipoBulto $tipoBulto
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereAltoCm($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereAnchoCm($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereCantidad($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereCostoIndividual($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereCotizacionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereLargoCm($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto wherePalletizado($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto wherePalletsEquivalentes($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto wherePesoKg($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto wherePesoTotalKg($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionBulto whereTipoBultoId($value)
@@ -293,9 +376,8 @@ namespace App\Models{
 
 namespace App\Models{
 /**
- * @property int $id
+ * @property string $codigo
  * @property int $cotizacion_id
- * @property string $codigo COT-YYYY-NNNNNN
  * @property \Carbon\CarbonImmutable $created_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCodigo newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCodigo newQuery()
@@ -303,7 +385,6 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCodigo whereCodigo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCodigo whereCotizacionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCodigo whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCodigo whereId($value)
  */
 	class CotizacionCodigo extends \Eloquent {}
 }
@@ -312,12 +393,12 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $cotizacion_id
- * @property int $resultado_id
- * @property int|null $costo_adicional_id
- * @property string $nombre Snapshot del nombre al momento de calcular
- * @property numeric $monto_aplicado Monto ya calculado (si era % se convirtió a $)
- * @property string $tipo $ | %
+ * @property int $costo_adicional_id
+ * @property string|null $nombre_snapshot Snapshot del nombre del costo adicional al cotizar
+ * @property string|null $unidad_snapshot Snapshot de la unidad ($ o %) al cotizar
+ * @property numeric $monto_aplicado
  * @property \Carbon\CarbonImmutable $created_at
+ * @property-read \App\Models\CostoAdicional|null $costoAdicional
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional query()
@@ -326,9 +407,8 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereMontoAplicado($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereNombre($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereResultadoId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereTipo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereNombreSnapshot($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionCostoAdicional whereUnidadSnapshot($value)
  */
 	class CotizacionCostoAdicional extends \Eloquent {}
 }
@@ -341,13 +421,17 @@ namespace App\Models{
  * @property int|null $localidad_origen_id
  * @property int $provincia_destino_id
  * @property int|null $localidad_destino_id
- * @property int $solicita_retiro Cliente pide que SET retire en su domicilio
- * @property int $solicita_entrega Cliente pide entrega a domicilio en destino
- * @property int $retira_en_sucursal Destinatario retira en sucursal SET
- * @property numeric|null $valor_declarado Para cálculo de seguro
- * @property int $dias_almacenamiento Días en depósito (si aplica)
+ * @property bool $solicita_retiro
+ * @property bool $solicita_entrega
+ * @property bool $retira_en_sucursal
+ * @property numeric|null $valor_declarado
+ * @property int $dias_almacenamiento
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\Localidad|null $localidadDestino
+ * @property-read \App\Models\Localidad|null $localidadOrigen
+ * @property-read \App\Models\Provincia $provinciaDestino
+ * @property-read \App\Models\Provincia $provinciaOrigen
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionEnvio newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionEnvio newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionEnvio query()
@@ -372,25 +456,23 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $cotizacion_id
- * @property string|null $nombre
- * @property string|null $email
+ * @property string|null $nombre_cliente
+ * @property string|null $email_cliente
+ * @property string|null $telefono_cliente
  * @property string|null $empresa
- * @property string|null $telefono
- * @property string|null $ip
- * @property string|null $user_agent
- * @property \Carbon\CarbonImmutable $created_at
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereCotizacionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereEmail($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereEmailCliente($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereEmpresa($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereIp($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereNombre($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereTelefono($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereUserAgent($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereNombreCliente($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereTelefonoCliente($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionLead whereUpdatedAt($value)
  */
 	class CotizacionLead extends \Eloquent {}
 }
@@ -399,49 +481,56 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $cotizacion_id
- * @property int $numero_version Versión del cálculo; incrementa en cada recalculo
- * @property numeric|null $peso_total_kg
- * @property numeric|null $volumen_total_m3
- * @property numeric|null $pallets_equivalentes
- * @property numeric $subtotal_flete Costo de transporte sin márgenes ni descuentos
+ * @property int $numero_version
+ * @property int|null $margen_id
  * @property numeric $margen_porcentaje
- * @property numeric $margen_monto
+ * @property numeric $costo_troncal
+ * @property numeric $costo_primera_milla
+ * @property numeric $costo_ultima_milla
+ * @property numeric $costo_puerta_puerta
+ * @property numeric $subtotal_flete
+ * @property numeric $costo_seguro
+ * @property numeric $costo_carga_descarga
+ * @property bool $incluye_carga_descarga
+ * @property numeric $margen_ganancia
  * @property numeric $descuento_porcentaje
  * @property numeric $descuento_monto
- * @property numeric $subtotal_adicionales
- * @property numeric $seguro_monto
+ * @property numeric $iva
  * @property numeric $total_final
- * @property int|null $margen_id
- * @property int|null $tarifa_id
- * @property string|null $unidad_cobro KG | M3 | PALLET | BULTO
- * @property numeric|null $cantidad_cobrada
- * @property string $calculado_at
+ * @property int|null $tiempo_estimado_min
+ * @property int|null $tiempo_estimado_max
+ * @property string $version_algoritmo
+ * @property \Carbon\CarbonImmutable $calculado_at
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property-read \App\Models\MargenGanancia|null $margen
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCalculadoAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCantidadCobrada($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCostoCargaDescarga($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCostoPrimeraMilla($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCostoPuertaPuerta($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCostoSeguro($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCostoTroncal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCostoUltimaMilla($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCotizacionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereDescuentoMonto($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereDescuentoPorcentaje($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereIncluyeCargaDescarga($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereIva($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereMargenGanancia($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereMargenId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereMargenMonto($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereMargenPorcentaje($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereNumeroVersion($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado wherePalletsEquivalentes($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado wherePesoTotalKg($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereSeguroMonto($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereSubtotalAdicionales($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereSubtotalFlete($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereTarifaId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereTiempoEstimadoMax($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereTiempoEstimadoMin($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereTotalFinal($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereUnidadCobro($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereUpdatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereVolumenTotalM3($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionResultado whereVersionAlgoritmo($value)
  */
 	class CotizacionResultado extends \Eloquent {}
 }
@@ -450,18 +539,22 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $cotizacion_id
- * @property int $estado_id
+ * @property int|null $estado_anterior_id
+ * @property int $estado_nuevo_id
+ * @property string|null $motivo_no_cierre
+ * @property string|null $respuesta_cliente
  * @property int|null $usuario_id
- * @property string|null $observacion
  * @property \Carbon\CarbonImmutable $created_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereCotizacionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereCreatedAt($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereEstadoId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereEstadoAnteriorId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereEstadoNuevoId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereObservacion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereMotivoNoCierre($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereRespuestaCliente($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|CotizacionSeguimiento whereUsuarioId($value)
  */
 	class CotizacionSeguimiento extends \Eloquent {}
@@ -482,6 +575,7 @@ namespace App\Models{
  * @property string $numero_documento
  * @property string $fecha
  * @property string $url_archivo
+ * @property-read \App\Models\Cliente|null $cliente
  * @property-read \App\Models\TipoDocumento|null $tipo
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Documento newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Documento newQuery()
@@ -565,9 +659,25 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property string $codigo
+ * @property string $nombre
+ * @property int $orden
+ * @property int $es_final
+ * @property int $activo
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereActivo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereCodigo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereEsFinal($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereNombre($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereOrden($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|EstadoPedido whereUpdatedAt($value)
  */
 	class EstadoPedido extends \Eloquent {}
 }
@@ -646,6 +756,7 @@ namespace App\Models{
  * @property string $token
  * @property Carbon $expires_at
  * @property Carbon|null $accepted_at
+ * @property-read \App\Models\Cliente|null $cliente
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invitacion newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invitacion newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Invitacion query()
@@ -660,14 +771,17 @@ namespace App\Models{
  * @property string $nombre
  * @property string|null $codigo_postal
  * @property string $codigo_georef
+ * @property int $activo
  * @property string|null $created_at
  * @property string|null $updated_at
  * @property string|null $deleted_at
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \App\Models\Cliente> $clientes
  * @property-read int|null $clientes_count
+ * @property-read \App\Models\Provincia $provincia
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Localidad newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Localidad newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Localidad query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Localidad whereActivo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Localidad whereCodigoGeoref($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Localidad whereCodigoPostal($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Localidad whereCreatedAt($value)
@@ -751,11 +865,16 @@ namespace App\Models{
 /**
  * @property int $id
  * @property int $cliente_id
+ * @property int|null $importacion_id
  * @property int $localidad_destino_id
  * @property int $estado_id
  * @property string $numero_pedido
  * @property \Carbon\CarbonImmutable $fecha
- * @property int|null $cotizacion_id
+ * @property int|null $created_by
+ * @property int|null $updated_by
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $deleted_at
  * @property string|null $transoft_tracking
  * @property string|null $transoft_operation_id
  * @property string|null $transoft_estado_codigo
@@ -763,11 +882,7 @@ namespace App\Models{
  * @property string|null $transoft_seguimiento_url
  * @property \Carbon\CarbonImmutable|null $transoft_sync_at
  * @property array<array-key, mixed>|null $transoft_payload_json
- * @property int|null $created_by
- * @property int|null $updated_by
- * @property \Carbon\CarbonImmutable|null $created_at
- * @property \Carbon\CarbonImmutable|null $updated_at
- * @property \Carbon\CarbonImmutable|null $deleted_at
+ * @property string|null $numero_unico
  * @property-read \App\Models\Cliente|null $cliente
  * @property-read \App\Models\Cotizacion|null $cotizacion
  * @property-read \App\Models\EstadoPedido $estado
@@ -782,15 +897,16 @@ namespace App\Models{
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido query()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereClienteId($value)
- * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereCotizacionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereCreatedBy($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereDeletedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereEstadoId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereFecha($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereImportacionId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereLocalidadDestinoId($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereNumeroPedido($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereNumeroUnico($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereTransoftEstadoCodigo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereTransoftEtiquetaUrl($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Pedido whereTransoftOperationId($value)
@@ -808,9 +924,13 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Proveedor activo()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Proveedor newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Proveedor newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Proveedor onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Proveedor query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Proveedor withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Proveedor withoutTrashed()
  */
 	class Proveedor extends \Eloquent {}
 }
@@ -821,12 +941,14 @@ namespace App\Models{
  * @property string $nombre
  * @property string $codigo_georef Código GeoRef INDEC
  * @property int $tiene_deposito
+ * @property int $activo
  * @property \Carbon\CarbonImmutable|null $created_at
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property string|null $deleted_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Provincia newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Provincia newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Provincia query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|Provincia whereActivo($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Provincia whereCodigoGeoref($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Provincia whereCreatedAt($value)
  * @method static \Illuminate\Database\Eloquent\Builder<static>|Provincia whereDeletedAt($value)
@@ -852,8 +974,8 @@ namespace App\Models{
  * @property int $id
  * @property int $pedido_id
  * @property int $estado_id
- * @property int $localidad_destino_id
- * @property string $numero_seguimiento
+ * @property int|null $localidad_destino_id
+ * @property string|null $numero_seguimiento
  * @property string $fecha_actualizacion
  * @property string|null $observacion
  * @property \Carbon\CarbonImmutable|null $created_at
@@ -897,7 +1019,7 @@ namespace App\Models{
  * @property \Carbon\CarbonImmutable|null $updated_at
  * @property \Carbon\CarbonImmutable|null $deleted_at
  * @property-read \App\Models\Localidad|null $localidadDestino
- * @property-read \App\Models\Proveedor $proveedor
+ * @property-read \App\Models\Proveedor|null $proveedor
  * @property-read \App\Models\Provincia $provinciaDestino
  * @property-read \App\Models\Provincia $provinciaOrigen
  * @property-read \App\Models\TipoServicio $tipoServicio
@@ -932,27 +1054,95 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property int $provincia_origen_id
+ * @property int $provincia_destino_id
+ * @property int|null $localidad_destino_id
+ * @property int $tipo_servicio_id
+ * @property numeric $monto_minimo
+ * @property string|null $descripcion
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $deleted_at
+ * @property-read \App\Models\Localidad|null $localidadDestino
+ * @property-read \App\Models\Provincia $provinciaDestino
+ * @property-read \App\Models\Provincia $provinciaOrigen
+ * @property-read \App\Models\TipoServicio $tipoServicio
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereDescripcion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereLocalidadDestinoId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereMontoMinimo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereProvinciaDestinoId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereProvinciaOrigenId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereTipoServicioId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TarifaMinima withoutTrashed()
  */
 	class TarifaMinima extends \Eloquent {}
 }
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property int $provincia_origen_id
+ * @property int $provincia_destino_id
+ * @property int|null $localidad_origen_id
+ * @property int|null $localidad_destino_id
+ * @property int $dias_min
+ * @property int $dias_max
+ * @property string|null $observacion
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @property \Carbon\CarbonImmutable|null $deleted_at
+ * @property-read \App\Models\Localidad|null $localidadDestino
+ * @property-read \App\Models\Localidad|null $localidadOrigen
+ * @property-read \App\Models\Provincia $provinciaDestino
+ * @property-read \App\Models\Provincia $provinciaOrigen
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado onlyTrashed()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereDeletedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereDiasMax($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereDiasMin($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereLocalidadDestinoId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereLocalidadOrigenId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereObservacion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereProvinciaDestinoId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereProvinciaOrigenId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado whereUpdatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado withTrashed(bool $withTrashed = true)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TiempoEstimado withoutTrashed()
  */
 	class TiempoEstimado extends \Eloquent {}
 }
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property string $codigo
+ * @property string $nombre
+ * @property int $activo
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto whereActivo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto whereCodigo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto whereNombre($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoBulto whereUpdatedAt($value)
  */
 	class TipoBulto extends \Eloquent {}
 }
@@ -1044,9 +1234,45 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property string $codigo
+ * @property string $nombre
+ * @property string|null $descripcion
+ * @property int $activo
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion newModelQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion newQuery()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion whereActivo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion whereCodigo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion whereDescripcion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion whereNombre($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoIntegracion whereUpdatedAt($value)
+ */
+	class TipoIntegracion extends \Eloquent {}
+}
+
+namespace App\Models{
+/**
+ * @property int $id
+ * @property string $codigo
+ * @property string $nombre
+ * @property bool $activo
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio activo()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio whereActivo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio whereCodigo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio whereNombre($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|TipoServicio whereUpdatedAt($value)
  */
 	class TipoServicio extends \Eloquent {}
 }
@@ -1080,8 +1306,8 @@ namespace App\Models{
 
 namespace App\Models{
 /**
- * @property string $codigo PC, TT, ED...
- * @property string $descripcion
+ * @property string $codigo PN, PC, PR, TT, RL, ED, SR, RP, RD, RC, RR, VO
+ * @property string $descripcion Descripción legible del estado
  * @property int|null $estado_pedido_id
  * @property int|null $estado_cotizacion_id
  * @property bool $es_final
@@ -1139,9 +1365,23 @@ namespace App\Models{
 
 namespace App\Models{
 /**
+ * @property int $id
+ * @property string $codigo
+ * @property string $nombre
+ * @property string|null $descripcion
+ * @property bool $activo
+ * @property \Carbon\CarbonImmutable|null $created_at
+ * @property \Carbon\CarbonImmutable|null $updated_at
  * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida newModelQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida newQuery()
  * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida query()
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida whereActivo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida whereCodigo($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida whereCreatedAt($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida whereDescripcion($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida whereId($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida whereNombre($value)
+ * @method static \Illuminate\Database\Eloquent\Builder<static>|UnidadMedida whereUpdatedAt($value)
  */
 	class UnidadMedida extends \Eloquent {}
 }
