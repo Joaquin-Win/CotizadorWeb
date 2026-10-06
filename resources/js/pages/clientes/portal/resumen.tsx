@@ -78,9 +78,7 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                                     Gestiona tus pedidos, seguimientos y documentos desde un solo lugar.
                                 </p>
                             </div>
-                            <span className="hidden shrink-0 self-start text-3xl font-black text-[#0A3D91] italic md:inline md:self-center md:text-4xl">
-                                <span className="text-[#00A86B]">/</span>Set
-                            </span>
+                            <img src="/images/logo-set.png" alt="SET Logística" className="hidden h-10 w-auto shrink-0 self-start md:inline md:h-12 md:self-center" />
                         </div>
 
                         <div className="mt-4 flex flex-col overflow-hidden rounded-xl border border-slate-200 bg-white sm:flex-row">
@@ -144,9 +142,7 @@ export default function PortalResumen({ cliente, esAdmin, pedidosPorEstado, ulti
                             </div>
                             <div className="relative flex min-h-28 flex-1 items-center justify-end overflow-hidden bg-gradient-to-r from-sky-200 via-sky-100 to-slate-200 p-5">
                                 <Truck className="absolute -left-4 h-28 w-28 text-white/60" />
-                                <span className="relative text-3xl font-black text-[#0A3D91]/80 italic">
-                                    <span className="text-[#00A86B]">/</span>Set
-                                </span>
+                                <img src="/images/logo-set.png" alt="SET Logística" className="relative h-9 w-auto" />
                             </div>
                         </div>
 

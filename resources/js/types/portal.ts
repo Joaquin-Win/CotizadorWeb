@@ -13,6 +13,7 @@ export type PortalCliente = {
     estado?: { nombre: string; permite_operar?: boolean } | null;
     contactos?: {
         nombre: string;
+        cargo?: string | null;
         email: string | null;
         telefono: string | null;
         principal?: boolean;

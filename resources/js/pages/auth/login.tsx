@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -15,29 +15,31 @@ type Props = {
     canResetPassword: boolean;
 };
 
+/** Login único estilo SET: foto real de fondo, sin chrome de Laravel. */
 export default function Login({ status, canResetPassword }: Props) {
     return (
         <>
             <Head title="Ingresar" />
 
-            <div className="flex min-h-[70vh] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-                <div className="hidden w-2/5 flex-col justify-between bg-[#0A3D91] p-8 text-white lg:flex">
-                    <span className="text-3xl font-black italic">
-                        <span className="text-[#00A86B]">/</span>Set
-                    </span>
-                    <div>
-                        <p className="text-2xl font-extrabold tracking-tight">
-                            Movemos tu negocio hacia adelante
-                        </p>
-                        <p className="mt-2 text-sm text-white/80">
-                            Accedé a tu portal: pedidos, documentos y cotizaciones en un solo lugar.
-                        </p>
-                    </div>
-                    <p className="text-xs text-white/60">Logística integral · SET</p>
-                </div>
+            <div className="relative flex min-h-svh items-center justify-center overflow-hidden bg-[#031d45] p-4 font-sans sm:p-8">
+                <img
+                    src="/images/login-bg.png"
+                    alt=""
+                    aria-hidden
+                    className="absolute inset-0 h-full w-full object-cover"
+                />
+                <div className="absolute inset-0 bg-[#031d45]/55" />
 
-                <div className="flex flex-1 flex-col justify-center p-6 sm:p-10">
-                    <h1 className="text-xl font-extrabold tracking-tight text-slate-900">
+                <div className="relative flex w-full max-w-4xl flex-col gap-3 overflow-hidden lg:flex-row lg:gap-0">
+                    <div className="w-full rounded-2xl bg-white p-5 shadow-2xl sm:p-8 lg:w-[400px] lg:shrink-0 lg:rounded-r-none">
+                    <div className="flex items-center justify-between">
+                        <img src="/images/logo-set.png" alt="SET Logística" className="h-10 w-auto sm:h-14" />
+                        <a href="https://prueba.setlogistica.com/" className="text-xs font-semibold text-slate-500 hover:text-[#0A3D91]">
+                            ← Volver a SetLogistica
+                        </a>
+                    </div>
+
+                    <h1 className="mt-4 text-lg font-extrabold tracking-tight text-slate-900 sm:mt-6 sm:text-xl">
                         Ingresar a SET
                     </h1>
                     <p className="mt-1 text-sm text-slate-500">
@@ -47,7 +49,7 @@ export default function Login({ status, canResetPassword }: Props) {
                     <Form
                         {...store.form()}
                         resetOnSuccess={['password']}
-                        className="mt-6 flex flex-col gap-5"
+                        className="mt-4 flex flex-col gap-4 sm:mt-6 sm:gap-5"
                     >
                         {({ processing, errors }) => (
                             <>
@@ -118,13 +120,37 @@ export default function Login({ status, canResetPassword }: Props) {
                             {status}
                         </div>
                     )}
+                    </div>
+
+                    <div className="flex flex-1 flex-col justify-center gap-4 rounded-2xl bg-[#0A3D91] p-5 text-white sm:gap-6 sm:p-8 lg:rounded-l-none lg:p-10">
+                        <div>
+                            <p className="text-sm font-bold tracking-widest text-[#00A86B] uppercase">
+                                Tu plataforma
+                            </p>
+                            <p className="mt-2 text-2xl leading-tight font-black tracking-tight sm:text-3xl">
+                                Todo tu negocio en un solo lugar
+                            </p>
+                        </div>
+                        <ul className="space-y-4 sm:space-y-5">
+                            {[
+                                { titulo: 'Cotizá en segundos', texto: 'Calculá el costo de tus envíos al instante.' },
+                                { titulo: 'Seguí tus pedidos', texto: 'Estados en tiempo real, sin llamar a nadie.' },
+                                { titulo: 'Tus documentos', texto: 'Remitos y facturas siempre a mano.' },
+                            ].map((item) => (
+                                <li key={item.titulo} className="flex gap-4">
+                                    <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#00A86B] text-sm font-black text-white sm:h-9 sm:w-9 sm:text-base">
+                                        ✓
+                                    </span>
+                                    <span>
+                                        <span className="block text-base font-extrabold sm:text-lg">{item.titulo}</span>
+                                        <span className="block text-sm text-white/75 sm:text-[15px]">{item.texto}</span>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
                 </div>
             </div>
         </>
     );
 }
-
-Login.layout = {
-    title: 'Ingresar a tu cuenta',
-    description: 'Accedé con tu email y contraseña',
-};

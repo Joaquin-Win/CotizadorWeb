@@ -123,9 +123,49 @@ export default function PortalPerfil({ cliente, esAdmin }: Props) {
                                         <MapPin className="h-4 w-4 shrink-0 text-[#0A3D91]" />
                                         <span className="font-semibold">{cliente.direccion ?? '—'}</span>
                                     </li>
+                                    <li className="flex items-center gap-2">
+                                        <Building2 className="h-4 w-4 shrink-0 text-[#0A3D91]" />
+                                        <span className="font-semibold">
+                                            {cliente.localidad
+                                                ? `${cliente.localidad.nombre}${cliente.localidad.provincia ? `, ${cliente.localidad.provincia.nombre}` : ''}`
+                                                : '—'}
+                                        </span>
+                                    </li>
                                 </ul>
                             </div>
                         </div>
+
+                        {(cliente.contactos?.length ?? 0) > 1 && (
+                            <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">
+                                <h3 className="text-sm font-extrabold">Contactos</h3>
+                                <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+                                    {cliente.contactos?.map((c, i) => {
+                                        const esPrincipal = c.principal ?? c.es_principal ?? false;
+                                        return (
+                                            <li
+                                                key={`${c.email ?? c.nombre}-${i}`}
+                                                className="rounded-lg border border-slate-100 px-3 py-2 text-sm"
+                                            >
+                                                <p className="flex items-center gap-2 font-semibold">
+                                                    {c.nombre}
+                                                    {esPrincipal && (
+                                                        <span className="rounded-full bg-sky-50 px-2 py-0.5 text-xs font-bold text-sky-600">
+                                                            Principal
+                                                        </span>
+                                                    )}
+                                                </p>
+                                                {c.cargo && <p className="text-xs text-slate-500">{c.cargo}</p>}
+                                                {(c.email || c.telefono) && (
+                                                    <p className="mt-0.5 text-xs text-slate-500">
+                                                        {[c.email, c.telefono].filter(Boolean).join(' · ')}
+                                                    </p>
+                                                )}
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                            </div>
+                        )}
 
                         {cliente.observaciones && (
                             <div className="mt-4 rounded-xl border border-slate-200 bg-white p-5">

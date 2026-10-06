@@ -68,9 +68,7 @@ export default function PortalSidebar({ clienteId, nombre, cuit, tipo, active, e
                 >
                     <Menu className="h-5 w-5" />
                 </button>
-                <span className="text-xl font-black text-[#0A3D91] italic">
-                    <span className="text-[#00A86B]">/</span>Set
-                </span>
+                <img src="/images/logo-set.png" alt="SET Logística" className="h-7 w-auto" />
             </div>
 
             {abierto && (
@@ -78,9 +76,7 @@ export default function PortalSidebar({ clienteId, nombre, cuit, tipo, active, e
                     <div className="absolute inset-0 bg-slate-900/50" onClick={() => setAbierto(false)} />
                     <div className="absolute inset-y-0 left-0 flex w-72 flex-col gap-1 overflow-y-auto bg-[#F5F8FC] p-4">
                         <div className="mb-2 flex items-center justify-between">
-                            <span className="text-2xl font-black text-[#0A3D91] italic">
-                                <span className="text-[#00A86B]">/</span>Set
-                            </span>
+                            <img src="/images/logo-set.png" alt="SET Logística" className="h-8 w-auto" />
                             <button
                                 onClick={() => setAbierto(false)}
                                 aria-label="Cerrar menú"
