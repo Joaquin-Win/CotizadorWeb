@@ -14,6 +14,7 @@ class GeografiaController extends Controller
     {
         return response()->json(
             Provincia::whereNull('deleted_at')
+                ->where('activo', true)
                 ->orderBy('nombre')
                 ->get(['id', 'nombre', 'codigo_georef', 'tiene_deposito'])
         );
@@ -24,6 +25,7 @@ class GeografiaController extends Controller
         return response()->json(
             Localidad::where('provincia_id', $id)
                 ->whereNull('deleted_at')
+                ->where('activo', true)
                 ->orderBy('nombre')
                 ->get(['id', 'nombre', 'codigo_postal'])
         );

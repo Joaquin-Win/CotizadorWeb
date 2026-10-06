@@ -2,6 +2,8 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Building2, Eye, FileText, Package } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
+import AppLayout from '@/layouts/app-layout';
+import type { BreadcrumbItem } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -70,11 +72,17 @@ export default function ClienteShow({ cliente, cotizaciones, pedidos, tipos, est
         });
     }
 
+    const breadcrumbs: BreadcrumbItem[] = [
+        { title: 'Dashboard', href: '/dashboard' },
+        { title: 'Clientes', href: '/clientes' },
+        { title: nombre, href: `/clientes/${cliente.id}` },
+    ];
+
     return (
-        <>
+        <AppLayout breadcrumbs={breadcrumbs}>
             <Head title={nombre} />
 
-            <div className="flex flex-col space-y-6">
+            <div className="flex flex-col space-y-6 p-6">
                 <div className="flex flex-wrap gap-2">
                     <Button variant="secondary" size="sm" asChild className="w-fit">
                         <Link href="/clientes">
@@ -240,6 +248,6 @@ export default function ClienteShow({ cliente, cotizaciones, pedidos, tipos, est
                     </div>
                 </div>
             </div>
-        </>
+        </AppLayout>
     );
 }

@@ -3,7 +3,9 @@ import {
     Building2,
     Calculator,
     LayoutGrid,
+    MapPin,
     Settings2,
+    SlidersHorizontal,
     Truck,
     Users,
 } from 'lucide-react';
@@ -27,7 +29,7 @@ type AuthUser = {
     cliente_id: number | null;
 } | null;
 
-/** El cliente ve su plataforma; el admin ve la administración. */
+/** El cliente ve su plataforma; el admin ve la administración y configuración. */
 export function AppSidebar() {
     const { auth } = usePage().props as unknown as { auth: { user: AuthUser } };
     const user = auth?.user ?? null;
@@ -48,7 +50,7 @@ export function AppSidebar() {
           ]
         : [];
 
-    const adminItems: NavItem[] = !esCliente
+    const adminOperaciones: NavItem[] = !esCliente
         ? [
               {
                   title: 'Dashboard',
@@ -56,14 +58,39 @@ export function AppSidebar() {
                   icon: LayoutGrid,
               },
               {
+                  title: 'Cotizador Web',
+                  href: '/cotizador',
+                  icon: Calculator,
+              },
+              {
+                  title: 'Clientes',
+                  href: '/clientes',
+                  icon: Building2,
+              },
+              {
                   title: 'Usuarios',
                   href: '/usuarios',
                   icon: Users,
               },
+          ]
+        : [];
+
+    const adminConfiguracion: NavItem[] = !esCliente
+        ? [
               {
-                  title: 'Tarifas',
-                  href: '/admin/tarifas',
+                  title: 'Config. Cotizador',
+                  href: '/admin/cotizador/configuracion',
+                  icon: SlidersHorizontal,
+              },
+              {
+                  title: 'Tarifas y Fletes',
+                  href: '/admin/cotizador/configuracion?tab=tarifas',
                   icon: Truck,
+              },
+              {
+                  title: 'Cobertura Geográfica',
+                  href: '/admin/cotizador/configuracion?tab=geografia',
+                  icon: MapPin,
               },
               {
                   title: 'Config. Transoft',
@@ -91,8 +118,9 @@ export function AppSidebar() {
                 {esCliente && <NavMain items={plataformaItems} groupLabel="Plataforma" />}
                 {!esCliente && (
                     <>
-                        <NavMain items={adminItems} groupLabel="Administración" />
-                        <SidebarSeparator />
+                        <NavMain items={adminOperaciones} groupLabel="Operaciones" />
+                        <SidebarSeparator className="my-2" />
+                        <NavMain items={adminConfiguracion} groupLabel="Configuración" />
                     </>
                 )}
             </SidebarContent>
