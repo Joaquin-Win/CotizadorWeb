@@ -1,9 +1,10 @@
 import { Head, Link } from '@inertiajs/react';
-import { Calculator, Construction } from 'lucide-react';
+import { Calculator } from 'lucide-react';
+import CotizadorWizard from '@/components/cotizador-wizard';
 import PortalSidebar from '@/components/portal-sidebar';
 import { nombreCliente, type PortalCliente } from '@/types/portal';
 
-/** Cotizador dentro del portal. El wizard lo implementa el módulo cotizador. */
+/** Cotizador dentro del portal, con su estética. Cotiza con la tarifa de la empresa logueada. */
 type Props = {
     cliente: PortalCliente;
     esAdmin: boolean;
@@ -29,7 +30,7 @@ export default function PortalCotizador({ cliente, esAdmin }: Props) {
                                     Cotizador
                                 </h1>
                                 <p className="mt-0.5 text-sm text-slate-500">
-                                    Cotiza tus envíos como {nombre}.
+                                    Cotizá tus envíos como {nombre}, con tu tarifa negociada.
                                 </p>
                             </div>
                             <Link href={`${base}/resumen`} className="text-xs font-semibold text-[#0A3D91]">
@@ -37,12 +38,8 @@ export default function PortalCotizador({ cliente, esAdmin }: Props) {
                             </Link>
                         </div>
 
-                        <div className="mt-4 flex flex-col items-center rounded-xl border border-slate-200 bg-white px-4 py-14 text-center">
-                            <Construction className="h-8 w-8 text-slate-300" />
-                            <p className="mt-2 text-sm font-bold text-slate-600">En desarrollo</p>
-                            <p className="mt-1 max-w-sm text-sm text-slate-400">
-                                El cotizador vivirá en esta sección, con tu tarifa negociada aplicada.
-                            </p>
+                        <div className="portal-cotizador mt-4 min-w-0 overflow-x-clip rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+                            <CotizadorWizard />
                         </div>
                     </main>
                 </div>
