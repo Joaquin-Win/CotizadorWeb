@@ -2,7 +2,6 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -10,8 +9,7 @@ use Illuminate\Support\Facades\Schema;
  * seguimientos — bitácora de estados del pedido.
  * Per dump: NO cotizacion_id. Tiene numero_unico GENERATED STORED, importacion_id.
  */
-return new class extends Migration
-{
+return new class extends Migration {
     public function up(): void
     {
         // -------------------------------------------------------
@@ -20,7 +18,6 @@ return new class extends Migration
         Schema::create('pedidos', function (Blueprint $table) {
             $table->id();
             $table->foreignId('cliente_id')->constrained('clientes')->restrictOnDelete();
-            // FK a importaciones_excel se agrega en 131832 (importaciones corre después de pedidos)
             $table->unsignedBigInteger('importacion_id')->nullable();
             $table->foreignId('localidad_destino_id')->constrained('localidades')->restrictOnDelete();
             $table->unsignedSmallInteger('estado_id');
@@ -45,22 +42,12 @@ return new class extends Migration
             $table->index('transoft_estado_codigo');
         });
 
-        // GENERATED STORED column: unicidad de numero_pedido entre activos
-        // MySQL no soporta ADD COLUMN IF NOT EXISTS, se hace vía raw
-        DB::statement("
-            ALTER TABLE `pedidos`
-            ADD COLUMN `numero_unico` varchar(50) GENERATED ALWAYS AS (
-                IF(`deleted_at` IS NULL, `numero_pedido`, NULL)
-            ) STORED NULL,
-            ADD UNIQUE KEY `uq_pedidos_numero_unico` (`numero_unico`)
-        ");
-
-        // FK a transoft_estados (tabla no particionada → soporta FK)
+        // FK a transoft_estados
         Schema::table('pedidos', function (Blueprint $table) {
             $table->foreign('transoft_estado_codigo')
-                  ->references('codigo')
-                  ->on('transoft_estados')
-                  ->nullOnDelete();
+                ->references('codigo')
+                ->on('transoft_estados')
+                ->nullOnDelete();
         });
 
         // -------------------------------------------------------
