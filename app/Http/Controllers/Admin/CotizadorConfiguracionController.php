@@ -88,6 +88,9 @@ class CotizadorConfiguracionController extends Controller
         $request->validate([
             'seguro_porcentaje' => ['required', 'numeric', 'min:0', 'max:100'],
             'iva_porcentaje'    => ['required', 'numeric', 'min:0', 'max:100'],
+            'popup_activo'      => ['nullable', 'boolean'],
+            'popup_titulo'      => ['nullable', 'string', 'max:150'],
+            'popup_mensaje'     => ['nullable', 'string', 'max:2000'],
             'costos'            => ['nullable', 'array'],
             'costos.*.id'       => ['required', 'integer', 'exists:costos_adicionales,id'],
             'costos.*.monto'    => ['required', 'numeric', 'min:0'],
@@ -117,6 +120,18 @@ class CotizadorConfiguracionController extends Controller
                 'editable'    => true,
             ]
         );
+
+        // Popup informativo del cotizador
+        foreach ([
+            'popup_activo'  => [$request->boolean('popup_activo') ? '1' : '0', 'BOOLEAN', 'Muestra un popup informativo al ingresar al cotizador.'],
+            'popup_titulo'  => [(string) $request->input('popup_titulo', ''), 'STRING', 'Título del popup informativo.'],
+            'popup_mensaje' => [(string) $request->input('popup_mensaje', ''), 'STRING', 'Mensaje del popup informativo.'],
+        ] as $clave => [$valor, $tipo, $desc]) {
+            ConfiguracionCotizador::updateOrCreate(
+                ['clave' => $clave],
+                ['valor' => $valor, 'tipo' => $tipo, 'descripcion' => $desc, 'grupo' => 'popup', 'editable' => true]
+            );
+        }
 
         // Actualizar costos adicionales
         if ($request->has('costos')) {

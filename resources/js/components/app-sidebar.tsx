@@ -67,11 +67,6 @@ export function AppSidebar() {
                   href: '/clientes',
                   icon: Building2,
               },
-              {
-                  title: 'Usuarios',
-                  href: '/usuarios',
-                  icon: Users,
-              },
           ]
         : [];
 
@@ -91,6 +86,11 @@ export function AppSidebar() {
                   title: 'Cobertura Geográfica',
                   href: '/admin/cotizador/configuracion?tab=geografia',
                   icon: MapPin,
+              },
+              {
+                  title: 'Usuarios',
+                  href: '/admin/usuarios',
+                  icon: Users,
               },
               {
                   title: 'Config. Transoft',
