@@ -7,7 +7,10 @@ use App\Models\Cotizacion;
 use App\Models\EstadoCliente;
 use App\Models\Pedido;
 use App\Models\TipoCliente;
+use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Inertia\Inertia;
 
 class ClienteController extends Controller
@@ -54,14 +57,34 @@ class ClienteController extends Controller
             'email_facturacion' => 'nullable|email|max:255',
             'telefono'          => 'nullable|string|max:50',
             'direccion'         => 'nullable|string|max:255',
+            // Acceso a la plataforma: crea contacto principal + usuario.
+            'email_acceso'       => 'required|email|max:255|unique:usuarios,email',
+            'password'          => 'required|string|min:8|confirmed',
         ]);
 
         $data['estado_id']  = EstadoCliente::where('codigo', 'ACTIVO')->value('id');
         $data['created_by'] = auth()->id();
 
-        Cliente::create($data);
+        DB::transaction(function () use ($data) {
+            $cliente = Cliente::create($data);
 
-        return back()->with('success', 'Cliente creado.');
+            $cliente->contactos()->create([
+                'nombre'       => $data['nombre_fantasia'] ?: $data['razon_social'],
+                'email'        => $data['email_acceso'],
+                'telefono'     => $data['telefono'] ?? null,
+                'es_principal' => true,
+            ]);
+
+            User::create([
+                'rol_id'     => 2, // CLIENTE
+                'cliente_id' => $cliente->id,
+                'name'       => $data['nombre_fantasia'] ?: $data['razon_social'],
+                'email'      => $data['email_acceso'],
+                'password'   => Hash::make($data['password']),
+            ]);
+        });
+
+        return back()->with('success', 'Cliente creado con acceso a la plataforma.');
     }
 
     public function show(Cliente $cliente): \Inertia\Response

@@ -27,6 +27,11 @@ function seedCatalogoBasico(): void
         ['clave' => 'iva_porcentaje',    'valor' => '0',    'tipo' => 'NUMBER', 'descripcion' => '', 'grupo' => 'impuestos', 'editable' => true, 'created_at' => now(), 'updated_at' => now()],
         ['clave' => 'algoritmo_version', 'valor' => 'v2.0.0', 'tipo' => 'STRING', 'descripcion' => '', 'grupo' => 'sistema', 'editable' => false, 'created_at' => now(), 'updated_at' => now()],
     ]);
+    // Catálogos mínimos que el motor exige
+    TipoServicio::firstOrCreate(['codigo' => 'TRONCAL'], ['nombre' => 'Troncal', 'activo' => true]);
+    UnidadMedida::firstOrCreate(['codigo' => 'M3'], ['nombre' => 'Metro cúbico', 'activo' => true]);
+    \App\Models\Provincia::firstOrCreate(['id' => 1], ['nombre' => 'Córdoba', 'codigo_georef' => 'CBA', 'activo' => true]);
+    \App\Models\Provincia::firstOrCreate(['id' => 2], ['nombre' => 'Buenos Aires', 'codigo_georef' => 'BSA', 'activo' => true]);
 }
 
 /**
@@ -34,25 +39,11 @@ function seedCatalogoBasico(): void
  */
 function makeDtoSimple(int $provOrigenId, int $provDestinoId): CotizacionRequestData
 {
-    $origen              = new OrigenData();
-    $origen->provinciaId = $provOrigenId;
-    $origen->localidadId = null;
-    $origen->solicitaRetiro = false;
+    $origen = new OrigenData(provinciaId: $provOrigenId, localidadId: null, solicitaRetiro: false);
 
-    $destino                   = new DestinoData();
-    $destino->provinciaId      = $provDestinoId;
-    $destino->localidadId      = null;
-    $destino->solicitaEntrega  = false;
-    $destino->retiroEnSucursal = false;
+    $destino = new DestinoData(provinciaId: $provDestinoId, localidadId: null, solicitaEntrega: false, retiroEnSucursal: false);
 
-    $bulto           = new BultoData();
-    $bulto->tipoBultoId = 1;
-    $bulto->cantidad = 1;
-    $bulto->largoCm  = 100;
-    $bulto->anchoCm  = 100;
-    $bulto->altoCm   = 100;
-    $bulto->pesoKg   = 50;
-    $bulto->paletizado = false;
+    $bulto = new BultoData(tipoBultoId: 1, cantidad: 1, largoCm: 100, anchoCm: 100, altoCm: 100, pesoKg: 50, paletizado: false);
 
     $dto               = new CotizacionRequestData();
     $dto->origen       = $origen;
@@ -179,6 +170,7 @@ it('el total final es mayor que el subtotal cuando hay margen', function () {
         'porcentaje'       => 20,
         'descripcion'      => 'Margen global test',
         'activo'           => true,
+        'vigente_desde'    => now()->subDay()->toDateString(),
     ]);
 
     $service   = app(CotizadorService::class);

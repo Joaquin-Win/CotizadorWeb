@@ -13,15 +13,17 @@ uses(RefreshDatabase::class);
 beforeEach(function () {
     $this->servicio = new SeguroService();
 
-    // Insertar configuración de seguro para los tests
-    ConfiguracionCotizador::create([
-        'clave'       => 'seguro_porcentaje',
-        'valor'       => '0.80',
-        'tipo'        => 'NUMBER',
-        'descripcion' => 'Test',
-        'grupo'       => 'seguro',
-        'editable'    => true,
-    ]);
+    // Insertar configuración de seguro para los tests (la migración ya siembra la clave)
+    ConfiguracionCotizador::updateOrCreate(
+        ['clave' => 'seguro_porcentaje'],
+        [
+            'valor'       => '0.80',
+            'tipo'        => 'NUMBER',
+            'descripcion' => 'Test',
+            'grupo'       => 'seguro',
+            'editable'    => true,
+        ]
+    );
 });
 
 it('retorna cero si no hay valor declarado', function () {

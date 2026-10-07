@@ -10,6 +10,11 @@ use Illuminate\Support\Facades\DB;
 return new class extends Migration {
     public function up(): void
     {
+        // Vistas solo MySQL (backticks). En SQLite (tests) se saltean.
+        if (DB::getDriverName() !== 'mysql') {
+            return;
+        }
+
         // v_cotizaciones_activas — cotizaciones no borradas con datos de envío
         DB::statement("
             CREATE OR REPLACE VIEW `v_cotizaciones_activas` AS
