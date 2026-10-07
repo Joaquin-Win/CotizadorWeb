@@ -15,19 +15,18 @@ return new class extends Migration {
             CREATE OR REPLACE VIEW `v_cotizaciones_activas` AS
             SELECT
                 c.`id`,
-                c.`origen_id`,
-                c.`tipo_cliente_id`,
-                c.`cliente_id`,
-                c.`usuario_id`,
-                c.`acuerdo_id`,
                 c.`estado_id`,
                 ec.`codigo`  AS `estado_codigo`,
                 ec.`nombre`  AS `estado_nombre`,
+                c.`moneda`,
+                c.`subtotal`,
+                c.`costos_adicionales`,
+                c.`total`,
+                c.`margen_id`,
                 c.`created_at`,
                 c.`updated_at`
             FROM `cotizaciones` c
             INNER JOIN `estados_cotizacion` ec ON ec.`id` = c.`estado_id`
-            WHERE c.`deleted_at` IS NULL
         ");
 
         // v_pedidos_activos — pedidos no borrados con estado legible

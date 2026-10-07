@@ -50,14 +50,20 @@ class DocumentoController extends Controller
     }
 
     /**
-     * Baja el archivo original.
+     * Baja el archivo original (o lo muestra inline para previsualizar).
      */
-    public function descargar(Cliente $cliente, Documento $documento): BinaryFileResponse
+    public function descargar(Request $request, Cliente $cliente, Documento $documento): BinaryFileResponse
     {
         abort_if($documento->cliente_id !== $cliente->id, 404);
 
+        $path = Storage::disk('local')->path($documento->url_archivo);
+
+        if ($request->boolean('inline')) {
+            return response()->file($path);
+        }
+
         return response()->download(
-            Storage::disk('local')->path($documento->url_archivo),
+            $path,
             "{$documento->tipo->nombre}-{$documento->numero_documento}.".pathinfo($documento->url_archivo, PATHINFO_EXTENSION)
         );
     }

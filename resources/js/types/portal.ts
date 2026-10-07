@@ -7,11 +7,13 @@ export type PortalCliente = {
     email_facturacion: string | null;
     telefono: string | null;
     direccion: string | null;
+    logo_url?: string | null;
     observaciones?: string | null;
     tipoCliente?: { nombre: string } | null;
     estado?: { nombre: string; permite_operar?: boolean } | null;
     contactos?: {
         nombre: string;
+        cargo?: string | null;
         email: string | null;
         telefono: string | null;
         principal?: boolean;
