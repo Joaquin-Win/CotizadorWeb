@@ -165,3 +165,513 @@
         @apply font-bold tracking-tight;
     }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   COTIZADOR — estilos de página
+   Utiliza los tokens del diseño SET (--color-brand-green, etc.)
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* Página contenedora */
+.cot-page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem 4rem;
+}
+
+.cot-page__titulo {
+    margin-bottom: 2rem;
+}
+
+.cot-page__titulo h1 {
+    font-size: 1.75rem;
+    color: var(--color-ink-950);
+}
+
+.cot-page__subtitulo {
+    color: var(--color-ink-400);
+    margin-top: 0.375rem;
+    font-size: 0.9375rem;
+}
+
+/* Layout de dos columnas: formulario + resultado */
+.cot-layout {
+    display: grid;
+    gap: 2rem;
+    grid-template-columns: 1fr;
+    align-items: start;
+}
+
+@media (min-width: 1024px) {
+    .cot-layout {
+        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+    }
+}
+
+/* Formulario */
+.cot-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+/* Tarjeta de sección (Origen, Destino, Carga, Adicionales) */
+.cot-card {
+    background: #fff;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgb(0 0 0 / 4%);
+    transition: box-shadow 0.2s ease;
+}
+
+.cot-card:focus-within {
+    box-shadow: 0 2px 12px rgb(0 168 107 / 12%);
+}
+
+.cot-card__header {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.875rem 1.25rem;
+    background: var(--color-canvas, #f5f8fc);
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.cot-card__icono {
+    font-size: 1.125rem;
+    line-height: 1;
+}
+
+.cot-card__titulo {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-ink-800);
+    letter-spacing: -0.01em;
+}
+
+.cot-card__body {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Fila de dos columnas dentro del card */
+.cot-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.875rem;
+}
+
+@media (max-width: 640px) {
+    .cot-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Campo individual */
+.cot-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.cot-label {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-ink-600);
+    letter-spacing: 0.01em;
+}
+
+.cot-required {
+    color: var(--color-danger, #c92a0a);
+    margin-left: 0.1em;
+}
+
+.cot-select,
+.cot-input {
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--color-input, #e5e7eb);
+    border-radius: 0.5rem;
+    background: #fff;
+    font-size: 0.9375rem;
+    color: var(--color-ink-950);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    appearance: auto;
+}
+
+.cot-select:focus,
+.cot-input:focus {
+    outline: none;
+    border-color: var(--color-brand-green, #00a86b);
+    box-shadow: 0 0 0 3px rgb(0 168 107 / 12%);
+}
+
+.cot-select:disabled,
+.cot-input:disabled {
+    background: var(--color-canvas, #f5f8fc);
+    color: var(--color-ink-400);
+    cursor: not-allowed;
+}
+
+.cot-select--error,
+.cot-input--error {
+    border-color: var(--color-danger, #c92a0a);
+}
+
+/* Checkboxes */
+.cot-checks {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.625rem 1.5rem;
+    padding-top: 0.25rem;
+}
+
+.cot-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-ink-600);
+    cursor: pointer;
+    user-select: none;
+}
+
+.cot-checkbox {
+    width: 1.125rem;
+    height: 1.125rem;
+    accent-color: var(--color-brand-green, #00a86b);
+    cursor: pointer;
+}
+
+/* Mensajes de error inline */
+.cot-error {
+    font-size: 0.8rem;
+    color: var(--color-danger, #c92a0a);
+    margin-top: 0.125rem;
+}
+
+/* ─── Bultos ─── */
+.cot-bulto {
+    background: var(--color-canvas, #f5f8fc);
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 0.625rem;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.cot-bulto__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cot-bulto__num {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-brand-blue, #0a3d91);
+}
+
+.cot-bulto__dims {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.625rem;
+}
+
+@media (max-width: 600px) {
+    .cot-bulto__dims {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+/* Botón quitar bulto */
+.cot-btn-quitar {
+    background: none;
+    border: 1px solid var(--color-border, #e5e7eb);
+    border-radius: 50%;
+    width: 1.625rem;
+    height: 1.625rem;
+    font-size: 0.75rem;
+    color: var(--color-ink-400);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s;
+}
+
+.cot-btn-quitar:hover {
+    background: var(--color-danger, #c92a0a);
+    color: #fff;
+    border-color: transparent;
+}
+
+/* Botón agregar bulto */
+.cot-btn-agregar {
+    margin-top: 0.25rem;
+    background: none;
+    border: 1.5px dashed var(--color-brand-green, #00a86b);
+    border-radius: 0.5rem;
+    padding: 0.6rem 1rem;
+    color: var(--color-brand-green, #00a86b);
+    font-size: 0.9rem;
+    font-weight: 500;
+    cursor: pointer;
+    width: 100%;
+    text-align: center;
+    transition: background 0.15s;
+}
+
+.cot-btn-agregar:hover {
+    background: rgb(0 168 107 / 6%);
+}
+
+/* ─── Botón principal CALCULAR ─── */
+.cot-btn-calcular {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.625rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    background: linear-gradient(135deg, var(--color-brand-green, #00a86b) 0%, #007f52 100%);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    border: none;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: opacity 0.15s, transform 0.1s;
+    box-shadow: 0 4px 14px rgb(0 168 107 / 30%);
+}
+
+.cot-btn-calcular:hover:not(:disabled) {
+    opacity: 0.93;
+    transform: translateY(-1px);
+}
+
+.cot-btn-calcular:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.cot-btn-calcular:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+/* Spinner del botón */
+.cot-btn-calcular__spinner {
+    width: 1.1rem;
+    height: 1.1rem;
+    border: 2px solid rgba(255, 255, 255, 0.35);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: cot-spin 0.65s linear infinite;
+    flex-shrink: 0;
+}
+
+@keyframes cot-spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ─── Aside / Panel de resultado ─── */
+.cot-aside {
+    position: sticky;
+    top: 1.5rem;
+}
+
+/* Tarjeta de resultado */
+.cot-resultado {
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgb(0 0 0 / 8%);
+    animation: cot-fadein 0.3s ease;
+}
+
+@keyframes cot-fadein {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+.cot-resultado--ok {
+    border: 1.5px solid var(--color-brand-green, #00a86b);
+}
+
+.cot-resultado--atencion {
+    border: 1.5px solid var(--color-notice, #f59e0b);
+}
+
+/* Header del resultado */
+.cot-resultado__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.25rem;
+    background: var(--color-brand-navy, #062858);
+    gap: 0.75rem;
+}
+
+.cot-resultado__ruta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.cot-resultado__ciudad {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #fff;
+}
+
+.cot-resultado__flecha {
+    color: var(--color-brand-green, #00a86b);
+    font-size: 1.1rem;
+}
+
+.cot-resultado__badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    white-space: nowrap;
+    flex-shrink: 0;
+}
+
+.cot-badge--ok {
+    background: var(--color-brand-green, #00a86b);
+    color: #fff;
+}
+
+.cot-badge--atencion {
+    background: var(--color-notice, #f59e0b);
+    color: #fff;
+}
+
+/* Cuerpo del resultado */
+.cot-resultado__cuerpo {
+    background: #fff;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+/* Sección dentro del resultado */
+.cot-seccion {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.cot-seccion__titulo {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-ink-400);
+    padding-bottom: 0.375rem;
+    border-bottom: 1px solid var(--color-border, #e5e7eb);
+}
+
+.cot-fila-lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.cot-fila {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 0.9375rem;
+    color: var(--color-ink-800);
+    padding: 0.2rem 0;
+}
+
+.cot-fila--descuento {
+    color: var(--color-success, #15803d);
+    font-weight: 500;
+}
+
+.cot-fila--iva {
+    font-size: 0.875rem;
+    color: var(--color-ink-400);
+    padding: 0.1rem 0;
+}
+
+/* Total */
+.cot-total {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 0.875rem 1rem;
+    background: var(--color-canvas, #f5f8fc);
+    border-radius: 0.625rem;
+    border: 1px solid var(--color-border, #e5e7eb);
+    margin-top: 0.25rem;
+}
+
+.cot-total__label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--color-ink-800);
+}
+
+.cot-total__valor {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-green, #00a86b);
+    letter-spacing: -0.02em;
+}
+
+/* Tiempo estimado */
+.cot-tiempo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    background: rgb(10 61 145 / 5%);
+    border-radius: 0.5rem;
+    font-size: 0.9rem;
+    color: var(--color-brand-blue, #0a3d91);
+    font-weight: 500;
+}
+
+.cot-tiempo__icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* Panel de atención personalizada */
+.cot-atencion {
+    background: #fff;
+    padding: 2rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.75rem;
+    text-align: center;
+}
+
+.cot-atencion__icon {
+    font-size: 2.5rem;
+    line-height: 1;
+}
+
+.cot-atencion__titulo {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-ink-950);
+}
+
+.cot-atencion__texto {
+    font-size: 0.9375rem;
+    color: var(--color-ink-600);
+    max-width: 30ch;
+    line-height: 1.6;
+}

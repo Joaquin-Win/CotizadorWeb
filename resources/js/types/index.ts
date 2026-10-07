@@ -3,3 +3,4 @@ export type * from './navigation';
 export type * from './teams';
 export type * from './ui';
 export type * from './clients';
+export type * from './cotizador';

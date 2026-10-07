@@ -23,7 +23,7 @@ void createInertiaApp({
             case name.startsWith('invitaciones/'):
                 return null;
             default:
-                return AppLayout;
+                return null;
         }
     },
     strictMode: true,

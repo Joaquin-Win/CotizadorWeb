@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\GeografiaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\Cotizador\CotizacionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\CotizadorConfiguracionController;
 use App\Http\Controllers\Admin\MargenGananciaController;
 use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TransoftConfiguracionController;
@@ -102,6 +103,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Tarifas
         Route::resource('tarifas', TarifaController::class);
+
+        // Configuración Cotizador (Precios, Tarifas, Provincias y Localidades activas)
+        Route::get('cotizador/configuracion',                                   [CotizadorConfiguracionController::class, 'index'])->name('cotizador.config');
+        Route::post('cotizador/precios',                                        [CotizadorConfiguracionController::class, 'updatePrecios'])->name('cotizador.precios.update');
+        Route::post('cotizador/costos-adicionales',                             [CotizadorConfiguracionController::class, 'storeCostoAdicional'])->name('cotizador.costos.store');
+        Route::delete('cotizador/costos-adicionales/{costo}',                   [CotizadorConfiguracionController::class, 'destroyCostoAdicional'])->name('cotizador.costos.destroy');
+        Route::post('cotizador/tarifas',                                        [CotizadorConfiguracionController::class, 'storeTarifa'])->name('cotizador.tarifas.store');
+        Route::put('cotizador/tarifas/{tarifa}',                                [CotizadorConfiguracionController::class, 'updateTarifa'])->name('cotizador.tarifas.update');
+        Route::delete('cotizador/tarifas/{tarifa}',                             [CotizadorConfiguracionController::class, 'destroyTarifa'])->name('cotizador.tarifas.destroy');
+        Route::post('cotizador/provincias/{provincia}/toggle',                  [CotizadorConfiguracionController::class, 'toggleProvincia'])->name('cotizador.provincias.toggle');
+        Route::get('cotizador/provincias/{provincia}/localidades',              [CotizadorConfiguracionController::class, 'localidadesProvincia'])->name('cotizador.provincias.localidades');
+        Route::post('cotizador/provincias/{provincia}/toggle-localidades',       [CotizadorConfiguracionController::class, 'toggleTodasLocalidades'])->name('cotizador.provincias.toggle-todas');
+        Route::post('cotizador/localidades/{localidad}/toggle',                  [CotizadorConfiguracionController::class, 'toggleLocalidad'])->name('cotizador.localidades.toggle');
 
         // Márgenes de ganancia
         Route::resource('margenes', MargenGananciaController::class)->except(['show']);
