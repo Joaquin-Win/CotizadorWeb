@@ -4,6 +4,9 @@ import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import type { Provincia, Localidad, TipoBulto, BultoFormData, ResultadoCotizacion } from '@/types/cotizador';
 
+// Modalidad de destino: exclusiva
+type ModalidadDestino = 'entrega_domicilio' | 'retiro_sucursal' | '';
+
 const breadcrumbs: BreadcrumbItem[] = [
     { title: 'Dashboard', href: '/dashboard' },
     { title: 'Cotizador', href: '/cotizador' },
@@ -137,9 +140,10 @@ interface ResultadoPanelProps {
     resultado: ResultadoCotizacion;
     origenNombre: string;
     destinoNombre: string;
+    codigo?: string | null;
 }
 
-function ResultadoPanel({ resultado, origenNombre, destinoNombre }: ResultadoPanelProps) {
+function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: ResultadoPanelProps) {
     const esAtencion = resultado.estado === 'ATENCION_PERSONALIZADA';
 
     return (
@@ -165,6 +169,11 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre }: ResultadoPan
                         Este envío requiere revisión personalizada por parte de SET Logística.
                         Nos comunicaremos con vos a la brevedad.
                     </p>
+                    {codigo && (
+                        <p className="cot-atencion__texto">
+                            Código de referencia: <strong>{codigo}</strong>
+                        </p>
+                    )}
                 </div>
             ) : (
                 // Resultado completo
@@ -270,7 +279,12 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre }: ResultadoPan
 
 // ── Página principal ──────────────────────────────────────────────────────────
 
-export default function CotizadorIndex() {
+interface PopupConfig { activo: boolean; titulo: string; mensaje: string }
+
+export default function CotizadorIndex({ popup }: { popup?: PopupConfig }) {
+    const [popupVisible, setPopupVisible] = useState(
+        !!popup?.activo && !!(popup.titulo || popup.mensaje),
+    );
     // Catálogos
     const [provincias, setProvincias] = useState<Provincia[]>([]);
     const [localidadesOrigen, setLocalidadesOrigen] = useState<Localidad[]>([]);
@@ -288,8 +302,8 @@ export default function CotizadorIndex() {
     // Formulario — Destino
     const [destinoProvinciaId, setDestinoProvinciaId] = useState<number | ''>('');
     const [destinoLocalidadId, setDestinoLocalidadId] = useState<number | ''>('');
-    const [solicitaEntrega, setSolicitaEntrega] = useState(false);
-    const [retiraEnSucursal, setRetiraEnSucursal] = useState(false);
+    // Modalidad de entrega: excluyente
+    const [modalidadDestino, setModalidadDestino] = useState<ModalidadDestino>('');
 
     // Formulario — Bultos
     const [bultos, setBultos] = useState<BultoFormData[]>([{ ...BULTO_VACIO }]);
@@ -301,6 +315,7 @@ export default function CotizadorIndex() {
     // Estado de cotización
     const [cargando, setCargando] = useState(false);
     const [resultado, setResultado] = useState<ResultadoCotizacion | null>(null);
+    const [codigoGuardado, setCodigoGuardado] = useState<string | null>(null);
     const [erroresForm, setErroresForm] = useState<Record<string, string>>({});
 
     // ── Cargar catálogos al montar ──────────────────────────────────────────
@@ -378,6 +393,7 @@ export default function CotizadorIndex() {
         const errs: Record<string, string> = {};
         if (origenProvinciaId === '') errs['origen.provincia_id'] = 'Seleccioná la provincia de origen.';
         if (destinoProvinciaId === '') errs['destino.provincia_id'] = 'Seleccioná la provincia de destino.';
+        if (modalidadDestino === '') errs['destino.modalidad'] = 'Seleccioná la modalidad de entrega.';
         if (bultos.length === 0) errs['bultos'] = 'Agregá al menos un bulto.';
         bultos.forEach((b, i) => {
             if (!b.tipo_bulto_id) errs[`bultos.${i}.tipo_bulto_id`] = 'Seleccioná el tipo de bulto.';
@@ -397,6 +413,7 @@ export default function CotizadorIndex() {
 
         setCargando(true);
         setResultado(null);
+        setCodigoGuardado(null);
 
         const payload = {
             origen: {
@@ -407,8 +424,8 @@ export default function CotizadorIndex() {
             destino: {
                 provincia_id: Number(destinoProvinciaId),
                 localidad_id: destinoLocalidadId !== '' ? Number(destinoLocalidadId) : null,
-                solicita_entrega: solicitaEntrega,
-                retiro_en_sucursal: retiraEnSucursal,
+                solicita_entrega: modalidadDestino === 'entrega_domicilio',
+                retiro_en_sucursal: modalidadDestino === 'retiro_sucursal',
             },
             bultos: bultos.map((b) => ({
                 tipo_bulto_id: Number(b.tipo_bulto_id),
@@ -461,6 +478,27 @@ export default function CotizadorIndex() {
 
             const data = await resp.json();
             setResultado(data.resultado as ResultadoCotizacion);
+
+            // "Cotización a confirmar": persistir para que SET pueda revisarla
+            if (data.resultado?.estado === 'ATENCION_PERSONALIZADA') {
+                try {
+                    const g = await fetch('/cotizador/guardar', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            Accept: 'application/json',
+                            'X-CSRF-TOKEN': CSRF_TOKEN(),
+                        },
+                        body: JSON.stringify(payload),
+                    });
+                    if (g.ok) {
+                        const gd = await g.json();
+                        setCodigoGuardado(gd.codigo ?? null);
+                    }
+                } catch (e) {
+                    console.error('No se pudo guardar la cotización a confirmar', e);
+                }
+            }
         } catch {
             setResultado({
                 estado: 'ATENCION_PERSONALIZADA',
@@ -484,6 +522,43 @@ export default function CotizadorIndex() {
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Cotizador SET" />
+
+            {popupVisible && popup && (
+                <div
+                    role="dialog"
+                    aria-modal="true"
+                    id="cotizador-popup"
+                    style={{
+                        position: 'fixed', inset: 0, zIndex: 100, display: 'flex',
+                        alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(0,0,0,0.55)', padding: 16,
+                    }}
+                    onClick={() => setPopupVisible(false)}
+                >
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        style={{
+                            background: 'var(--background, #fff)', color: 'inherit', borderRadius: 16,
+                            padding: 24, maxWidth: 480, width: '100%',
+                            boxShadow: '0 20px 50px rgba(0,0,0,0.3)',
+                        }}
+                    >
+                        {popup.titulo && <h2 style={{ fontSize: 20, fontWeight: 700, marginBottom: 8 }}>{popup.titulo}</h2>}
+                        {popup.mensaje && <p style={{ whiteSpace: 'pre-line', marginBottom: 16 }}>{popup.mensaje}</p>}
+                        <button
+                            id="cotizador-popup-cerrar"
+                            type="button"
+                            onClick={() => setPopupVisible(false)}
+                            style={{
+                                padding: '8px 20px', borderRadius: 8, border: 0, cursor: 'pointer',
+                                fontWeight: 600, background: '#e11d48', color: '#fff',
+                            }}
+                        >
+                            Entendido
+                        </button>
+                    </div>
+                </div>
+            )}
 
             <div className="cot-page">
                 {/* Título de sección */}
@@ -573,19 +648,36 @@ export default function CotizadorIndex() {
                                 {erroresForm['destino.provincia_id'] && (
                                     <p className="cot-error">{erroresForm['destino.provincia_id']}</p>
                                 )}
+                                {/* Modalidad de entrega — mutuamente excluyente */}
                                 <div className="cot-checks">
-                                    <CheckboxField
-                                        id="solicita-entrega"
-                                        label="Entrega a domicilio"
-                                        checked={solicitaEntrega}
-                                        onChange={setSolicitaEntrega}
-                                    />
-                                    <CheckboxField
-                                        id="retira-en-sucursal"
-                                        label="Retira en sucursal"
-                                        checked={retiraEnSucursal}
-                                        onChange={setRetiraEnSucursal}
-                                    />
+                                    <p className="cot-label" style={{ marginBottom: '0.5rem' }}>
+                                        Modalidad de entrega <span className="cot-required">*</span>
+                                    </p>
+                                    <label htmlFor="modalidad-entrega-domicilio" className="cot-checkbox-label">
+                                        <input
+                                            id="modalidad-entrega-domicilio"
+                                            type="radio"
+                                            name="modalidad_destino"
+                                            className="cot-checkbox"
+                                            checked={modalidadDestino === 'entrega_domicilio'}
+                                            onChange={() => setModalidadDestino('entrega_domicilio')}
+                                        />
+                                        <span>Entrega a domicilio</span>
+                                    </label>
+                                    <label htmlFor="modalidad-retiro-sucursal" className="cot-checkbox-label">
+                                        <input
+                                            id="modalidad-retiro-sucursal"
+                                            type="radio"
+                                            name="modalidad_destino"
+                                            className="cot-checkbox"
+                                            checked={modalidadDestino === 'retiro_sucursal'}
+                                            onChange={() => setModalidadDestino('retiro_sucursal')}
+                                        />
+                                        <span>Retiro en sucursal</span>
+                                    </label>
+                                    {erroresForm['destino.modalidad'] && (
+                                        <p className="cot-error">{erroresForm['destino.modalidad']}</p>
+                                    )}
                                 </div>
                             </div>
                         </section>
@@ -743,7 +835,7 @@ export default function CotizadorIndex() {
                             {cargando ? (
                                 <span className="cot-btn-calcular__spinner" aria-hidden="true" />
                             ) : null}
-                            {cargando ? 'Calculando…' : 'CALCULAR COTIZACIÓN'}
+                            {cargando ? 'Procesando…' : 'REALIZAR COTIZACIÓN'}
                         </button>
                     </form>
 
@@ -754,6 +846,7 @@ export default function CotizadorIndex() {
                                 resultado={resultado}
                                 origenNombre={origenNombre}
                                 destinoNombre={destinoNombre}
+                                codigo={codigoGuardado}
                             />
                         </aside>
                     )}

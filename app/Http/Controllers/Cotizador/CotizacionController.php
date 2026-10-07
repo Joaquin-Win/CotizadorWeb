@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Cotizador;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Cotizador\CotizarRequest;
 use App\Http\Requests\Cotizador\GuardarCotizacionRequest;
+use App\Models\ConfiguracionCotizador;
 use App\Models\Cotizacion;
 use App\Models\CotizacionLead;
 use App\Models\EstadoCotizacion;
@@ -29,7 +30,13 @@ class CotizacionController extends Controller
      */
     public function index(): Response
     {
-        return Inertia::render('cotizador/index');
+        return Inertia::render('cotizador/index', [
+            'popup' => [
+                'activo'  => ConfiguracionCotizador::texto('popup_activo', '0') === '1',
+                'titulo'  => ConfiguracionCotizador::texto('popup_titulo'),
+                'mensaje' => ConfiguracionCotizador::texto('popup_mensaje'),
+            ],
+        ]);
     }
 
     /**

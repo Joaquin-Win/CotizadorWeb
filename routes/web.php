@@ -100,6 +100,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         // Usuarios internos SET
         Route::resource('usuarios', UsuarioController::class)->except(['show']);
+        Route::put('usuarios/{usuario}/margenes', [UsuarioController::class, 'updateMargenes'])->name('admin.usuarios.margenes');
+        Route::post('usuarios/{usuario}/toggle-activo', [UsuarioController::class, 'toggleActivo'])->name('admin.usuarios.toggle');
 
         // Tarifas
         Route::resource('tarifas', TarifaController::class);

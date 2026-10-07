@@ -133,6 +133,15 @@ export default function CotizadorConfiguracion({
         configuraciones['iva_porcentaje']?.valor ?? '0'
     );
     const [costos, setCostos] = useState<CostoAdicional[]>(initialCostos);
+    const [popupActivo, setPopupActivo] = useState(
+        configuraciones['popup_activo']?.valor === '1'
+    );
+    const [popupTitulo, setPopupTitulo] = useState(
+        configuraciones['popup_titulo']?.valor ?? ''
+    );
+    const [popupMensaje, setPopupMensaje] = useState(
+        configuraciones['popup_mensaje']?.valor ?? ''
+    );
     const [guardandoPrecios, setGuardandoPrecios] = useState(false);
     const [mostrarModalNuevoCosto, setMostrarModalNuevoCosto] = useState(false);
     const [nuevoCosto, setNuevoCosto] = useState({
@@ -152,6 +161,9 @@ export default function CotizadorConfiguracion({
             {
                 seguro_porcentaje: seguroPorcentaje,
                 iva_porcentaje: ivaPorcentaje,
+                popup_activo: popupActivo,
+                popup_titulo: popupTitulo,
+                popup_mensaje: popupMensaje,
                 costos: costos.map((c) => ({
                     id: c.id,
                     monto: c.monto,
@@ -561,6 +573,46 @@ export default function CotizadorConfiguracion({
                                     </div>
                                     <span className="text-xs text-muted-foreground">0% = tarifa final</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        {/* Popup informativo del cotizador */}
+                        <div className="rounded-xl border bg-card p-6 shadow-xs flex flex-col gap-4">
+                            <div className="flex items-center justify-between gap-3">
+                                <div>
+                                    <h3 className="font-semibold text-sm">Popup informativo del cotizador</h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        Mensaje que se muestra al usuario al ingresar al cotizador.
+                                    </p>
+                                </div>
+                                <label className="flex items-center gap-2 text-xs font-semibold cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={popupActivo}
+                                        onChange={(e) => setPopupActivo(e.target.checked)}
+                                    />
+                                    Activo
+                                </label>
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="popup-titulo">Título</Label>
+                                <Input
+                                    id="popup-titulo"
+                                    maxLength={150}
+                                    value={popupTitulo}
+                                    onChange={(e) => setPopupTitulo(e.target.value)}
+                                />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="popup-mensaje">Mensaje</Label>
+                                <textarea
+                                    id="popup-mensaje"
+                                    rows={4}
+                                    maxLength={2000}
+                                    value={popupMensaje}
+                                    onChange={(e) => setPopupMensaje(e.target.value)}
+                                    className="w-full rounded-md border bg-background px-3 py-2 text-sm"
+                                />
                             </div>
                         </div>
 
