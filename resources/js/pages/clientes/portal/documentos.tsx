@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Download, FileText, Plus, Trash2, Upload } from 'lucide-react';
+import { Download, Eye, FileText, Plus, Trash2, Upload } from 'lucide-react';
 import PortalSidebar from '@/components/portal-sidebar';
 import { Button } from '@/components/ui/button';
 import {
@@ -21,7 +21,7 @@ import { nombreCliente, type PortalCliente } from '@/types/portal';
 type Props = {
     cliente: PortalCliente;
     esAdmin: boolean;
-    documentos: { id: number; numero_documento: string; fecha: string; tipo: { nombre: string; codigo: string } }[];
+    documentos: { id: number; numero_documento: string; fecha: string; es_imagen: boolean; tipo: { nombre: string; codigo: string } }[];
     tipos: { id: number; nombre: string; codigo: string }[];
 };
 
@@ -64,13 +64,13 @@ export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }
             <Head title={`Documentos · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
-                <div className="mx-auto flex max-w-[1400px] gap-5 px-4 py-5">
-                    <PortalSidebar clienteId={cliente.id} nombre={nombre} active="documentos" esAdmin={esAdmin} />
+                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:gap-5 md:py-5">
+                    <PortalSidebar clienteId={cliente.id} nombre={nombre} cuit={cliente.cuit} tipo={cliente.tipoCliente?.nombre ?? null} active="documentos" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center justify-between gap-3">
                             <div>
-                                <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900">
+                                <h1 className="flex items-center gap-2 text-xl font-extrabold text-slate-900 md:text-2xl">
                                     <FileText className="h-5 w-5 text-[#0A3D91]" />
                                     Documentos
                                 </h1>
@@ -170,22 +170,25 @@ export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }
                         </div>
 
                         <div className="mt-4 flex flex-wrap gap-2">
-                            {categorias.map((c) => (
-                                <button
-                                    key={c}
-                                    onClick={() => setFiltro(c)}
-                                    className={
-                                        filtro === c
-                                            ? 'rounded-lg bg-[#0A3D91] px-3 py-1.5 text-xs font-bold text-white'
-                                            : 'rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-[#0A3D91]/40'
-                                    }
-                                >
-                                    {c === 'todos' ? 'Todos' : `${c}s`}
-                                </button>
-                            ))}
+                            {categorias.map((c) => {
+                                const n = c === 'todos' ? documentos.length : documentos.filter((d) => categoriaDe(d.tipo.codigo) === c).length;
+                                return (
+                                    <button
+                                        key={c}
+                                        onClick={() => setFiltro(c)}
+                                        className={
+                                            filtro === c
+                                                ? 'rounded-lg bg-[#0A3D91] px-3 py-1.5 text-xs font-bold text-white'
+                                                : 'rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:border-[#0A3D91]/40'
+                                        }
+                                    >
+                                        {c === 'todos' ? `Todos (${n})` : `${c}s (${n})`}
+                                    </button>
+                                );
+                            })}
                         </div>
 
-                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4">
+                        <div className="mt-4 rounded-xl border border-slate-200 bg-white p-4 md:p-6">
                             {visibles.length === 0 ? (
                                 <div className="flex flex-col items-center py-10 text-center">
                                     <Upload className="h-8 w-8 text-slate-300" />
@@ -217,6 +220,33 @@ export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }
                                                 <td className="text-slate-500">{doc.fecha}</td>
                                                 <td>
                                                     <div className="flex items-center gap-1">
+                                                        {doc.es_imagen && (
+                                                            <Dialog>
+                                                                <DialogTrigger asChild>
+                                                                    <button className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 font-medium text-slate-500 hover:border-[#0A3D91]/40">
+                                                                        <Eye className="h-3 w-3" />
+                                                                        Ver
+                                                                    </button>
+                                                                </DialogTrigger>
+                                                                <DialogContent className="sm:max-w-2xl">
+                                                                    <DialogHeader>
+                                                                        <DialogTitle>
+                                                                            {doc.tipo.nombre} {doc.numero_documento}
+                                                                        </DialogTitle>
+                                                                    </DialogHeader>
+                                                                    <img
+                                                                        src={`${base}/documentos/${doc.id}/descargar?inline=1`}
+                                                                        alt={`${doc.tipo.nombre} ${doc.numero_documento}`}
+                                                                        className="max-h-[70vh] w-full rounded-lg border border-slate-200 object-contain"
+                                                                    />
+                                                                    <DialogFooter>
+                                                                        <DialogClose asChild>
+                                                                            <Button variant="outline">Cerrar</Button>
+                                                                        </DialogClose>
+                                                                    </DialogFooter>
+                                                                </DialogContent>
+                                                            </Dialog>
+                                                        )}
                                                         <a
                                                             href={`${base}/documentos/${doc.id}/descargar`}
                                                             className="flex items-center gap-1 rounded-md border border-slate-200 px-2 py-1 font-medium text-slate-500 hover:border-[#0A3D91]/40"
