@@ -13,6 +13,11 @@ return new class extends Migration {
             CREATE TABLE IF NOT EXISTS `cotizaciones` (
                 `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
 
+                `origen_id` SMALLINT UNSIGNED DEFAULT NULL,
+                `tipo_cliente_id` SMALLINT UNSIGNED DEFAULT NULL,
+                `cliente_id` BIGINT UNSIGNED DEFAULT NULL,
+                `usuario_id` BIGINT UNSIGNED DEFAULT NULL,
+                `acuerdo_id` BIGINT UNSIGNED DEFAULT NULL,
                 `estado_id` SMALLINT UNSIGNED NOT NULL,
 
                 `moneda` VARCHAR(3) NOT NULL DEFAULT 'ARS',
@@ -25,12 +30,16 @@ return new class extends Migration {
 
                 `algoritmo_version` VARCHAR(20) DEFAULT NULL,
 
-                `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
                 `updated_at` TIMESTAMP NULL DEFAULT NULL,
+                `deleted_at` TIMESTAMP NULL DEFAULT NULL,
 
                 PRIMARY KEY (`id`, `created_at`),
 
                 KEY `idx_cotizaciones_estado_id` (`estado_id`),
+                KEY `idx_cotizaciones_cliente_id` (`cliente_id`),
+                KEY `idx_cotizaciones_usuario_id` (`usuario_id`),
+                KEY `idx_cotizaciones_acuerdo_id` (`acuerdo_id`),
                 KEY `idx_cotizaciones_created_at` (`created_at`),
                 KEY `idx_cotizaciones_margen_id` (`margen_id`)
             )

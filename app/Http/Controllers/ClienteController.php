@@ -143,7 +143,13 @@ class ClienteController extends Controller
         return Inertia::render('clientes/portal/documentos', [
             'cliente'    => $cliente,
             'esAdmin'    => auth()->user()?->esAdmin() ?? false,
-            'documentos' => $cliente->documentos()->with('tipo')->latest()->get(),
+            'documentos' => $cliente->documentos()->with('tipo')->latest()->get()->map(fn ($documento) => [
+                'id' => $documento->id,
+                'numero_documento' => $documento->numero_documento,
+                'fecha' => $documento->fecha,
+                'tipo' => ['nombre' => $documento->tipo->nombre, 'codigo' => $documento->tipo->codigo],
+                'es_imagen' => in_array(strtolower(pathinfo($documento->url_archivo, PATHINFO_EXTENSION)), ['png', 'jpg', 'jpeg']),
+            ])->values(),
             'tipos'      => \App\Models\TipoDocumento::where('activo', true)->orderBy('nombre')->get(['id', 'nombre', 'codigo']),
         ]);
     }
