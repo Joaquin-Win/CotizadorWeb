@@ -84,8 +84,6 @@ class CotizacionRepository
                     'peso_kg'              => $bultoData['peso_kg'],
                     'cantidad'             => $bultoData['cantidad'],
                     'palletizado'          => $bultoData['palletizado'] ?? false,
-                    'pallets_equivalentes' => $bultoData['pallets_equivalentes'] ?? null,
-                    'costo_individual'     => $bultoData['costo_individual'] ?? null,
                 ]);
             }
 

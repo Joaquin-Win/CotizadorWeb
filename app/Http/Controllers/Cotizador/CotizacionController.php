@@ -42,17 +42,20 @@ class CotizacionController extends Controller
     /**
      * Calcula el precio de un envío.
      *
-     * No persiste nada — solo devuelve el resultado del motor.
-     * La persistencia ocurre en guardar().
+     * Si el usuario está autenticado (admin o cliente), también persiste
+     * la cotización automáticamente y devuelve el código generado.
+     *
+     * Para usuarios anónimos: solo calcula, sin persistencia.
      *
      * NUNCA acepta precios calculados desde el browser.
      */
     public function calcular(CotizarRequest $request): JsonResponse
     {
         // Identificar cliente autenticado si lo hay
-        $cliente  = auth()->user()?->cliente;
-        $clienteId  = $cliente?->id;
-        $usuarioId  = auth()->id();
+        $usuario       = auth()->user();
+        $cliente       = $usuario?->cliente;
+        $clienteId     = $cliente?->id;
+        $usuarioId     = $usuario?->id;
         $tipoClienteId = $cliente?->tipo_cliente_id ?? $this->tipoPublicoId();
 
         // Construir el DTO desde el request validado
@@ -62,8 +65,63 @@ class CotizacionController extends Controller
         // Ejecutar el motor
         $resultado = $this->cotizadorService->calcular($dto);
 
+        $codigoGuardado = null;
+
+        // Persistir automáticamente si el usuario está autenticado
+        if ($usuarioId !== null) {
+            try {
+                $estadoCodigo = $resultado->estado === 'ATENCION_PERSONALIZADA'
+                    ? 'EN_REVISION'
+                    : 'BORRADOR';
+
+                $estadoId = EstadoCotizacion::where('codigo', $estadoCodigo)->value('id')
+                         ?? EstadoCotizacion::first()?->id
+                         ?? 1;
+
+                $codigo = $this->codigoGenerator->generar();
+
+                $validated = $request->validated();
+                $payload = [
+                    'origen_id'            => $validated['origen_cotizacion_id'] ?? 1,
+                    'tipo_cliente_id'      => $tipoClienteId,
+                    'cliente_id'           => $clienteId,
+                    'usuario_id'           => $usuarioId,
+                    'estado_id'            => $estadoId,
+                    'provincia_origen_id'  => $validated['origen']['provincia_id'],
+                    'localidad_origen_id'  => $validated['origen']['localidad_id'] ?? null,
+                    'provincia_destino_id' => $validated['destino']['provincia_id'],
+                    'localidad_destino_id' => $validated['destino']['localidad_id'] ?? null,
+                    'solicita_retiro'      => $validated['origen']['solicita_retiro'] ?? false,
+                    'solicita_entrega'     => $validated['destino']['solicita_entrega'] ?? false,
+                    'retira_en_sucursal'   => $validated['destino']['retiro_en_sucursal'] ?? false,
+                    'valor_declarado'      => $validated['valor_declarado'] ?? null,
+                    'bultos'               => array_map(fn ($b) => [
+                        'tipo_bulto_id' => $b['tipo_bulto_id'],
+                        'largo_cm'      => $b['largo_cm'],
+                        'ancho_cm'      => $b['ancho_cm'],
+                        'alto_cm'       => $b['alto_cm'],
+                        'peso_kg'       => $b['peso_kg'],
+                        'cantidad'      => $b['cantidad'],
+                        'palletizado'   => $b['palletizado'] ?? false,
+                    ], $validated['bultos']),
+                ];
+
+                $this->repository->guardar($payload, $resultado, $codigo);
+                $codigoGuardado = $codigo;
+            } catch (\Throwable $e) {
+                // Si falla la persistencia, la cotización igual se muestra
+                // Solo loguear el error, no interrumpir la respuesta
+                \Illuminate\Support\Facades\Log::error('Error al persistir cotización calculada', [
+                    'usuario_id' => $usuarioId,
+                    'error'      => $e->getMessage(),
+                ]);
+            }
+        }
+
         return response()->json([
-            'status'   => $resultado->estado,
+            'status'    => $resultado->estado,
+            'guardado'  => $codigoGuardado !== null,
+            'codigo'    => $codigoGuardado,
             'resultado' => [
                 'estado'              => $resultado->estado,
                 'costo_troncal'       => $resultado->costoTroncal,

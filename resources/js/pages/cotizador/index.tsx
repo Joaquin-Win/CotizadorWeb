@@ -479,8 +479,15 @@ export default function CotizadorIndex({ popup }: { popup?: PopupConfig }) {
             const data = await resp.json();
             setResultado(data.resultado as ResultadoCotizacion);
 
-            // "Cotización a confirmar": persistir para que SET pueda revisarla
-            if (data.resultado?.estado === 'ATENCION_PERSONALIZADA') {
+            // Si el backend ya persistió la cotización (usuario autenticado),
+            // capturar el código directamente de la respuesta
+            if (data.guardado && data.codigo) {
+                setCodigoGuardado(data.codigo);
+            }
+
+            // Solo guardar manualmente si es ATENCION_PERSONALIZADA Y
+            // el backend no la guardó aún (usuario anónimo)
+            if (data.resultado?.estado === 'ATENCION_PERSONALIZADA' && !data.guardado) {
                 try {
                     const g = await fetch('/cotizador/guardar', {
                         method: 'POST',
