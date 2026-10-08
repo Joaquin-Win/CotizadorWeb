@@ -4,6 +4,8 @@ namespace App\Auth;
 
 use App\Models\Cliente;
 use Illuminate\Auth\EloquentUserProvider;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Solo deja entrar a cuentas activas. La empresa inhabilitada entra
@@ -33,7 +35,22 @@ class ActivosUserProvider extends EloquentUserProvider
 
         $user = $query->where('activo', true)->first();
 
-        if ($user && $user->cliente_id && ! $this->empresaHabilitada($user->cliente_id)) {
+        if (! $user) {
+            return null;
+        }
+
+        // Credenciales válidas pero empresa inhabilitada sin pendientes:
+        // mensaje propio en vez del genérico de Fortify.
+        if ($user->cliente_id
+            && isset($credentials['password'])
+            && Hash::check($credentials['password'], $user->password)
+            && ! $this->empresaHabilitada($user->cliente_id)) {
+            throw ValidationException::withMessages([
+                'email' => 'Esta cuenta está deshabilitada, por favor comuníquese con el soporte de SET.',
+            ]);
+        }
+
+        if ($user->cliente_id && ! $this->empresaHabilitada($user->cliente_id)) {
             return null;
         }
 
