@@ -79,6 +79,9 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
         email_facturacion: '',
         telefono: '',
         direccion: '',
+        email_acceso: '',
+        password: '',
+        password_confirmation: '',
     });
 
     const filtered = clientes.filter((c) => {
@@ -217,6 +220,47 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                                             value={data.direccion}
                                             onChange={(e) => setData('direccion', e.target.value)}
                                         />
+                                    </div>
+                                </div>
+
+                                <div className="rounded-lg border border-dashed p-3">
+                                    <p className="mb-3 text-sm font-semibold">Acceso a la plataforma</p>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="email_acceso">Email de acceso *</Label>
+                                        <Input
+                                            id="email_acceso"
+                                            type="email"
+                                            value={data.email_acceso}
+                                            onChange={(e) => setData('email_acceso', e.target.value)}
+                                            placeholder="usuario@empresa.com"
+                                        />
+                                        {errors.email_acceso && (
+                                            <p className="text-destructive text-xs">{errors.email_acceso}</p>
+                                        )}
+                                    </div>
+                                    <div className="mt-3 grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="password">Contraseña *</Label>
+                                            <Input
+                                                id="password"
+                                                type="password"
+                                                value={data.password}
+                                                onChange={(e) => setData('password', e.target.value)}
+                                                placeholder="Mínimo 8 caracteres"
+                                            />
+                                            {errors.password && (
+                                                <p className="text-destructive text-xs">{errors.password}</p>
+                                            )}
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="password_confirmation">Repetir contraseña *</Label>
+                                            <Input
+                                                id="password_confirmation"
+                                                type="password"
+                                                value={data.password_confirmation}
+                                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
 

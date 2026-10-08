@@ -21,16 +21,9 @@ function makeDtoConTramos(
     ?int $localidadOrigenId  = null,
     ?int $localidadDestinoId = null,
 ): CotizacionRequestData {
-    $origen              = new OrigenData();
-    $origen->provinciaId = 1;
-    $origen->localidadId = $localidadOrigenId;
-    $origen->solicitaRetiro = $solicitaRetiro;
+    $origen = new OrigenData(provinciaId: 1, localidadId: $localidadOrigenId, solicitaRetiro: $solicitaRetiro);
 
-    $destino                  = new DestinoData();
-    $destino->provinciaId     = 2;
-    $destino->localidadId     = $localidadDestinoId;
-    $destino->solicitaEntrega = $solicitaEntrega;
-    $destino->retiroEnSucursal = $retiraEnSucursal;
+    $destino = new DestinoData(provinciaId: 2, localidadId: $localidadDestinoId, solicitaEntrega: $solicitaEntrega, retiroEnSucursal: $retiraEnSucursal);
 
     $dto         = new CotizacionRequestData();
     $dto->origen = $origen;

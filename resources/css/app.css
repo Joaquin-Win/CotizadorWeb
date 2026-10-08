@@ -166,12 +166,12 @@
     }
 }
 
-/* ═══════════════════════════════════════════════════════════════════════════
-   COTIZADOR — estilos de página
-   Utiliza los tokens del diseño SET (--color-brand-green, etc.)
-   ═══════════════════════════════════════════════════════════════════════════ */
+/* â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+   COTIZADOR â€” estilos de pÃ¡gina
+   Utiliza los tokens del diseÃ±o SET (--color-brand-green, etc.)
+   â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â• */
 
-/* Página contenedora */
+/* PÃ¡gina contenedora */
 .cot-page {
     max-width: 1200px;
     margin: 0 auto;
@@ -214,7 +214,7 @@
     gap: 1.25rem;
 }
 
-/* Tarjeta de sección (Origen, Destino, Carga, Adicionales) */
+/* Tarjeta de secciÃ³n (Origen, Destino, Carga, Adicionales) */
 .cot-card {
     background: #fff;
     border: 1px solid var(--color-border, #e5e7eb);
@@ -352,7 +352,7 @@
     margin-top: 0.125rem;
 }
 
-/* ─── Bultos ─── */
+/* â”€â”€â”€ Bultos â”€â”€â”€ */
 .cot-bulto {
     background: var(--color-canvas, #f5f8fc);
     border: 1px solid var(--color-border, #e5e7eb);
@@ -387,7 +387,7 @@
     }
 }
 
-/* Botón quitar bulto */
+/* BotÃ³n quitar bulto */
 .cot-btn-quitar {
     background: none;
     border: 1px solid var(--color-border, #e5e7eb);
@@ -409,7 +409,7 @@
     border-color: transparent;
 }
 
-/* Botón agregar bulto */
+/* BotÃ³n agregar bulto */
 .cot-btn-agregar {
     margin-top: 0.25rem;
     background: none;
@@ -429,7 +429,7 @@
     background: rgb(0 168 107 / 6%);
 }
 
-/* ─── Botón principal CALCULAR ─── */
+/* â”€â”€â”€ BotÃ³n principal CALCULAR â”€â”€â”€ */
 .cot-btn-calcular {
     display: flex;
     align-items: center;
@@ -463,7 +463,7 @@
     cursor: not-allowed;
 }
 
-/* Spinner del botón */
+/* Spinner del botÃ³n */
 .cot-btn-calcular__spinner {
     width: 1.1rem;
     height: 1.1rem;
@@ -478,7 +478,7 @@
     to { transform: rotate(360deg); }
 }
 
-/* ─── Aside / Panel de resultado ─── */
+/* â”€â”€â”€ Aside / Panel de resultado â”€â”€â”€ */
 .cot-aside {
     position: sticky;
     top: 1.5rem;
@@ -561,7 +561,7 @@
     gap: 1rem;
 }
 
-/* Sección dentro del resultado */
+/* SecciÃ³n dentro del resultado */
 .cot-seccion {
     display: flex;
     flex-direction: column;
@@ -647,7 +647,7 @@
     line-height: 1;
 }
 
-/* Panel de atención personalizada */
+/* Panel de atenciÃ³n personalizada */
 .cot-atencion {
     background: #fff;
     padding: 2rem 1.5rem;
@@ -675,3 +675,14 @@
     max-width: 30ch;
     line-height: 1.6;
 }
+
+/* Portal del cliente: wizard contenido, sin titulo duplicado */
+.portal-cotizador .cot-page { max-width: none; margin: 0; padding: 0; }
+.portal-cotizador .cot-layout { grid-template-columns: minmax(0, 1fr); max-width: 720px; margin: 0 auto; }
+.portal-cotizador .cot-page__titulo { display: none; }
+@media (max-width: 640px) {
+    .portal-cotizador .cot-row { grid-template-columns: minmax(0, 1fr); }
+    .portal-cotizador .cot-field { min-width: 0; }
+    .portal-cotizador .cot-select, .portal-cotizador .cot-input { max-width: 100%; }
+}
+
