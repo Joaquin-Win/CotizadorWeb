@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration {
   /**
@@ -9,6 +11,29 @@ return new class extends Migration {
    */
   public function up(): void
   {
+    // En SQLite (tests) no hay particiones: tabla simple equivalente.
+    if (DB::getDriverName() !== 'mysql') {
+        Schema::create('cotizaciones', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedSmallInteger('origen_id')->nullable();
+            $table->unsignedSmallInteger('tipo_cliente_id')->nullable();
+            $table->unsignedBigInteger('cliente_id')->nullable();
+            $table->unsignedBigInteger('usuario_id')->nullable();
+            $table->unsignedBigInteger('acuerdo_id')->nullable();
+            $table->unsignedSmallInteger('estado_id');
+            $table->string('moneda', 3)->default('ARS');
+            $table->decimal('subtotal', 15, 2)->default(0);
+            $table->decimal('costos_adicionales', 15, 2)->default(0);
+            $table->decimal('total', 15, 2)->default(0);
+            $table->unsignedBigInteger('margen_id')->nullable();
+            $table->string('algoritmo_version', 20)->nullable();
+            $table->timestamps();
+            $table->softDeletes();
+        });
+
+        return;
+    }
+
     DB::statement("
             CREATE TABLE IF NOT EXISTS `cotizaciones` (
                 `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

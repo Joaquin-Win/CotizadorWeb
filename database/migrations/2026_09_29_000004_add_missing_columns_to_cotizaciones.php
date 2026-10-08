@@ -1,7 +1,9 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Alinea la tabla cotizaciones con el schema real.
@@ -22,6 +24,23 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        // En SQLite (tests) se usa el schema builder; en MySQL el SQL directo.
+        if (DB::getDriverName() !== 'mysql') {
+            Schema::table('cotizaciones', function (Blueprint $table) {
+                if (! Schema::hasColumn('cotizaciones', 'codigo')) {
+                    $table->string('codigo', 30)->default('');
+                }
+                if (! Schema::hasColumn('cotizaciones', 'created_by')) {
+                    $table->unsignedBigInteger('created_by')->nullable();
+                }
+                if (! Schema::hasColumn('cotizaciones', 'updated_by')) {
+                    $table->unsignedBigInteger('updated_by')->nullable();
+                }
+            });
+
+            return;
+        }
+
         $columns = DB::select("
             SHOW COLUMNS FROM `cotizaciones`
         ");

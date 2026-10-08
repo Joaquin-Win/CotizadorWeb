@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 /**
@@ -138,6 +139,16 @@ return new class extends Migration
             $table->boolean('activo')->default(true);
             $table->timestamps();
         });
+
+        // Roles base: los exigen las FK de usuarios. Idempotente.
+        DB::table('roles')->updateOrInsert(
+            ['codigo' => 'ADMIN'],
+            ['nombre' => 'Administrador', 'es_interno' => true, 'activo' => true]
+        );
+        DB::table('roles')->updateOrInsert(
+            ['codigo' => 'CLIENTE'],
+            ['nombre' => 'Cliente', 'es_interno' => false, 'activo' => true]
+        );
 
     }
 
