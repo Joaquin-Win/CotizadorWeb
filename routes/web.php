@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\GeografiaController;
 use App\Http\Controllers\ClienteController;
 use App\Http\Controllers\Cotizador\CotizacionController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Admin\CotizacionesAdminController;
 use App\Http\Controllers\Admin\CotizadorConfiguracionController;
 use App\Http\Controllers\Admin\MargenGananciaController;
 use App\Http\Controllers\Admin\TarifaController;
@@ -97,6 +98,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Panel Admin SET (solo rol ADMIN)
     // -------------------------------------------------------
     Route::prefix('admin')->name('admin.')->middleware('can:esAdmin')->group(function () {
+
+        // Cotizaciones administrativas (solo admin)
+        Route::get('cotizaciones',                         [CotizacionesAdminController::class, 'index'])->name('cotizaciones.index');
+        Route::post('cotizaciones/{cotizacion}/confirmar', [CotizacionesAdminController::class, 'confirmar'])->name('cotizaciones.confirmar');
 
         // Usuarios internos SET
         Route::resource('usuarios', UsuarioController::class)->except(['show']);

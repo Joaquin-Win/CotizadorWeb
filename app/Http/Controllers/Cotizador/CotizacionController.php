@@ -235,7 +235,16 @@ class CotizacionController extends Controller
     public function resultado(string $codigo): Response
     {
         $cotizacion = Cotizacion::where('codigo', $codigo)
-            ->with(['envio', 'bultos', 'resultados', 'costosAdicionales.costoAdicional', 'lead'])
+            ->with([
+                'estado:id,codigo,nombre,es_final',
+                'envio.provinciaOrigen:id,nombre',
+                'envio.provinciaDestino:id,nombre',
+                'bultos',
+                'resultados',
+                'costosAdicionales.costoAdicional',
+                'lead',
+                'usuario:id,name,email',
+            ])
             ->firstOrFail();
 
         $resultado = $cotizacion->resultados()->latest('numero_version')->first();

@@ -2,6 +2,7 @@ import { Link, usePage } from '@inertiajs/react';
 import {
     Building2,
     Calculator,
+    ClipboardList,
     LayoutGrid,
     MapPin,
     Settings2,
@@ -34,6 +35,8 @@ export function AppSidebar() {
     const { auth } = usePage().props as unknown as { auth: { user: AuthUser } };
     const user = auth?.user ?? null;
     const esCliente = user !== null && user.rol_id === 2 && user.cliente_id !== null;
+    /** Administrador interno SET (rol_id = 1) */
+    const esAdmin = user !== null && user.rol_id === 1;
 
     const plataformaItems: NavItem[] = esCliente
         ? [
@@ -67,6 +70,16 @@ export function AppSidebar() {
                   href: '/clientes',
                   icon: Building2,
               },
+              // Solo visible para administradores (rol_id = 1)
+              ...(esAdmin
+                  ? [
+                        {
+                            title: 'Cotizaciones',
+                            href: '/admin/cotizaciones',
+                            icon: ClipboardList,
+                        } satisfies NavItem,
+                    ]
+                  : []),
           ]
         : [];
 
