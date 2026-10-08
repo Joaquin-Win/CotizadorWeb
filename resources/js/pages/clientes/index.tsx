@@ -1,17 +1,25 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Building2, Eye, Plus, Search, Trash2 } from 'lucide-react';
+import { Building2, Eye, Plus, Search, UserX } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
+    DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
     Select,
     SelectContent,
@@ -70,6 +78,7 @@ const estadoBadgeClass = (codigo: string | undefined) => {
 export default function ClientesIndex({ clientes, tipos }: Props) {
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
+    const [inhabilitar, setInhabilitar] = useState<Cliente | null>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         razon_social: '',
@@ -101,8 +110,8 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
     };
 
     const destroy = (id: number) => {
-        if (!confirm('¿Eliminar este cliente?')) return;
-        router.delete(`/clientes/${id}`);
+        router.put(`/clientes/${id}/inactivar`, {}, { preserveScroll: true });
+        setInhabilitar(null);
     };
 
     return (
@@ -340,20 +349,48 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                                             <Eye className="h-4 w-4" />
                                         </Link>
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        title="Eliminar"
-                                        onClick={() => destroy(cliente.id)}
-                                    >
-                                        <Trash2 className="text-destructive h-4 w-4" />
-                                    </Button>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() => setInhabilitar(cliente)}
+                                            >
+                                                <UserX className="text-destructive h-4 w-4" />
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>Inhabilitar cliente</TooltipContent>
+                                    </Tooltip>
                                 </div>
                             </div>
                         ))
                     )}
                 </div>
             </div>
+
+            <Dialog open={inhabilitar !== null} onOpenChange={(o) => !o && setInhabilitar(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Inhabilitar cliente</DialogTitle>
+                        <DialogDescription>
+                            ¿Seguro que quieres inhabilitar a {inhabilitar?.razon_social}? Dejará de
+                            verse en Clientes y no podrá entrar a la plataforma, salvo que tenga
+                            operaciones pendientes.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <DialogClose asChild>
+                            <Button variant="secondary">Cancelar</Button>
+                        </DialogClose>
+                        <Button
+                            className="bg-destructive hover:bg-destructive/90"
+                            onClick={() => inhabilitar && destroy(inhabilitar.id)}
+                        >
+                            Sí, inhabilitar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }
