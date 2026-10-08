@@ -50,6 +50,7 @@ class CotizacionRepository
                 'usuario_id'      => $payload['usuario_id'] ?? null,
                 'acuerdo_id'      => $resultado->acuerdoId ?? null,
                 'estado_id'       => $payload['estado_id'],
+                'created_by'      => $payload['usuario_id'] ?? null, // registra el creador (admin o cliente)
             ]);
 
             // 2. Código de cotización (tabla cotizacion_codigos)

@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\ConfiguracionCotizador;
 use App\Models\CostoAdicional;
+use App\Models\Cotizacion;
+use App\Models\EstadoCotizacion;
 use App\Models\Localidad;
 use App\Models\Proveedor;
 use App\Models\Provincia;
@@ -14,6 +16,7 @@ use App\Models\UnidadMedida;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -143,6 +146,25 @@ class CotizadorConfiguracionController extends Controller
                 ]);
             }
         }
+
+        // ----------------------------------------------------------------
+        // Registrar timestamp de actualización y marcar cotizaciones
+        // que requieren reconfirmación.
+        // ----------------------------------------------------------------
+        $ahora = now();
+
+        ConfiguracionCotizador::updateOrCreate(
+            ['clave' => 'parametros_updated_at'],
+            [
+                'valor'       => $ahora->toIso8601String(),
+                'tipo'        => 'STRING',
+                'descripcion' => 'Timestamp de la última actualización de precios/parámetros.',
+                'grupo'       => 'sistema',
+                'editable'    => false,
+            ]
+        );
+
+        $this->marcarCotizacionesPendientesConfirmacion($ahora);
 
         return back()->with('success', 'Precios y parámetros actualizados correctamente.');
     }
@@ -320,5 +342,62 @@ class CotizadorConfiguracionController extends Controller
                 ? "Todas las localidades de {$provincia->nombre} fueron activadas."
                 : "Todas las localidades de {$provincia->nombre} fueron desactivadas."
         );
+    }
+
+    // ----------------------------------------------------------------
+    // Helpers privados
+    // ----------------------------------------------------------------
+
+    /**
+     * Busca cotizaciones en estados no finales cuyo último resultado fue
+     * calculado ANTES de la actualización de parámetros y las marca como
+     * PENDIENTE_CONFIRMACION.
+     *
+     * Solo afecta estados no finales: BORRADOR, ENVIADA, EN_REVISION.
+     * Nunca toca: ACEPTADA, RECHAZADA, VENCIDA, PENDIENTE_CONFIRMACION.
+     */
+    private function marcarCotizacionesPendientesConfirmacion(\Illuminate\Support\Carbon $actualizado_at): void
+    {
+        // ID del nuevo estado
+        $estadoPendiente = EstadoCotizacion::where('codigo', 'PENDIENTE_CONFIRMACION')->value('id');
+        if (! $estadoPendiente) {
+            return; // La migración no se ejecutó aún — no hacer nada
+        }
+
+        // IDs de estados no finales (excluyendo el propio PENDIENTE_CONFIRMACION)
+        $estadosNoFinales = EstadoCotizacion::where('es_final', false)
+            ->where('codigo', '!=', 'PENDIENTE_CONFIRMACION')
+            ->pluck('id')
+            ->toArray();
+
+        if (empty($estadosNoFinales)) {
+            return;
+        }
+
+        // Cotizaciones con estados no finales cuyo último resultado es más antiguo
+        // que la actualización de precios.
+        // Se usa una subconsulta para obtener el calculado_at del último resultado.
+        $cotizacionIds = DB::table('cotizacion_resultados as cr')
+            ->select('cr.cotizacion_id')
+            ->whereIn(
+                'cr.numero_version',
+                DB::raw('(SELECT MAX(cr2.numero_version) FROM cotizacion_resultados cr2 WHERE cr2.cotizacion_id = cr.cotizacion_id)')
+            )
+            ->where('cr.calculado_at', '<', $actualizado_at)
+            ->pluck('cotizacion_id')
+            ->toArray();
+
+        if (empty($cotizacionIds)) {
+            return;
+        }
+
+        // Actualizar solo las que están en estados no finales
+        Cotizacion::whereIn('id', $cotizacionIds)
+            ->whereIn('estado_id', $estadosNoFinales)
+            ->update([
+                'estado_id'  => $estadoPendiente,
+                'updated_by' => auth()->id(),
+                'updated_at' => now(),
+            ]);
     }
 }
