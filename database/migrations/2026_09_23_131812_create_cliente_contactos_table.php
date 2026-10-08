@@ -29,40 +29,9 @@ return new class extends Migration
             // no con constraint de BD (MySQL no soporta partial indexes).
         });
 
-        // Triggers BEFORE INSERT/UPDATE para garantizar 1 principal por cliente.
-        // Solo MySQL: SQLite (tests) no entiende esta sintaxis y no los necesita.
-        if (DB::getDriverName() === 'mysql') {
-        DB::unprepared("
-            CREATE TRIGGER trg_contacto_principal_ins
-            BEFORE INSERT ON cliente_contactos
-            FOR EACH ROW
-            BEGIN
-                IF NEW.es_principal = 1 THEN
-                    UPDATE cliente_contactos
-                    SET es_principal = 0
-                    WHERE cliente_id = NEW.cliente_id
-                      AND deleted_at IS NULL
-                      AND es_principal = 1;
-                END IF;
-            END
-        ");
-
-        DB::unprepared("
-            CREATE TRIGGER trg_contacto_principal_upd
-            BEFORE UPDATE ON cliente_contactos
-            FOR EACH ROW
-            BEGIN
-                IF NEW.es_principal = 1 AND OLD.es_principal = 0 THEN
-                    UPDATE cliente_contactos
-                    SET es_principal = 0
-                    WHERE cliente_id = NEW.cliente_id
-                      AND deleted_at IS NULL
-                      AND es_principal = 1
-                      AND id != NEW.id;
-                END IF;
-            END
-        ");
-        }
+        // Sin triggers: MySQL prohíbe actualizar la misma tabla dentro de
+        // su trigger (error 1442) y rompía todos los inserts. La garantía
+        // de "un solo principal" vive en el modelo (evento Eloquent).
 
         // -------------------------------------------------------
         // cliente_integraciones
