@@ -147,6 +147,24 @@ class UsuarioController extends Controller
         return back()->with('success', "Usuario {$estado} correctamente.");
     }
 
+    /**
+     * Fija el estado de un usuario desde el dropdown (con confirmación en el front).
+     */
+    public function setEstado(Request $request, string $id): RedirectResponse
+    {
+        $usuario = User::findOrFail($id);
+
+        $data = $request->validate([
+            'activo' => ['required', 'boolean'],
+        ]);
+
+        $usuario->activo = $data['activo'];
+        $usuario->save();
+
+        $estado = $usuario->activo ? 'activado' : 'desactivado';
+        return back()->with('success', "Usuario {$estado} correctamente.");
+    }
+
     // Métodos requeridos por el resource pero no usados actualmente
     public function create()
     {

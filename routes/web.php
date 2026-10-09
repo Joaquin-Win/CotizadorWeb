@@ -69,7 +69,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/',                                 [ClienteController::class, 'store'])->name('store');
         Route::get('{cliente}',                          [ClienteController::class, 'show'])->name('show');
         Route::put('{cliente}',                          [ClienteController::class, 'update'])->name('update');
-        Route::delete('{cliente}',                       [ClienteController::class, 'destroy'])->name('destroy');
+        Route::put('{cliente}/inactivar',                 [ClienteController::class, 'setInactive'])->name('inactivar');
+        Route::put('{cliente}/activar',                   [ClienteController::class, 'setActive'])->name('activar');
 
         // Portal del cliente (visto desde backoffice)
         Route::prefix('{cliente}/portal')->name('portal.')->group(function () {
@@ -107,6 +108,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::resource('usuarios', UsuarioController::class)->except(['show']);
         Route::put('usuarios/{usuario}/margenes', [UsuarioController::class, 'updateMargenes'])->name('admin.usuarios.margenes');
         Route::post('usuarios/{usuario}/toggle-activo', [UsuarioController::class, 'toggleActivo'])->name('admin.usuarios.toggle');
+        Route::put('usuarios/{usuario}/estado', [UsuarioController::class, 'setEstado'])->name('admin.usuarios.estado');
 
         // Tarifas
         Route::resource('tarifas', TarifaController::class);

@@ -18,6 +18,7 @@ class ClienteController extends Controller
     public function index(): \Inertia\Response
     {
         $clientes = Cliente::with(['tipoCliente', 'estado'])
+            ->whereHas('estado', fn ($q) => $q->where('codigo', 'ACTIVO'))
             ->withCount(['cotizaciones', 'pedidos'])
             ->latest()
             ->get();
@@ -123,10 +124,32 @@ class ClienteController extends Controller
         return back()->with('success', 'Cliente actualizado.');
     }
 
-    public function destroy(Cliente $cliente): \Illuminate\Http\RedirectResponse
+    /**
+     * Inhabilita un cliente: sale de la lista pero queda en la BD.
+     */
+    public function setInactive(Cliente $cliente): \Illuminate\Http\RedirectResponse
     {
-        $cliente->delete();
-        return redirect()->route('clientes.index')->with('success', 'Cliente eliminado.');
+        $inactivoId = EstadoCliente::where('codigo', 'INACTIVO')->value('id');
+        abort_if(! $inactivoId, 500, 'Falta el estado INACTIVO.');
+
+        $cliente->update(['estado_id' => $inactivoId, 'updated_by' => auth()->id()]);
+        $cliente->users()->update(['activo' => false]);
+
+        return back()->with('success', 'Cliente inhabilitado.');
+    }
+
+    /**
+     * Habilita un cliente: vuelve a la lista y recupera el acceso.
+     */
+    public function setActive(Cliente $cliente): \Illuminate\Http\RedirectResponse
+    {
+        $activoId = EstadoCliente::where('codigo', 'ACTIVO')->value('id');
+        abort_if(! $activoId, 500, 'Falta el estado ACTIVO.');
+
+        $cliente->update(['estado_id' => $activoId, 'updated_by' => auth()->id()]);
+        $cliente->users()->update(['activo' => true]);
+
+        return back()->with('success', 'Cliente habilitado.');
     }
 
     // -------------------------------------------------------

@@ -1,9 +1,25 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Users, Eye, Power, Search } from 'lucide-react';
+import { Users, Eye, Search } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 import type { BreadcrumbItem } from '@/types';
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -54,6 +70,7 @@ const rolBadgeClass = (rol_id: number) =>
 
 export default function AdminUsuariosIndex({ usuarios, clientes = [] }: Props) {
     const [search, setSearch] = useState('');
+    const [cambio, setCambio] = useState<{ usuario: Usuario; activo: boolean } | null>(null);
     const q0 = search.toLowerCase();
     const clientesFiltrados = clientes.filter(
         (c) =>
@@ -71,12 +88,6 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [] }: Props) {
             (u.cliente?.razon_social ?? '').toLowerCase().includes(q)
         );
     });
-
-    const toggleActivo = (id: number) => {
-        router.post(`/admin/usuarios/${id}/toggle-activo`, {}, {
-            preserveScroll: true,
-        });
-    };
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
@@ -146,23 +157,28 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [] }: Props) {
                                         </span>
                                     </div>
                                     <div className="text-center">
-                                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                                            usuario.activo
-                                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
-                                                : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
-                                        }`}>
-                                            {usuario.activo ? 'Activo' : 'Inactivo'}
-                                        </span>
+                                        <Select
+                                            value={usuario.activo ? 'activo' : 'inactivo'}
+                                            onValueChange={(v) =>
+                                                setCambio({ usuario, activo: v === 'activo' })
+                                            }
+                                        >
+                                            <SelectTrigger
+                                                className={`mx-auto h-7 w-[110px] rounded-full px-2.5 text-xs font-medium ${
+                                                    usuario.activo
+                                                        ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300'
+                                                        : 'bg-zinc-100 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300'
+                                                }`}
+                                            >
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="activo">Activo</SelectItem>
+                                                <SelectItem value="inactivo">Inactivo</SelectItem>
+                                            </SelectContent>
+                                        </Select>
                                     </div>
                                     <div className="flex justify-end gap-1">
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            title={usuario.activo ? 'Desactivar usuario' : 'Activar usuario'}
-                                            onClick={() => toggleActivo(usuario.id)}
-                                        >
-                                            <Power className={`h-4 w-4 ${usuario.activo ? 'text-emerald-600' : 'text-muted-foreground'}`} />
-                                        </Button>
                                         <Button variant="ghost" size="icon" asChild title="Editar usuario">
                                             <Link href={`/admin/usuarios/${usuario.id}/edit`}>
                                                 <Eye className="h-4 w-4" />
@@ -228,6 +244,35 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [] }: Props) {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={cambio !== null} onOpenChange={(o) => !o && setCambio(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Cambiar estado</DialogTitle>
+                        <DialogDescription>
+                            ¿Seguro de cambiar el estado de {cambio?.usuario.name} a{' '}
+                            {cambio?.activo ? 'Activo' : 'Inactivo'}?
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <DialogClose asChild>
+                            <Button variant="secondary">Cancelar</Button>
+                        </DialogClose>
+                        <Button
+                            onClick={() => {
+                                if (!cambio) return;
+                                router.put(
+                                    `/admin/usuarios/${cambio.usuario.id}/estado`,
+                                    { activo: cambio.activo },
+                                    { preserveScroll: true, onFinish: () => setCambio(null) },
+                                );
+                            }}
+                        >
+                            Sí, cambiar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

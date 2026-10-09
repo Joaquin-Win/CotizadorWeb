@@ -1,17 +1,25 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Building2, Eye, MonitorPlay, Plus, Search, Trash2 } from 'lucide-react';
+import { Building2, Eye, MonitorPlay, Plus, Search, UserCheck } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
+    DialogClose,
     DialogContent,
+    DialogDescription,
+    DialogFooter,
     DialogHeader,
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import {
     Select,
     SelectContent,
@@ -70,6 +78,7 @@ const estadoBadgeClass = (codigo: string | undefined) => {
 export default function UsuariosIndex({ clientes, tipos }: Props) {
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
+    const [habilitar, setHabilitar] = useState<Cliente | null>(null);
 
     const { data, setData, post, processing, errors, reset } = useForm({
         razon_social: '',
@@ -79,6 +88,9 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
         email_facturacion: '',
         telefono: '',
         direccion: '',
+        email_acceso: '',
+        password: '',
+        password_confirmation: '',
     });
 
     const filtered = clientes.filter((c) => {
@@ -97,9 +109,9 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
         });
     };
 
-    const destroy = (id: number) => {
-        if (!confirm('¿Eliminar este cliente?')) return;
-        router.delete(`/clientes/${id}`);
+    const habilitarCliente = (id: number) => {
+        router.put(`/clientes/${id}/activar`, {}, { preserveScroll: true });
+        setHabilitar(null);
     };
 
     return (
@@ -220,6 +232,47 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
                                     </div>
                                 </div>
 
+                                <div className="rounded-lg border border-dashed p-3">
+                                    <p className="mb-3 text-sm font-semibold">Acceso a la plataforma</p>
+                                    <div className="grid gap-2">
+                                        <Label htmlFor="u-email_acceso">Email de acceso *</Label>
+                                        <Input
+                                            id="u-email_acceso"
+                                            type="email"
+                                            value={data.email_acceso}
+                                            onChange={(e) => setData('email_acceso', e.target.value)}
+                                            placeholder="usuario@empresa.com"
+                                        />
+                                        {errors.email_acceso && (
+                                            <p className="text-destructive text-xs">{errors.email_acceso}</p>
+                                        )}
+                                    </div>
+                                    <div className="mt-3 grid grid-cols-2 gap-4">
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="u-password">Contraseña *</Label>
+                                            <Input
+                                                id="u-password"
+                                                type="password"
+                                                value={data.password}
+                                                onChange={(e) => setData('password', e.target.value)}
+                                                placeholder="Mínimo 8 caracteres"
+                                            />
+                                            {errors.password && (
+                                                <p className="text-destructive text-xs">{errors.password}</p>
+                                            )}
+                                        </div>
+                                        <div className="grid gap-2">
+                                            <Label htmlFor="u-password_confirmation">Repetir contraseña *</Label>
+                                            <Input
+                                                id="u-password_confirmation"
+                                                type="password"
+                                                value={data.password_confirmation}
+                                                onChange={(e) => setData('password_confirmation', e.target.value)}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div className="flex justify-end gap-2 pt-2">
                                     <Button type="button" variant="outline" onClick={() => { reset(); setOpen(false); }}>
                                         Cancelar
@@ -302,14 +355,20 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
                                             <Eye className="h-4 w-4" />
                                         </Link>
                                     </Button>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        title="Eliminar"
-                                        onClick={() => destroy(cliente.id)}
-                                    >
-                                        <Trash2 className="text-destructive h-4 w-4" />
-                                    </Button>
+                                    {cliente.estado?.codigo !== 'ACTIVO' && (
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => setHabilitar(cliente)}
+                                                >
+                                                    <UserCheck className="h-4 w-4 text-emerald-600" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>Habilitar cliente</TooltipContent>
+                                        </Tooltip>
+                                    )}
                                 </div>
                             </div>
                         ))
@@ -317,6 +376,29 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
                     </div>
                 </div>
             </div>
+
+            <Dialog open={habilitar !== null} onOpenChange={(o) => !o && setHabilitar(null)}>
+                <DialogContent>
+                    <DialogHeader>
+                        <DialogTitle>Habilitar cliente</DialogTitle>
+                        <DialogDescription>
+                            ¿Seguro que quieres habilitar a {habilitar?.razon_social}? Volverá a verse en
+                            Clientes y recuperará el acceso a la plataforma.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2">
+                        <DialogClose asChild>
+                            <Button variant="secondary">Cancelar</Button>
+                        </DialogClose>
+                        <Button
+                            className="bg-emerald-600 hover:bg-emerald-600/90"
+                            onClick={() => habilitar && habilitarCliente(habilitar.id)}
+                        >
+                            Sí, habilitar
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

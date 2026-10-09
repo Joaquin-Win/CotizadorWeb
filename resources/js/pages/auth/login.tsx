@@ -1,14 +1,61 @@
+import { useEffect, useState } from 'react';
 import { Form, Head, Link } from '@inertiajs/react';
+import { Ban } from 'lucide-react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import {
+    Dialog,
+    DialogClose,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Spinner } from '@/components/ui/spinner';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+
+const MENSAJE_DESHABILITADA = 'Esta cuenta está deshabilitada, por favor comuníquese con el soporte de SET.';
+
+/** Popup en vez de letras rojas cuando la cuenta está deshabilitada. */
+function AvisoDeshabilitada({ error }: { error?: string }) {
+    const [abierto, setAbierto] = useState(false);
+
+    useEffect(() => {
+        if (error === MENSAJE_DESHABILITADA) {
+            setAbierto(true);
+        }
+    }, [error]);
+
+    return (
+        <Dialog open={abierto} onOpenChange={setAbierto}>
+            <DialogContent>
+                <DialogHeader>
+                    <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-50">
+                        <Ban className="h-6 w-6 text-amber-500" />
+                    </div>
+                    <DialogTitle className="mt-3 text-center">Cuenta deshabilitada</DialogTitle>
+                    <DialogDescription className="text-center">
+                        {MENSAJE_DESHABILITADA}
+                    </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                    <DialogClose asChild>
+                        <Button type="button" className="w-full bg-[#0A3D91] hover:bg-[#0A3D91]/90">
+                            Entendido
+                        </Button>
+                    </DialogClose>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
+}
 
 type Props = {
     status?: string;
@@ -65,7 +112,12 @@ export default function Login({ status, canResetPassword }: Props) {
                                         autoComplete="email"
                                         placeholder="nombre@empresa.com"
                                     />
-                                    <InputError message={errors.email} />
+                                    <InputError
+                                        message={
+                                            errors.email === MENSAJE_DESHABILITADA ? undefined : errors.email
+                                        }
+                                    />
+                                    <AvisoDeshabilitada error={errors.email} />
                                 </div>
 
                                 <div className="grid gap-2">
