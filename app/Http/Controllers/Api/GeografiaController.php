@@ -27,7 +27,7 @@ class GeografiaController extends Controller
                 ->whereNull('deleted_at')
                 ->where('activo', true)
                 ->orderBy('nombre')
-                ->get(['id', 'nombre', 'codigo_postal'])
+                ->get(['id', 'nombre', 'codigo_postal', 'tiene_deposito'])
         );
     }
 }

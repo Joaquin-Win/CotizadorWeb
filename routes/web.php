@@ -103,6 +103,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Cotizaciones administrativas (solo admin)
         Route::get('cotizaciones',                         [CotizacionesAdminController::class, 'index'])->name('cotizaciones.index');
         Route::post('cotizaciones/{cotizacion}/confirmar', [CotizacionesAdminController::class, 'confirmar'])->name('cotizaciones.confirmar');
+        Route::post('cotizaciones/{cotizacion}/whatsapp',  [CotizacionesAdminController::class, 'contactarWhatsapp'])->name('cotizaciones.whatsapp');
 
         // Usuarios internos SET
         Route::resource('usuarios', UsuarioController::class)->except(['show']);
@@ -120,11 +121,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::delete('cotizador/costos-adicionales/{costo}',                   [CotizadorConfiguracionController::class, 'destroyCostoAdicional'])->name('cotizador.costos.destroy');
         Route::post('cotizador/tarifas',                                        [CotizadorConfiguracionController::class, 'storeTarifa'])->name('cotizador.tarifas.store');
         Route::put('cotizador/tarifas/{tarifa}',                                [CotizadorConfiguracionController::class, 'updateTarifa'])->name('cotizador.tarifas.update');
+        Route::get('cotizador/tarifas/exportar',                                [CotizadorConfiguracionController::class, 'exportarTarifas'])->name('cotizador.tarifas.exportar');
+        Route::get('cotizador/tarifas/plantilla',                               [CotizadorConfiguracionController::class, 'plantillaTarifas'])->name('cotizador.tarifas.plantilla');
+        Route::post('cotizador/tarifas/importar',                               [CotizadorConfiguracionController::class, 'importarTarifas'])->name('cotizador.tarifas.importar');
         Route::delete('cotizador/tarifas/{tarifa}',                             [CotizadorConfiguracionController::class, 'destroyTarifa'])->name('cotizador.tarifas.destroy');
         Route::post('cotizador/provincias/{provincia}/toggle',                  [CotizadorConfiguracionController::class, 'toggleProvincia'])->name('cotizador.provincias.toggle');
         Route::get('cotizador/provincias/{provincia}/localidades',              [CotizadorConfiguracionController::class, 'localidadesProvincia'])->name('cotizador.provincias.localidades');
         Route::post('cotizador/provincias/{provincia}/toggle-localidades',       [CotizadorConfiguracionController::class, 'toggleTodasLocalidades'])->name('cotizador.provincias.toggle-todas');
         Route::post('cotizador/localidades/{localidad}/toggle',                  [CotizadorConfiguracionController::class, 'toggleLocalidad'])->name('cotizador.localidades.toggle');
+        Route::post('cotizador/localidades/{localidad}/deposito',                [CotizadorConfiguracionController::class, 'toggleDeposito'])->name('cotizador.localidades.deposito');
 
         // Márgenes de ganancia
         Route::resource('margenes', MargenGananciaController::class)->except(['show']);

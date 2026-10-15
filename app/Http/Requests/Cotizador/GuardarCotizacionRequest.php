@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Cotizador;
 
+use App\Services\WhatsApp\SeguimientoCotizacionService;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -21,9 +22,19 @@ class GuardarCotizacionRequest extends FormRequest
     {
         return [
             // El mismo payload del cotizar, más los datos de contacto para el lead
-            'nombre_cliente'    => ['nullable', 'string', 'max:255'],
-            'email_cliente'     => ['nullable', 'email', 'max:255'],
-            'telefono_cliente'  => ['nullable', 'string', 'max:50'],
+            // Datos personales de quien cotiza (se guardan como lead)
+            'nombre_cliente'    => ['required', 'string', 'max:100'],
+            'apellido_cliente'  => ['required', 'string', 'max:100'],
+            'dni_cliente'       => ['required', 'regex:/^\d{7,8}$/'],
+            'email_cliente'     => ['required', 'email', 'max:255'],
+            'telefono_cliente'  => [
+                'required', 'string', 'max:50',
+                function (string $attribute, mixed $value, \Closure $fail) {
+                    if (app(SeguimientoCotizacionService::class)->normalizarTelefono((string) $value) === null) {
+                        $fail('Ingresá un teléfono celular argentino válido (ej. 351 123 4567).');
+                    }
+                },
+            ],
             'empresa'           => ['nullable', 'string', 'max:255'],
 
             // Origen del request

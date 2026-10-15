@@ -1,4 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { usePage } from '@inertiajs/react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import type { Provincia, Localidad, TipoBulto, BultoFormData, ResultadoCotizacion } from '@/types/cotizador';
 
 // Modalidad de destino: exclusiva
@@ -70,6 +77,17 @@ function SelectProvincia({ id, label, value, provincias, loading, onChange, requ
     );
 }
 
+// Aviso con los depósitos de la empresa en la provincia elegida
+function DepositosInfo({ localidades, texto, id }: { localidades: Localidad[]; texto: string; id: string }) {
+    const depositos = localidades.filter((l) => l.tiene_deposito);
+    if (depositos.length === 0) return null;
+    return (
+        <p id={id} className="cot-hint" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)' }}>
+            🏢 {texto} <strong>{depositos.map((d) => d.nombre).join(', ')}</strong>
+        </p>
+    );
+}
+
 interface SelectLocalidadProps {
     id: string;
     label: string;
@@ -78,13 +96,14 @@ interface SelectLocalidadProps {
     loading: boolean;
     disabled: boolean;
     onChange: (id: number | '') => void;
+    required?: boolean;
 }
 
-function SelectLocalidad({ id, label, value, localidades, loading, disabled, onChange }: SelectLocalidadProps) {
+function SelectLocalidad({ id, label, value, localidades, loading, disabled, onChange, required }: SelectLocalidadProps) {
     return (
         <div className="cot-field">
             <label htmlFor={id} className="cot-label">
-                {label}
+                {label} {required && <span className="cot-required">*</span>}
             </label>
             <select
                 id={id}
@@ -94,11 +113,11 @@ function SelectLocalidad({ id, label, value, localidades, loading, disabled, onC
                 onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
             >
                 <option value="">
-                    {disabled ? 'Seleccioná primero una provincia' : loading ? 'Cargando…' : 'Todas las localidades'}
+                    {disabled ? 'Seleccioná primero una provincia' : loading ? 'Cargando…' : 'Seleccioná una localidad'}
                 </option>
                 {localidades.map((l) => (
                     <option key={l.id} value={l.id}>
-                        {l.nombre}
+                        {l.nombre}{l.tiene_deposito ? ' — 🏢 Depósito' : ''}
                     </option>
                 ))}
             </select>
@@ -276,9 +295,21 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
 interface PopupConfig { activo: boolean; titulo: string; mensaje: string }
 
 export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
+    const { auth } = usePage().props as unknown as { auth?: { user?: { name?: string; email?: string } | null } };
     const [popupVisible, setPopupVisible] = useState(
         !!popup?.activo && !!(popup.titulo || popup.mensaje),
     );
+    // Datos personales (se precargan si hay sesión; siempre editables)
+    const [persona, setPersona] = useState({
+        nombre: auth?.user?.name ?? '',
+        apellido: '',
+        dni: '',
+        telefono: '',
+        email: auth?.user?.email ?? '',
+    });
+    const [modalConfirmar, setModalConfirmar] = useState(false);
+    const [confirmando, setConfirmando] = useState(false);
+    const [errorConfirmar, setErrorConfirmar] = useState<string | null>(null);
     // Catálogos
     const [provincias, setProvincias] = useState<Provincia[]>([]);
     const [localidadesOrigen, setLocalidadesOrigen] = useState<Localidad[]>([]);
@@ -291,7 +322,9 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
     // Formulario — Origen
     const [origenProvinciaId, setOrigenProvinciaId] = useState<number | ''>('');
     const [origenLocalidadId, setOrigenLocalidadId] = useState<number | ''>('');
-    const [solicitaRetiro, setSolicitaRetiro] = useState(false);
+    // Modalidad de origen: la empresa retira (primera milla) o el cliente lo lleva al depósito (sin cargo)
+    const [modalidadOrigen, setModalidadOrigen] = useState<'retiro_domicilio' | 'lleva_deposito' | ''>('');
+    const solicitaRetiro = modalidadOrigen === 'retiro_domicilio';
 
     // Formulario — Destino
     const [destinoProvinciaId, setDestinoProvinciaId] = useState<number | ''>('');
@@ -387,8 +420,16 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
         const errs: Record<string, string> = {};
         if (origenProvinciaId === '') errs['origen.provincia_id'] = 'Seleccioná la provincia de origen.';
         if (destinoProvinciaId === '') errs['destino.provincia_id'] = 'Seleccioná la provincia de destino.';
+        if (modalidadOrigen === '') errs['origen.modalidad'] = 'Elegí cómo entregás el pedido.';
+        if (solicitaRetiro && origenLocalidadId === '') errs['origen.localidad_id'] = 'Seleccioná la localidad de retiro.';
+        if (modalidadDestino === 'entrega_domicilio' && destinoLocalidadId === '') errs['destino.localidad_id'] = 'Seleccioná la localidad de entrega.';
         if (modalidadDestino === '') errs['destino.modalidad'] = 'Seleccioná la modalidad de entrega.';
         if (bultos.length === 0) errs['bultos'] = 'Agregá al menos un bulto.';
+        if (!persona.nombre.trim()) errs['nombre_cliente'] = 'Ingresá tu nombre.';
+        if (!persona.apellido.trim()) errs['apellido_cliente'] = 'Ingresá tu apellido.';
+        if (!/^\d{7,8}$/.test(persona.dni.trim())) errs['dni_cliente'] = 'Ingresá un DNI válido (7 u 8 números, sin puntos).';
+        if (persona.telefono.replace(/\D/g, '').length < 8) errs['telefono_cliente'] = 'Ingresá un teléfono válido con código de área.';
+        if (!/^\S+@\S+\.\S+$/.test(persona.email.trim())) errs['email_cliente'] = 'Ingresá un correo electrónico válido.';
         bultos.forEach((b, i) => {
             if (!b.tipo_bulto_id) errs[`bultos.${i}.tipo_bulto_id`] = 'Seleccioná el tipo de bulto.';
             if (b.largo_cm === '' || Number(b.largo_cm) <= 0) errs[`bultos.${i}.largo_cm`] = 'Ingresá el largo.';
@@ -402,37 +443,85 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
     };
 
     // ── Enviar cotización al backend ────────────────────────────────────────
+    // ── Armado del payload (solo datos de entrada; el backend recalcula todo) ──────
+    const armarPayload = () => ({
+        origen: {
+            provincia_id: Number(origenProvinciaId),
+            localidad_id: origenLocalidadId !== '' ? Number(origenLocalidadId) : null,
+            solicita_retiro: solicitaRetiro,
+        },
+        destino: {
+            provincia_id: Number(destinoProvinciaId),
+            localidad_id: destinoLocalidadId !== '' ? Number(destinoLocalidadId) : null,
+            solicita_entrega: modalidadDestino === 'entrega_domicilio',
+            retiro_en_sucursal: modalidadDestino === 'retiro_sucursal',
+        },
+        bultos: bultos.map((b) => ({
+            tipo_bulto_id: Number(b.tipo_bulto_id),
+            largo_cm: Number(b.largo_cm),
+            ancho_cm: Number(b.ancho_cm),
+            alto_cm: Number(b.alto_cm),
+            peso_kg: Number(b.peso_kg),
+            cantidad: Number(b.cantidad),
+        })),
+        solicita_carga: solicitaCarga,
+        solicita_descarga: solicitaDescarga,
+        origen_cotizacion_id: 1,
+    });
+
+    // ── Rechazar: descarta el precio estimado, nada se guarda ──────────────────────
+    const rechazar = () => {
+        setModalConfirmar(false);
+        setResultado(null);
+        setErrorConfirmar(null);
+    };
+
+    // ── Confirmar: recién acá se genera la cotización en el sistema ──────────────
+    const confirmar = async () => {
+        setConfirmando(true);
+        setErrorConfirmar(null);
+        try {
+            const g = await fetch('/cotizador/guardar', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-CSRF-TOKEN': CSRF_TOKEN(),
+                },
+                body: JSON.stringify({
+                    ...armarPayload(),
+                    nombre_cliente: persona.nombre.trim(),
+                    apellido_cliente: persona.apellido.trim(),
+                    dni_cliente: persona.dni.trim(),
+                    telefono_cliente: persona.telefono.trim(),
+                    email_cliente: persona.email.trim(),
+                }),
+            });
+            const gd = await g.json().catch(() => ({}));
+            if (!g.ok) {
+                const primero = gd?.errors ? (Object.values(gd.errors)[0] as string[])[0] : null;
+                setErrorConfirmar(primero ?? 'No pudimos generar la cotización. Intentá nuevamente.');
+                return;
+            }
+            setCodigoGuardado(gd.codigo ?? null);
+            setModalConfirmar(false);
+        } catch {
+            setErrorConfirmar('Error de conexión. Verificá tu conexión a internet.');
+        } finally {
+            setConfirmando(false);
+        }
+    };
+
+    // ── Calcular precio estimado (no persiste nada) ────────────────────────────
     const calcular = async () => {
         if (!validar()) return;
 
         setCargando(true);
         setResultado(null);
         setCodigoGuardado(null);
+        setErrorConfirmar(null);
 
-        const payload = {
-            origen: {
-                provincia_id: Number(origenProvinciaId),
-                localidad_id: origenLocalidadId !== '' ? Number(origenLocalidadId) : null,
-                solicita_retiro: solicitaRetiro,
-            },
-            destino: {
-                provincia_id: Number(destinoProvinciaId),
-                localidad_id: destinoLocalidadId !== '' ? Number(destinoLocalidadId) : null,
-                solicita_entrega: modalidadDestino === 'entrega_domicilio',
-                retiro_en_sucursal: modalidadDestino === 'retiro_sucursal',
-            },
-            bultos: bultos.map((b) => ({
-                tipo_bulto_id: Number(b.tipo_bulto_id),
-                largo_cm: Number(b.largo_cm),
-                ancho_cm: Number(b.ancho_cm),
-                alto_cm: Number(b.alto_cm),
-                peso_kg: Number(b.peso_kg),
-                cantidad: Number(b.cantidad),
-            })),
-            solicita_carga: solicitaCarga,
-            solicita_descarga: solicitaDescarga,
-            origen_cotizacion_id: 1,
-        };
+        const payload = armarPayload();
 
         try {
             const resp = await fetch('/cotizador/calcular', {
@@ -457,52 +546,17 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                     setErroresForm(errs);
                 } else {
                     // Error genérico — no mostrar detalles técnicos
-                    setResultado({
-                        estado: 'ATENCION_PERSONALIZADA',
-                        costo_troncal: 0, costo_primera_milla: 0, costo_ultima_milla: 0,
-                        costo_puerta_puerta: 0, subtotal_flete: 0, costo_seguro: 0,
-                        costo_carga_descarga: 0, margen_porcentaje: 0, descuento_porcentaje: 0,
-                        descuento_monto: 0, iva: 0, total_final: 0, tiempo_min: null, tiempo_max: null,
-                        version_algoritmo: '', adicionales: [],
-                        errores: ['No pudimos procesar tu cotización en este momento.'],
-                    });
+                    setErroresForm({ general: 'No pudimos procesar tu cotización en este momento. Intentá nuevamente.' });
                 }
                 return;
             }
 
             const data = await resp.json();
             setResultado(data.resultado as ResultadoCotizacion);
-
-            // "Cotización a confirmar": persistir para que SET pueda revisarla
-            if (data.resultado?.estado === 'ATENCION_PERSONALIZADA') {
-                try {
-                    const g = await fetch('/cotizador/guardar', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            Accept: 'application/json',
-                            'X-CSRF-TOKEN': CSRF_TOKEN(),
-                        },
-                        body: JSON.stringify(payload),
-                    });
-                    if (g.ok) {
-                        const gd = await g.json();
-                        setCodigoGuardado(gd.codigo ?? null);
-                    }
-                } catch (e) {
-                    console.error('No se pudo guardar la cotización a confirmar', e);
-                }
-            }
+            // Popup con el precio estimado: el usuario decide Rechazar o Confirmar
+            setModalConfirmar(true);
         } catch {
-            setResultado({
-                estado: 'ATENCION_PERSONALIZADA',
-                costo_troncal: 0, costo_primera_milla: 0, costo_ultima_milla: 0,
-                costo_puerta_puerta: 0, subtotal_flete: 0, costo_seguro: 0,
-                costo_carga_descarga: 0, margen_porcentaje: 0, descuento_porcentaje: 0,
-                descuento_monto: 0, iva: 0, total_final: 0, tiempo_min: null, tiempo_max: null,
-                version_algoritmo: '', adicionales: [],
-                errores: ['Error de conexión. Verificá tu conexión a internet.'],
-            });
+            setErroresForm({ general: 'Error de conexión. Verificá tu conexión a internet.' });
         } finally {
             setCargando(false);
         }
@@ -569,6 +623,41 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                         noValidate
                         id="cotizador-form"
                     >
+                        {/* ─── DATOS PERSONALES ─── */}
+                        <section className="cot-card" aria-labelledby="sec-personales">
+                            <div className="cot-card__header">
+                                <span className="cot-card__icono cot-card__icono--adicional">👤</span>
+                                <h2 id="sec-personales" className="cot-card__titulo">Tus datos</h2>
+                            </div>
+                            <div className="cot-card__body">
+                                <div className="cot-row">
+                                    {([
+                                        { campo: 'nombre', err: 'nombre_cliente', label: 'Nombre', type: 'text', ac: 'given-name' },
+                                        { campo: 'apellido', err: 'apellido_cliente', label: 'Apellido', type: 'text', ac: 'family-name' },
+                                        { campo: 'dni', err: 'dni_cliente', label: 'DNI', type: 'text', ac: 'off' },
+                                        { campo: 'telefono', err: 'telefono_cliente', label: 'Teléfono (con código de área)', type: 'tel', ac: 'tel' },
+                                        { campo: 'email', err: 'email_cliente', label: 'Correo electrónico', type: 'email', ac: 'email' },
+                                    ] as const).map(({ campo, err, label, type, ac }) => (
+                                        <div key={campo} className="cot-field">
+                                            <label htmlFor={`persona-${campo}`} className="cot-label">
+                                                {label} <span className="cot-required">*</span>
+                                            </label>
+                                            <input
+                                                id={`persona-${campo}`}
+                                                type={type}
+                                                autoComplete={ac}
+                                                inputMode={campo === 'dni' || campo === 'telefono' ? 'numeric' : undefined}
+                                                className={clsx('cot-input', erroresForm[err] && 'cot-input--error')}
+                                                value={persona[campo]}
+                                                onChange={(e) => setPersona((p) => ({ ...p, [campo]: e.target.value }))}
+                                            />
+                                            {erroresForm[err] && <p className="cot-error">{erroresForm[err]}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </section>
+
                         {/* ─── ORIGEN ─── */}
                         <section className="cot-card" aria-labelledby="sec-origen">
                             <div className="cot-card__header">
@@ -594,19 +683,61 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                                         loading={loadingLocOrigen}
                                         disabled={origenProvinciaId === ''}
                                         onChange={setOrigenLocalidadId}
+                                        required={solicitaRetiro}
                                     />
                                 </div>
                                 {erroresForm['origen.provincia_id'] && (
                                     <p className="cot-error">{erroresForm['origen.provincia_id']}</p>
                                 )}
+                                {erroresForm['origen.localidad_id'] && (
+                                    <p className="cot-error">{erroresForm['origen.localidad_id']}</p>
+                                )}
+                                {/* Modalidad de origen — mutuamente excluyente */}
                                 <div className="cot-checks">
-                                    <CheckboxField
-                                        id="solicita-retiro"
-                                        label="Solicita retiro a domicilio"
-                                        checked={solicitaRetiro}
-                                        onChange={setSolicitaRetiro}
-                                    />
+                                    <p className="cot-label" style={{ marginBottom: '0.5rem' }}>
+                                        ¿Cómo entregás el pedido? <span className="cot-required">*</span>
+                                    </p>
+                                    <label htmlFor="modalidad-origen-retiro" className="cot-checkbox-label">
+                                        <input
+                                            id="modalidad-origen-retiro"
+                                            type="radio"
+                                            name="modalidad_origen"
+                                            className="cot-checkbox"
+                                            checked={modalidadOrigen === 'retiro_domicilio'}
+                                            onChange={() => setModalidadOrigen('retiro_domicilio')}
+                                        />
+                                        <span>Que lo retiren por mi domicilio (se cobra primera milla)</span>
+                                    </label>
+                                    <label htmlFor="modalidad-origen-deposito" className="cot-checkbox-label">
+                                        <input
+                                            id="modalidad-origen-deposito"
+                                            type="radio"
+                                            name="modalidad_origen"
+                                            className="cot-checkbox"
+                                            checked={modalidadOrigen === 'lleva_deposito'}
+                                            onChange={() => setModalidadOrigen('lleva_deposito')}
+                                        />
+                                        <span>Lo llevo yo al depósito (sin primera milla)</span>
+                                    </label>
+                                    {erroresForm['origen.modalidad'] && (
+                                        <p className="cot-error">{erroresForm['origen.modalidad']}</p>
+                                    )}
                                 </div>
+                                <DepositosInfo
+                                    id="depositos-origen"
+                                    localidades={localidadesOrigen}
+                                    texto={
+                                        modalidadOrigen === 'lleva_deposito'
+                                            ? 'Podés llevar el pedido a nuestro depósito en:'
+                                            : 'Depósitos de la empresa en esta provincia:'
+                                    }
+                                />
+                                {origenProvinciaId !== '' && !loadingLocOrigen &&
+                                    !localidadesOrigen.some((l) => l.tiene_deposito) && (
+                                        <p className="cot-error">
+                                            Todavía no tenemos depósito en esta provincia: la cotización se revisará personalmente.
+                                        </p>
+                                    )}
                             </div>
                         </section>
 
@@ -635,10 +766,14 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                                         loading={loadingLocDestino}
                                         disabled={destinoProvinciaId === ''}
                                         onChange={setDestinoLocalidadId}
+                                        required={modalidadDestino === 'entrega_domicilio'}
                                     />
                                 </div>
                                 {erroresForm['destino.provincia_id'] && (
                                     <p className="cot-error">{erroresForm['destino.provincia_id']}</p>
+                                )}
+                                {erroresForm['destino.localidad_id'] && (
+                                    <p className="cot-error">{erroresForm['destino.localidad_id']}</p>
                                 )}
                                 {/* Modalidad de entrega — mutuamente excluyente */}
                                 <div className="cot-checks">
@@ -671,6 +806,21 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                                         <p className="cot-error">{erroresForm['destino.modalidad']}</p>
                                     )}
                                 </div>
+                                <DepositosInfo
+                                    id="depositos-destino"
+                                    localidades={localidadesDestino}
+                                    texto={
+                                        modalidadDestino === 'retiro_sucursal'
+                                            ? 'Retirás el pedido en nuestro depósito de:'
+                                            : 'Depósitos de la empresa en esta provincia:'
+                                    }
+                                />
+                                {destinoProvinciaId !== '' && !loadingLocDestino &&
+                                    !localidadesDestino.some((l) => l.tiene_deposito) && (
+                                        <p className="cot-error">
+                                            Todavía no tenemos depósito en esta provincia: la cotización se revisará personalmente.
+                                        </p>
+                                    )}
                             </div>
                         </section>
 
@@ -817,6 +967,10 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                             </div>
                         </section>
 
+                        {erroresForm['general'] && (
+                            <p className="cot-error" role="alert">{erroresForm['general']}</p>
+                        )}
+
                         {/* ─── BOTÓN CALCULAR ─── */}
                         <button
                             type="submit"
@@ -831,19 +985,82 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                         </button>
                     </form>
 
-                    {/* ── Panel de Resultado ── */}
-                    {resultado && (
-                        <aside className="cot-aside" aria-live="polite" aria-atomic="true">
-                            <ResultadoPanel
-                                resultado={resultado}
-                                origenNombre={origenNombre}
-                                destinoNombre={destinoNombre}
-                                codigo={codigoGuardado}
-                            />
+                    {/* ── Cotización generada (tras confirmar) ── */}
+                    {codigoGuardado && (
+                        <aside className="cot-aside" aria-live="polite" aria-atomic="true" id="cotizacion-generada">
+                            <div className="cot-resultado cot-resultado--ok">
+                                <div className="cot-atencion">
+                                    <div className="cot-atencion__icon">✅</div>
+                                    <h3 className="cot-atencion__titulo">¡Cotización generada!</h3>
+                                    <p className="cot-atencion__texto">
+                                        Código de referencia: <strong>{codigoGuardado}</strong>
+                                    </p>
+                                    <p className="cot-atencion__texto">
+                                        Nos pondremos en contacto con vos al teléfono y correo indicados.
+                                    </p>
+                                    <p className="cot-atencion__texto">
+                                        <a href={`/cotizador/${codigoGuardado}`}>Ver cotización</a>
+                                    </p>
+                                </div>
+                            </div>
                         </aside>
                     )}
                 </div>
             </div>
+
+            {/* ── Popup: precio estimado + Rechazar / Confirmar ── */}
+            <Dialog
+                open={modalConfirmar && !!resultado}
+                onOpenChange={(abierto) => { if (!abierto && !confirmando) rechazar(); }}
+            >
+                <DialogContent id="modal-confirmar-cotizacion" className="max-h-[90vh] gap-4 overflow-y-auto sm:max-w-lg">
+                    <DialogTitle>
+                        {resultado?.estado === 'ATENCION_PERSONALIZADA'
+                            ? 'No pudimos calcular el precio automáticamente'
+                            : 'Precio estimado de tu envío'}
+                    </DialogTitle>
+                    <DialogDescription>
+                        {resultado?.estado === 'ATENCION_PERSONALIZADA'
+                            ? 'Podés enviar tu pedido y SET Logística te va a pasar el precio a la brevedad.'
+                            : 'Revisá el valor estimado. Si lo confirmás, se genera la cotización con tus datos.'}
+                    </DialogDescription>
+                    {resultado && (
+                        <ResultadoPanel
+                            resultado={resultado}
+                            origenNombre={origenNombre}
+                            destinoNombre={destinoNombre}
+                            codigo={null}
+                        />
+                    )}
+                    {errorConfirmar && (
+                        <p className="cot-error" role="alert">{errorConfirmar}</p>
+                    )}
+                    <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <button
+                            id="btn-rechazar-cotizacion"
+                            type="button"
+                            disabled={confirmando}
+                            onClick={rechazar}
+                            className="rounded-lg border px-5 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"
+                        >
+                            Rechazar
+                        </button>
+                        <button
+                            id="btn-confirmar-cotizacion"
+                            type="button"
+                            disabled={confirmando}
+                            onClick={() => void confirmar()}
+                            className="rounded-lg bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground hover:opacity-90 disabled:opacity-50"
+                        >
+                            {confirmando
+                                ? 'Generando…'
+                                : resultado?.estado === 'ATENCION_PERSONALIZADA'
+                                    ? 'Confirmar y enviar a revisión'
+                                    : 'Confirmar'}
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </>
     );
 }

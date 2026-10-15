@@ -173,13 +173,20 @@
 
 /* PÃ¡gina contenedora */
 .cot-page {
-    max-width: 1200px;
+    max-width: 760px;
     margin: 0 auto;
-    padding: 2rem 1.5rem 4rem;
+    padding: 2rem 1rem 4rem;
+}
+
+@media (min-width: 640px) {
+    .cot-page {
+        padding: 2.5rem 1.5rem 4rem;
+    }
 }
 
 .cot-page__titulo {
     margin-bottom: 2rem;
+    text-align: center;
 }
 
 .cot-page__titulo h1 {
@@ -196,15 +203,10 @@
 /* Layout de dos columnas: formulario + resultado */
 .cot-layout {
     display: grid;
-    gap: 2rem;
-    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    grid-template-columns: minmax(0, 1fr);
     align-items: start;
-}
-
-@media (min-width: 1024px) {
-    .cot-layout {
-        grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
-    }
+    width: 100%;
 }
 
 /* Formulario */

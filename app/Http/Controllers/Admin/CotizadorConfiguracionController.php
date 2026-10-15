@@ -13,6 +13,8 @@ use App\Models\Provincia;
 use App\Models\Tarifa;
 use App\Models\TipoServicio;
 use App\Models\UnidadMedida;
+use App\Services\Cotizador\TarifasExcelService;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -63,6 +65,7 @@ class CotizadorConfiguracionController extends Controller
         $provincias = Provincia::withCount([
             'localidades as total_localidades',
             'localidades as localidades_activas' => fn ($q) => $q->where('activo', true),
+            'localidades as localidades_con_deposito' => fn ($q) => $q->where('tiene_deposito', true),
         ])
             ->orderBy('nombre')
             ->get(['id', 'nombre', 'codigo_georef', 'tiene_deposito', 'activo']);
@@ -80,6 +83,7 @@ class CotizadorConfiguracionController extends Controller
             'unidadesMedida'    => $unidadesMedida,
             'proveedor'         => $proveedor,
             'activeTab'         => $request->query('tab', 'precios'),
+            'importacion'       => session('importacion'),
         ]);
     }
 
@@ -259,6 +263,67 @@ class CotizadorConfiguracionController extends Controller
     }
 
     /**
+     * Descarga todas las tarifas en Excel.
+     */
+    public function exportarTarifas(TarifasExcelService $excel): BinaryFileResponse
+    {
+        $ruta = tempnam(sys_get_temp_dir(), 'tarifas_') . '.xlsx';
+        $excel->exportar($ruta);
+
+        return response()->download($ruta, 'tarifas-' . now()->format('Y-m-d') . '.xlsx')->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Descarga una plantilla de ejemplo para cargar tarifas por Excel.
+     */
+    public function plantillaTarifas(TarifasExcelService $excel): BinaryFileResponse
+    {
+        $ruta = tempnam(sys_get_temp_dir(), 'plantilla_') . '.xlsx';
+        $excel->plantilla($ruta);
+
+        return response()->download($ruta, 'plantilla-tarifas.xlsx')->deleteFileAfterSend(true);
+    }
+
+    /**
+     * Importa tarifas desde un Excel (crea las nuevas y actualiza las existentes).
+     */
+    public function importarTarifas(Request $request, TarifasExcelService $excel): RedirectResponse
+    {
+        $request->validate([
+            'archivo' => ['required', 'file', 'mimes:xlsx', 'max:10240'],
+        ], [
+            'archivo.required' => 'Seleccioná un archivo Excel (.xlsx).',
+            'archivo.mimes'    => 'El archivo debe ser un Excel (.xlsx).',
+            'archivo.max'      => 'El archivo no puede superar los 10 MB.',
+        ]);
+
+        try {
+            $resultado = $excel->importar($request->file('archivo')->getRealPath(), auth()->id());
+        } catch (\Throwable $e) {
+            report($e);
+            $resultado = [
+                'creadas' => 0, 'actualizadas' => 0,
+                'errores' => ['No se pudo leer el archivo. Verificá que sea un .xlsx válido y con el formato de la plantilla.'],
+            ];
+        }
+
+        $ok = $resultado['errores'] === [];
+
+        Inertia::flash('toast', $ok
+            ? ['type' => 'success', 'message' => "Importación lista: {$resultado['creadas']} creadas, {$resultado['actualizadas']} actualizadas."]
+            : ['type' => 'error', 'message' => 'No se importó nada: el archivo tiene errores.']
+        );
+
+        return back()->with('importacion', [
+            'ok'           => $ok,
+            'creadas'      => $resultado['creadas'],
+            'actualizadas' => $resultado['actualizadas'],
+            'total_errores' => count($resultado['errores']),
+            'errores'      => array_slice($resultado['errores'], 0, 50),
+        ]);
+    }
+
+    /**
      * Activa / desactiva una provincia completa.
      */
     public function toggleProvincia(Provincia $provincia): JsonResponse|RedirectResponse
@@ -291,7 +356,7 @@ class CotizadorConfiguracionController extends Controller
             });
         }
 
-        $localidades = $query->orderBy('nombre')->get(['id', 'nombre', 'codigo_postal', 'codigo_georef', 'activo']);
+        $localidades = $query->orderBy('nombre')->get(['id', 'nombre', 'codigo_postal', 'codigo_georef', 'activo', 'tiene_deposito']);
 
         return response()->json([
             'provincia'   => $provincia->only(['id', 'nombre', 'activo']),
@@ -318,6 +383,31 @@ class CotizadorConfiguracionController extends Controller
         }
 
         return back()->with('success', "Localidad {$localidad->nombre} " . ($localidad->activo ? 'activada' : 'desactivada') . '.');
+    }
+
+    /**
+     * Agrega o quita el depósito de la empresa en una localidad.
+     * Mantiene provincias.tiene_deposito = "alguna localidad de la provincia tiene depósito".
+     */
+    public function toggleDeposito(Localidad $localidad): JsonResponse
+    {
+        $localidad->tiene_deposito = ! $localidad->tiene_deposito;
+        $localidad->save();
+
+        $provincia = Provincia::find($localidad->provincia_id);
+        $conDeposito = Localidad::where('provincia_id', $localidad->provincia_id)
+            ->whereNull('deleted_at')
+            ->where('tiene_deposito', true)
+            ->count();
+        $provincia?->update(['tiene_deposito' => $conDeposito > 0]);
+
+        return response()->json([
+            'ok'                       => true,
+            'tiene_deposito'           => $localidad->tiene_deposito,
+            'nombre'                   => $localidad->nombre,
+            'provincia_tiene_deposito' => $conDeposito > 0,
+            'localidades_con_deposito' => $conDeposito,
+        ]);
     }
 
     /**

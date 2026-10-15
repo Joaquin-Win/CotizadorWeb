@@ -4,8 +4,12 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Cotizacion;
+use App\Models\CotizacionContactoWhatsapp;
 use App\Models\EstadoCotizacion;
+use App\Services\WhatsApp\SeguimientoCotizacionService;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -19,6 +23,8 @@ use Inertia\Response;
  */
 class CotizacionesAdminController extends Controller
 {
+    public function __construct(private readonly SeguimientoCotizacionService $whatsapp) {}
+
     /**
      * Muestra la página de cotizaciones administrativas.
      *
@@ -34,19 +40,27 @@ class CotizacionesAdminController extends Controller
         $estadosPendientesIds = EstadoCotizacion::where('es_final', false)->pluck('id');
 
         // ── Cotizaciones pendientes (todos los estados no finales) ─────────────
-        $pendientes = Cotizacion::with([
-                'cliente:id,razon_social,nombre_fantasia',
-                'estado:id,codigo,nombre',
+        $pendientesModelos = Cotizacion::with([
+                'cliente:id,razon_social,nombre_fantasia,telefono',
+                'estado:id,codigo,nombre,es_final',
                 'envio.provinciaOrigen:id,nombre',
                 'envio.provinciaDestino:id,nombre',
                 'resultados' => fn ($q) => $q->latest('numero_version')->limit(1),
-                'usuario:id,name,email',
-                'lead:cotizacion_id,nombre_cliente',
+                'usuario:id,name,email,telefono',
+                'lead:cotizacion_id,nombre_cliente,telefono_cliente',
             ])
             ->whereIn('estado_id', $estadosPendientesIds)
             ->latest()
+            ->get();
+
+        // Último contacto por WhatsApp de cada cotización (una sola consulta)
+        $ultimosContactos = CotizacionContactoWhatsapp::whereIn('cotizacion_id', $pendientesModelos->pluck('id'))
+            ->orderBy('created_at')->orderBy('id')
             ->get()
-            ->map(fn ($c) => $this->mapCotizacion($c))
+            ->keyBy('cotizacion_id'); // el último gana
+
+        $pendientes = $pendientesModelos
+            ->map(fn ($c) => $this->mapCotizacion($c) + $this->datosSeguimiento($c, $ultimosContactos->get($c->id)))
             ->values();
 
         // ── Cotizaciones completadas (estados finales, paginadas) ─────────────
@@ -92,9 +106,45 @@ class CotizacionesAdminController extends Controller
         return back()->with('success', "Cotización #{$cotizacion->codigo} confirmada correctamente.");
     }
 
+    /**
+     * Genera el enlace wa.me de seguimiento y registra el contacto.
+     *
+     * NO envía el mensaje ni cambia el estado de la cotización: el usuario
+     * debe revisar y enviar el mensaje manualmente desde WhatsApp.
+     */
+    public function contactarWhatsapp(Request $request, Cotizacion $cotizacion): JsonResponse
+    {
+        $request->validate(['forzar' => ['sometimes', 'boolean']]);
+
+        try {
+            $contacto = $this->whatsapp->generarContacto(
+                $cotizacion,
+                auth()->id(),
+                $request->boolean('forzar'),
+            );
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json(['url' => $contacto['url']]);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Helpers privados
     // ─────────────────────────────────────────────────────────────────────────
+
+    /** Datos de seguimiento por WhatsApp para una fila de pendientes. */
+    private function datosSeguimiento(Cotizacion $c, ?CotizacionContactoWhatsapp $ultimo): array
+    {
+        $contacto = $this->whatsapp->resolverContacto($c);
+
+        return [
+            'seguimiento_estado'   => $this->whatsapp->estadoSeguimiento($c, $contacto['telefono'], $ultimo),
+            'ultimo_contacto'      => $ultimo?->created_at?->format('d/m/Y H:i'),
+            'contacto_reciente'    => $this->whatsapp->dentroDeVentanaAntiDuplicado($ultimo),
+            'telefono_disponible'  => $contacto['telefono'] !== null,
+        ];
+    }
 
     /**
      * Normaliza los datos de una cotización para el frontend.
