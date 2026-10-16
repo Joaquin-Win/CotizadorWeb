@@ -13,6 +13,14 @@ class ResultadoCotizacion
     // Estado del cálculo
     public string  $estado            = 'OK';        // 'OK' | 'ATENCION_PERSONALIZADA'
 
+    /**
+     * true  → precio calculado con tarifas disponibles pero no es exacto al 100%
+     *         (ej: sin depósito en la provincia, tarifa de tramo faltante,
+     *          se usó tarifa de provincia sin localidad, etc.)
+     * false → precio exacto calculado con todas las tarifas requeridas
+     */
+    public bool    $esEstimado        = false;
+
     // Costos por tramo (brutos, antes de mínimos)
     public float   $costoPrimeraMilla = 0.0;
     public float   $costoTroncal      = 0.0;

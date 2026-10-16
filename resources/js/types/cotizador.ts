@@ -69,6 +69,11 @@ export interface AdicionalResultado {
 
 export interface ResultadoCotizacion {
     estado: 'OK' | 'ATENCION_PERSONALIZADA';
+    /**
+     * true  → precio calculado con tarifas pero puede variar (sin depósito exacto, tramo con fallback, etc.)
+     * false → precio calculado con todas las tarifas exactas
+     */
+    es_estimado: boolean;
     costo_troncal: number;
     costo_primera_milla: number;
     costo_ultima_milla: number;

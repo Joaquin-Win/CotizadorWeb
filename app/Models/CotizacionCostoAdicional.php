@@ -15,14 +15,13 @@ class CotizacionCostoAdicional extends Model
     protected $fillable = [
         'cotizacion_id', 'costo_adicional_id',
         'nombre_snapshot', 'unidad_snapshot',
-        'monto_aplicado',
+        'importe',   // columna real en BD (antes llamada monto_aplicado en el código)
     ];
 
     protected $casts = [
-        'monto_aplicado' => 'decimal:2',
-        'created_at'     => 'datetime',
+        'importe'    => 'decimal:2',
+        'created_at' => 'datetime',
     ];
 
     public function costoAdicional() { return $this->belongsTo(CostoAdicional::class); }
 }
-

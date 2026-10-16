@@ -33,6 +33,8 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        // Cargar el cliente con sus datos para el autocompletado del cotizador
+        $cliente = $user?->cliente;
 
         return [
             ...parent::share($request),
@@ -42,9 +44,18 @@ class HandleInertiaRequests extends Middleware
                     'id'         => $user->id,
                     'name'       => $user->name,
                     'email'      => $user->email,
+                    'telefono'   => $user->telefono,
                     'rol_id'     => $user->rol_id,
                     'cliente_id' => $user->cliente_id,
                     'activo'     => $user->activo,
+                    // Datos del cliente (empresa) para autocompletado del cotizador
+                    'cliente'    => $cliente ? [
+                        'razon_social'      => $cliente->razon_social,
+                        'nombre_fantasia'   => $cliente->nombre_fantasia,
+                        'cuit'             => $cliente->cuit,
+                        'email_facturacion' => $cliente->email_facturacion,
+                        'telefono'          => $cliente->telefono,
+                    ] : null,
                 ] : null,
             ],
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',

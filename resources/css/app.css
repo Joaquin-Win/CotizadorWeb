@@ -322,6 +322,20 @@
     border-color: var(--color-danger, #c92a0a);
 }
 
+/* Campo de solo lectura (usuario autenticado) */
+.cot-input--readonly {
+    background: var(--color-canvas, #f5f8fc);
+    color: var(--color-ink-600);
+    cursor: default;
+    border-color: var(--color-border, #e5e7eb);
+    user-select: none;
+}
+
+.cot-input--readonly:focus {
+    box-shadow: none;
+    border-color: var(--color-border, #e5e7eb);
+}
+
 /* Checkboxes */
 .cot-checks {
     display: flex;
@@ -503,6 +517,10 @@
     border: 1.5px solid var(--color-brand-green, #00a86b);
 }
 
+.cot-resultado--estimado {
+    border: 1.5px solid var(--color-info, #2563eb);
+}
+
 .cot-resultado--atencion {
     border: 1.5px solid var(--color-notice, #f59e0b);
 }
@@ -546,6 +564,11 @@
 
 .cot-badge--ok {
     background: var(--color-brand-green, #00a86b);
+    color: #fff;
+}
+
+.cot-badge--estimado {
+    background: var(--color-info, #2563eb);
     color: #fff;
 }
 
@@ -676,6 +699,35 @@
     color: var(--color-ink-600);
     max-width: 30ch;
     line-height: 1.6;
+}
+
+/* Total con acento azul para precio estimado */
+.cot-total--estimado .cot-total__valor {
+    color: var(--color-info, #2563eb);
+}
+
+/* Banner informativo de precio estimado */
+.cot-estimado-banner {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    background: rgb(37 99 235 / 7%);
+    border: 1px solid rgb(37 99 235 / 22%);
+    border-radius: 0.5rem;
+    font-size: 0.8125rem;
+    color: #1d4ed8;
+    line-height: 1.5;
+}
+
+.cot-estimado-banner__icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+    margin-top: 0.05rem;
+}
+
+.cot-estimado-banner__texto {
+    flex: 1;
 }
 
 /* Portal del cliente: wizard contenido, sin titulo duplicado */

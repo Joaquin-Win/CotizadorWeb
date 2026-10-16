@@ -8,8 +8,9 @@ use Illuminate\Foundation\Http\FormRequest;
 /**
  * Valida el request para guardar una cotización ya calculada.
  *
- * authorize() = true para cotizadores públicos.
- * La cotización se identifica por el codigo generado por el motor.
+ * Si el usuario está autenticado, los datos personales son opcionales
+ * porque el controller los toma directamente del perfil/cliente del usuario.
+ * Para usuarios anónimos son obligatorios.
  */
 class GuardarCotizacionRequest extends FormRequest
 {
@@ -20,17 +21,24 @@ class GuardarCotizacionRequest extends FormRequest
 
     public function rules(): array
     {
+        $esAnonimo = ! auth()->check();
+
         return [
-            // El mismo payload del cotizar, más los datos de contacto para el lead
-            // Datos personales de quien cotiza (se guardan como lead)
-            'nombre_cliente'    => ['required', 'string', 'max:100'],
-            'apellido_cliente'  => ['required', 'string', 'max:100'],
-            'dni_cliente'       => ['required', 'regex:/^\d{7,8}$/'],
-            'email_cliente'     => ['required', 'email', 'max:255'],
+            // Datos personales: obligatorios solo para usuarios anónimos.
+            // Para autenticados el controller los toma del perfil.
+            'nombre_cliente'    => [$esAnonimo ? 'required' : 'nullable', 'string', 'max:100'],
+            'apellido_cliente'  => ['nullable', 'string', 'max:100'],
+            // cuit_cliente es alias del campo que envía el front para usuarios autenticados
+            'cuit_cliente'      => ['nullable', 'string', 'max:30'],
+            'dni_cliente'       => [$esAnonimo ? 'required' : 'nullable', 'nullable', 'regex:/^\d{7,8}$/'],
+            'email_cliente'     => [$esAnonimo ? 'required' : 'nullable', 'nullable', 'email', 'max:255'],
             'telefono_cliente'  => [
-                'required', 'string', 'max:50',
+                $esAnonimo ? 'required' : 'nullable',
+                'nullable',
+                'string',
+                'max:50',
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    if (app(SeguimientoCotizacionService::class)->normalizarTelefono((string) $value) === null) {
+                    if ($value && app(SeguimientoCotizacionService::class)->normalizarTelefono((string) $value) === null) {
                         $fail('Ingresá un teléfono celular argentino válido (ej. 351 123 4567).');
                     }
                 },

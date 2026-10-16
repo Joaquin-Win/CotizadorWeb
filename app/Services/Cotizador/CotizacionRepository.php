@@ -119,7 +119,7 @@ class CotizacionRepository
                     'costo_adicional_id'  => $adicional['id'],
                     'nombre_snapshot'     => $adicional['nombre'],
                     'unidad_snapshot'     => $adicional['unidad'],
-                    'monto_aplicado'      => $adicional['monto_calculado'],
+                    'importe'             => $adicional['monto_calculado'],  // columna real en BD
                 ]);
             }
 

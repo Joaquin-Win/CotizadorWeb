@@ -66,7 +66,12 @@ class CotizadorService
             // 1. Proveedor activo
             $proveedor = Proveedor::activo()->first();
             if (! $proveedor) {
-                return $this->atencionPersonalizada($resultado, 'No hay proveedor activo configurado.');
+                // Sin proveedor configurado: marcamos estimado, precio = $0.
+                // El usuario podrá confirmar y SET Logística le dará el precio real.
+                $resultado->esEstimado = true;
+                $resultado->errores[]  = 'Sin proveedor activo configurado. Precio estimado — SET Logística confirmará el valor final.';
+                $resultado->estado     = 'OK';
+                return $resultado;
             }
 
             // 2. Acuerdo comercial del cliente
@@ -75,11 +80,9 @@ class CotizadorService
             $seguroIncluido   = $this->acuerdoService->tieneSeguroIncluido($acuerdo);
             $descuentoPorcentaje = $this->acuerdoService->calcularDescuentoNeto($acuerdo, $data->clienteId);
 
-            // 2b. Depósitos: el troncal va de depósito a depósito, así que debe haber
-            //     al menos un depósito en la provincia de origen y en la de destino.
-            //     Cobros: primera milla solo si la empresa retira; última milla solo si
-            //     se entrega a domicilio (ver RutaResolver). Si el cliente lleva/retira en
-            //     depósito, ese tramo no se cobra.
+            // 2b. Depósitos: verificamos si hay depósito en las provincias.
+            //     Si NO hay depósito, NO abortamos — intentamos calcular igual
+            //     usando las tarifas existentes y marcamos el resultado como estimado.
             $sinDeposito = [];
             if (! Localidad::conDeposito()->where('provincia_id', $data->origen->provinciaId)->exists()) {
                 $sinDeposito[] = 'origen';
@@ -88,10 +91,10 @@ class CotizadorService
                 $sinDeposito[] = 'destino';
             }
             if (! empty($sinDeposito)) {
-                return $this->atencionPersonalizada(
-                    $resultado,
-                    'Sin depósito configurado en la provincia de ' . implode(' y ', $sinDeposito) . '.'
-                );
+                // Sin depósito → marcamos estimado pero continuamos el cálculo
+                $resultado->esEstimado = true;
+                $resultado->errores[]  = 'Sin depósito configurado en: ' . implode(' y ', $sinDeposito) . '. Precio estimado en base a tarifas disponibles.';
+                Log::info('[CotizadorService] Precio estimado — sin depósito en: ' . implode(', ', $sinDeposito));
             }
 
             // 3. Determinar tramos candidatos
@@ -215,10 +218,13 @@ class CotizadorService
                 }
             }
 
-            // Si falta algún tramo → atención personalizada
+            // Si faltan tramos → siempre marcar como estimado y continuar.
+            // Nunca devolvemos ATENCION_PERSONALIZADA aquí:
+            // el usuario siempre puede confirmar y SET Logística le dará el precio final.
             if (! empty($tramosFaltantes)) {
-                $error = 'Sin tarifa para: ' . implode(', ', $tramosFaltantes);
-                return $this->atencionPersonalizada($resultado, $error);
+                $resultado->esEstimado = true;
+                $resultado->errores[]  = 'Sin tarifa exacta para tramos: ' . implode(', ', $tramosFaltantes) . '. Precio estimado — el precio final lo confirmará SET Logística.';
+                Log::info('[CotizadorService] Sin tarifa para tramos: ' . implode(', ', $tramosFaltantes) . ' — devolviendo precio estimado ($0 si no hay ninguna tarifa).');
             }
 
             // Cargar costos de tramos en el DTO
@@ -257,6 +263,8 @@ class CotizadorService
                 'iva_porcentaje'     => ConfiguracionCotizador::numero('iva_porcentaje', 0),
             ]);
 
+            // Estado final: si hay estimado, mantenemos OK pero con esEstimado=true
+            // El frontend diferencia visualmente OK vs OK+esEstimado
             $resultado->estado = 'OK';
 
         } catch (\Throwable $e) {
@@ -264,10 +272,12 @@ class CotizadorService
                 'error'   => $e->getMessage(),
                 'trace'   => $e->getTraceAsString(),
             ]);
-            $resultado = $this->atencionPersonalizada(
-                $resultado,
-                'Error interno al calcular la cotización.'
-            );
+            // No devolvemos ATENCION_PERSONALIZADA en excepciones:
+            // marcamos esEstimado=true con precio $0 para que el usuario
+            // siempre pueda avanzar y SET Logística lo contacte.
+            $resultado->esEstimado = true;
+            $resultado->estado     = 'OK';
+            $resultado->errores[]  = 'No pudimos calcular el precio automáticamente. SET Logística te confirmará el valor final.';
         }
 
         return $resultado;
@@ -352,24 +362,26 @@ class CotizadorService
 
     /**
      * Marca el resultado como ATENCION_PERSONALIZADA y registra el error.
+     * Solo se usa cuando realmente NO hay tarifa para calcular ningún precio.
      */
     private function atencionPersonalizada(ResultadoCotizacion $resultado, string $motivo): ResultadoCotizacion
     {
-        $resultado->estado  = 'ATENCION_PERSONALIZADA';
-        $resultado->errores[] = $motivo;
+        $resultado->estado      = 'ATENCION_PERSONALIZADA';
+        $resultado->esEstimado  = false;
+        $resultado->errores[]   = $motivo;
 
-        // Resetear montos
-        $resultado->costoPrimeraMilla = 0;
-        $resultado->costoTroncal      = 0;
-        $resultado->costoUltimaMilla  = 0;
-        $resultado->costoPuertaPuerta = 0;
-        $resultado->subtotalFlete     = 0;
-        $resultado->costoSeguro       = 0;
+        // Resetear montos — no hay precio que mostrar
+        $resultado->costoPrimeraMilla  = 0;
+        $resultado->costoTroncal       = 0;
+        $resultado->costoUltimaMilla   = 0;
+        $resultado->costoPuertaPuerta  = 0;
+        $resultado->subtotalFlete      = 0;
+        $resultado->costoSeguro        = 0;
         $resultado->costoCargaDescarga = 0;
-        $resultado->margenMonto       = 0;
-        $resultado->descuentoMonto    = 0;
-        $resultado->iva               = 0;
-        $resultado->totalFinal        = 0;
+        $resultado->margenMonto        = 0;
+        $resultado->descuentoMonto     = 0;
+        $resultado->iva                = 0;
+        $resultado->totalFinal         = 0;
 
         return $resultado;
     }

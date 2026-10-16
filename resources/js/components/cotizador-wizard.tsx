@@ -157,10 +157,35 @@ interface ResultadoPanelProps {
 }
 
 function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: ResultadoPanelProps) {
-    const esAtencion = resultado.estado === 'ATENCION_PERSONALIZADA';
+    const esAtencion  = resultado.estado === 'ATENCION_PERSONALIZADA';
+    const esEstimado  = resultado.es_estimado && !esAtencion;
+    // Sin precio calculado: tarifas no cargadas aún
+    const sinPrecio   = esEstimado && resultado.total_final === 0;
+
+    // Badge config
+    const badgeClase = esAtencion
+        ? 'cot-badge--atencion'
+        : sinPrecio
+            ? 'cot-badge--atencion'
+            : esEstimado
+                ? 'cot-badge--estimado'
+                : 'cot-badge--ok';
+
+    const badgeTexto = esAtencion
+        ? 'Requiere revisión'
+        : sinPrecio
+            ? 'A confirmar'
+            : esEstimado
+                ? 'Precio estimado'
+                : 'Cotización lista';
 
     return (
-        <div className={clsx('cot-resultado', esAtencion ? 'cot-resultado--atencion' : 'cot-resultado--ok')}>
+        <div className={clsx(
+            'cot-resultado',
+            (esAtencion || sinPrecio) ? 'cot-resultado--atencion'
+                : esEstimado ? 'cot-resultado--estimado'
+                             : 'cot-resultado--ok',
+        )}>
             {/* Encabezado */}
             <div className="cot-resultado__header">
                 <div className="cot-resultado__ruta">
@@ -168,19 +193,19 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
                     <span className="cot-resultado__flecha">→</span>
                     <span className="cot-resultado__ciudad">{destinoNombre}</span>
                 </div>
-                <div className={clsx('cot-resultado__badge', esAtencion ? 'cot-badge--atencion' : 'cot-badge--ok')}>
-                    {esAtencion ? 'Requiere revisión' : 'Cotización lista'}
+                <div className={clsx('cot-resultado__badge', badgeClase)}>
+                    {badgeTexto}
                 </div>
             </div>
 
-            {esAtencion ? (
-                // Estado de atención personalizada
+            {(esAtencion || sinPrecio) ? (
+                // Sin precio: tarifas no configuradas aún o error de configuración
                 <div className="cot-atencion">
-                    <div className="cot-atencion__icon">⚠️</div>
+                    <div className="cot-atencion__icon">📋</div>
                     <h3 className="cot-atencion__titulo">Cotización a confirmar</h3>
                     <p className="cot-atencion__texto">
-                        Este envío requiere revisión personalizada por parte de SET Logística.
-                        Nos comunicaremos con vos a la brevedad.
+                        No pudimos calcular el precio automáticamente para esta ruta.
+                        Al confirmar, SET Logística se comunicará con vos a la brevedad para darte el precio final.
                     </p>
                     {codigo && (
                         <p className="cot-atencion__texto">
@@ -189,8 +214,19 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
                     )}
                 </div>
             ) : (
-                // Resultado completo
+                // Precio calculado (exacto o estimado con valor > 0)
                 <div className="cot-resultado__cuerpo">
+                    {/* Banner de precio estimado */}
+                    {esEstimado && (
+                        <div className="cot-estimado-banner">
+                            <span className="cot-estimado-banner__icon">ℹ️</span>
+                            <span className="cot-estimado-banner__texto">
+                                Precio estimado calculado en base a nuestras tarifas.
+                                El precio final puede variar levemente según la ruta exacta.
+                            </span>
+                        </div>
+                    )}
+
                     {/* Costos por tramo */}
                     <div className="cot-seccion">
                         <h4 className="cot-seccion__titulo">Costos por tramo</h4>
@@ -267,9 +303,13 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
                     )}
 
                     {/* Total */}
-                    <div className="cot-total">
-                        <span className="cot-total__label">Total estimado</span>
-                        <span className="cot-total__valor">{formatARS(resultado.total_final)}</span>
+                    <div className={clsx('cot-total', esEstimado && 'cot-total--estimado')}>
+                        <span className="cot-total__label">
+                            {esEstimado ? 'Precio estimado' : 'Total estimado'}
+                        </span>
+                        <span className="cot-total__valor">
+                            {formatARS(resultado.total_final)}
+                        </span>
                     </div>
 
                     {/* Tiempo de entrega */}
@@ -295,18 +335,44 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
 interface PopupConfig { activo: boolean; titulo: string; mensaje: string }
 
 export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
-    const { auth } = usePage().props as unknown as { auth?: { user?: { name?: string; email?: string } | null } };
-    const [popupVisible, setPopupVisible] = useState(
-        !!popup?.activo && !!(popup.titulo || popup.mensaje),
-    );
-    // Datos personales (se precargan si hay sesión; siempre editables)
+    const { auth } = usePage().props as unknown as {
+        auth?: {
+            user?: {
+                name?: string;
+                email?: string;
+                telefono?: string;
+                cliente?: {
+                    razon_social?: string;
+                    nombre_fantasia?: string;
+                    cuit?: string;
+                    email_facturacion?: string;
+                    telefono?: string;
+                } | null;
+            } | null;
+        };
+    };
+    const usuarioLogueado = auth?.user ?? null;
+    const clienteEmpresa  = usuarioLogueado?.cliente ?? null;
+
+    // Datos personales precargados desde el perfil del usuario:
+    //   - Si tiene empresa asociada (cliente): usar datos del cliente
+    //     nombre = razon_social, sin apellido, dni = cuit, email = email_facturacion, tel = cliente.telefono
+    //   - Si no tiene empresa: usar datos del usuario directamente
     const [persona, setPersona] = useState({
-        nombre: auth?.user?.name ?? '',
-        apellido: '',
-        dni: '',
-        telefono: '',
-        email: auth?.user?.email ?? '',
+        nombre:   clienteEmpresa?.razon_social  ?? usuarioLogueado?.name     ?? '',
+        apellido: '',           // no aplica para empresas (no se muestra si hay cliente)
+        dni:      clienteEmpresa?.cuit          ?? '',    // será el CUIT si está logueado
+        telefono: clienteEmpresa?.telefono      ?? usuarioLogueado?.telefono ?? '',
+        email:    clienteEmpresa?.email_facturacion ?? usuarioLogueado?.email ?? '',
     });
+    // Para saber qué label mostrar en el campo DNI/CUIT
+    const tieneCliente = !!clienteEmpresa;
+
+    const [popupVisible, setPopupVisible] = useState(
+        !!popup?.activo && !!(popup?.titulo || popup?.mensaje),
+    );
+
+    // modalConfirmar: muestra el modal de confirmación SOLO tras handleConfirmAndSend()
     const [modalConfirmar, setModalConfirmar] = useState(false);
     const [confirmando, setConfirmando] = useState(false);
     const [errorConfirmar, setErrorConfirmar] = useState<string | null>(null);
@@ -426,8 +492,11 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
         if (modalidadDestino === '') errs['destino.modalidad'] = 'Seleccioná la modalidad de entrega.';
         if (bultos.length === 0) errs['bultos'] = 'Agregá al menos un bulto.';
         if (!persona.nombre.trim()) errs['nombre_cliente'] = 'Ingresá tu nombre.';
-        if (!persona.apellido.trim()) errs['apellido_cliente'] = 'Ingresá tu apellido.';
-        if (!/^\d{7,8}$/.test(persona.dni.trim())) errs['dni_cliente'] = 'Ingresá un DNI válido (7 u 8 números, sin puntos).';
+        // Apellido y DNI solo son obligatorios para usuarios sin empresa (particulares anónimos)
+        if (!tieneCliente && !usuarioLogueado) {
+            if (!persona.apellido.trim()) errs['apellido_cliente'] = 'Ingresá tu apellido.';
+            if (!/^\d{7,8}$/.test(persona.dni.trim())) errs['dni_cliente'] = 'Ingresá un DNI válido (7 u 8 números, sin puntos).';
+        }
         if (persona.telefono.replace(/\D/g, '').length < 8) errs['telefono_cliente'] = 'Ingresá un teléfono válido con código de área.';
         if (!/^\S+@\S+\.\S+$/.test(persona.email.trim())) errs['email_cliente'] = 'Ingresá un correo electrónico válido.';
         bultos.forEach((b, i) => {
@@ -490,11 +559,15 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                 },
                 body: JSON.stringify({
                     ...armarPayload(),
-                    nombre_cliente: persona.nombre.trim(),
-                    apellido_cliente: persona.apellido.trim(),
-                    dni_cliente: persona.dni.trim(),
+                    nombre_cliente:   persona.nombre.trim(),
+                    apellido_cliente: tieneCliente ? null : persona.apellido.trim(),
+                    // Para empresas se envía cuit_cliente; para particulares dni_cliente
+                    ...(tieneCliente
+                        ? { cuit_cliente: persona.dni.trim() }
+                        : { dni_cliente: persona.dni.trim() }
+                    ),
                     telefono_cliente: persona.telefono.trim(),
-                    email_cliente: persona.email.trim(),
+                    email_cliente:    persona.email.trim(),
                 }),
             });
             const gd = await g.json().catch(() => ({}));
@@ -513,6 +586,8 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
     };
 
     // ── Calcular precio estimado (no persiste nada) ────────────────────────────
+    // Solo calcula y muestra el resultado inline. El modal de confirmación
+    // se abre únicamente cuando el usuario hace clic en "Confirmar y enviar".
     const calcular = async () => {
         if (!validar()) return;
 
@@ -520,6 +595,7 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
         setResultado(null);
         setCodigoGuardado(null);
         setErrorConfirmar(null);
+        setModalConfirmar(false);
 
         const payload = armarPayload();
 
@@ -545,21 +621,26 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                     }
                     setErroresForm(errs);
                 } else {
-                    // Error genérico — no mostrar detalles técnicos
                     setErroresForm({ general: 'No pudimos procesar tu cotización en este momento. Intentá nuevamente.' });
                 }
                 return;
             }
 
             const data = await resp.json();
+            // ✅ Solo mostramos el resultado inline. El modal NO se abre aquí.
             setResultado(data.resultado as ResultadoCotizacion);
-            // Popup con el precio estimado: el usuario decide Rechazar o Confirmar
-            setModalConfirmar(true);
         } catch {
             setErroresForm({ general: 'Error de conexión. Verificá tu conexión a internet.' });
         } finally {
             setCargando(false);
         }
+    };
+
+    // ── Confirmar y enviar: ÚNICA función que abre el modal de revisión ─────────
+    const handleConfirmAndSend = () => {
+        if (!resultado) return;
+        setErrorConfirmar(null);
+        setModalConfirmar(true); // ← showReviewModal = true SOLO aquí
     };
 
     // ── Nombres para mostrar en el resultado ────────────────────────────────
@@ -628,32 +709,64 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                             <div className="cot-card__header">
                                 <span className="cot-card__icono cot-card__icono--adicional">👤</span>
                                 <h2 id="sec-personales" className="cot-card__titulo">Tus datos</h2>
+                                {usuarioLogueado && (
+                                    <span style={{
+                                        marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 600,
+                                        padding: '2px 10px', borderRadius: 20,
+                                        background: 'var(--color-primary, #2563eb)', color: '#fff',
+                                    }}>
+                                        ✓ Cuenta verificada
+                                    </span>
+                                )}
                             </div>
+                            {usuarioLogueado && (
+                                <p style={{ margin: '0 0 8px', fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)', padding: '0 1rem' }}>
+                                    {tieneCliente
+                                        ? 'Los datos de tu empresa se completaron automáticamente y no pueden modificarse.'
+                                        : 'Tu nombre y correo se completaron automáticamente desde tu perfil y no pueden modificarse.'
+                                    }
+                                </p>
+                            )}
                             <div className="cot-card__body">
                                 <div className="cot-row">
                                     {([
-                                        { campo: 'nombre', err: 'nombre_cliente', label: 'Nombre', type: 'text', ac: 'given-name' },
-                                        { campo: 'apellido', err: 'apellido_cliente', label: 'Apellido', type: 'text', ac: 'family-name' },
-                                        { campo: 'dni', err: 'dni_cliente', label: 'DNI', type: 'text', ac: 'off' },
-                                        { campo: 'telefono', err: 'telefono_cliente', label: 'Teléfono (con código de área)', type: 'tel', ac: 'tel' },
-                                        { campo: 'email', err: 'email_cliente', label: 'Correo electrónico', type: 'email', ac: 'email' },
-                                    ] as const).map(({ campo, err, label, type, ac }) => (
-                                        <div key={campo} className="cot-field">
-                                            <label htmlFor={`persona-${campo}`} className="cot-label">
-                                                {label} <span className="cot-required">*</span>
-                                            </label>
-                                            <input
-                                                id={`persona-${campo}`}
-                                                type={type}
-                                                autoComplete={ac}
-                                                inputMode={campo === 'dni' || campo === 'telefono' ? 'numeric' : undefined}
-                                                className={clsx('cot-input', erroresForm[err] && 'cot-input--error')}
-                                                value={persona[campo]}
-                                                onChange={(e) => setPersona((p) => ({ ...p, [campo]: e.target.value }))}
-                                            />
-                                            {erroresForm[err] && <p className="cot-error">{erroresForm[err]}</p>}
-                                        </div>
-                                    ))}
+                                        // Si tiene cliente empresa: no mostramos apellido, CUIT reemplaza DNI
+                                        { campo: 'nombre',   err: 'nombre_cliente',   label: 'Razón social',                  type: 'text',  ac: 'organization', readonlyIfAuth: true,          hide: !tieneCliente },
+                                        { campo: 'nombre',   err: 'nombre_cliente',   label: 'Nombre',                        type: 'text',  ac: 'given-name',   readonlyIfAuth: true,          hide: tieneCliente  },
+                                        { campo: 'apellido', err: 'apellido_cliente', label: 'Apellido',                      type: 'text',  ac: 'family-name',  readonlyIfAuth: false,         hide: tieneCliente  },
+                                        { campo: 'dni',      err: 'dni_cliente',      label: tieneCliente ? 'CUIT' : 'DNI',   type: 'text',  ac: 'off',          readonlyIfAuth: tieneCliente,  hide: false         },
+                                        { campo: 'telefono', err: 'telefono_cliente', label: 'Teléfono (con código de área)', type: 'tel',   ac: 'tel',          readonlyIfAuth: tieneCliente,  hide: false         },
+                                        { campo: 'email',    err: 'email_cliente',    label: 'Correo electrónico',            type: 'email', ac: 'email',        readonlyIfAuth: true,          hide: false         },
+                                    ] as const).filter((f) => !f.hide).map(({ campo, err, label, type, ac, readonlyIfAuth }) => {
+                                        const isReadonly = !!usuarioLogueado && readonlyIfAuth;
+                                        return (
+                                            <div key={`${campo}-${label}`} className="cot-field">
+                                                <label htmlFor={`persona-${campo}-${label}`} className="cot-label">
+                                                    {label} <span className="cot-required">*</span>
+                                                    {isReadonly && (
+                                                        <span style={{ marginLeft: 6, fontSize: '0.7rem', color: 'var(--color-ink-400, #9ca3af)', fontWeight: 400 }}>
+                                                            (solo lectura)
+                                                        </span>
+                                                    )}
+                                                </label>
+                                                <input
+                                                    id={`persona-${campo}-${label}`}
+                                                    type={type}
+                                                    autoComplete={ac}
+                                                    inputMode={campo === 'dni' || campo === 'telefono' ? 'numeric' : undefined}
+                                                    className={clsx(
+                                                        'cot-input',
+                                                        erroresForm[err] && 'cot-input--error',
+                                                        isReadonly && 'cot-input--readonly',
+                                                    )}
+                                                    value={persona[campo as keyof typeof persona]}
+                                                    readOnly={isReadonly}
+                                                    onChange={isReadonly ? undefined : (e) => setPersona((p) => ({ ...p, [campo]: e.target.value }))}
+                                                />
+                                                {erroresForm[err] && <p className="cot-error">{erroresForm[err]}</p>}
+                                            </div>
+                                        );
+                                    })}
                                 </div>
                             </div>
                         </section>
@@ -981,9 +1094,46 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                             {cargando ? (
                                 <span className="cot-btn-calcular__spinner" aria-hidden="true" />
                             ) : null}
-                            {cargando ? 'Procesando…' : 'REALIZAR COTIZACIÓN'}
+                            {cargando ? 'Calculando…' : 'CALCULAR COTIZACIÓN'}
                         </button>
                     </form>
+
+                    {/* ── Resultado inline (precio estimado) ── */}
+                    {resultado && !codigoGuardado && (
+                        <aside className="cot-aside" aria-live="polite" aria-atomic="true" id="resultado-estimado">
+                            <ResultadoPanel
+                                resultado={resultado}
+                                origenNombre={origenNombre}
+                                destinoNombre={destinoNombre}
+                                codigo={null}
+                            />
+                            {/* Botón para abrir el modal de confirmación — ÚNICA vía para showReviewModal=true */}
+                            <div style={{ marginTop: '1rem', display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
+                                <button
+                                    id="btn-confirmar-enviar"
+                                    type="button"
+                                    className="cot-btn-calcular"
+                                    style={{ flex: 1 }}
+                                    onClick={handleConfirmAndSend}
+                                >
+                                    {resultado.es_estimado && resultado.total_final === 0
+                                        ? 'Enviar y que me contacten'
+                                        : resultado.es_estimado
+                                            ? 'Confirmar precio estimado'
+                                            : 'Confirmar y enviar cotización'}
+                                </button>
+                                <button
+                                    id="btn-nueva-cotizacion"
+                                    type="button"
+                                    onClick={() => { setResultado(null); setErroresForm({}); }}
+                                    className="rounded-lg border px-5 py-2.5 text-sm font-semibold hover:bg-muted"
+                                    style={{ flex: 1 }}
+                                >
+                                    Modificar datos
+                                </button>
+                            </div>
+                        </aside>
+                    )}
 
                     {/* ── Cotización generada (tras confirmar) ── */}
                     {codigoGuardado && (
@@ -1008,7 +1158,7 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                 </div>
             </div>
 
-            {/* ── Popup: precio estimado + Rechazar / Confirmar ── */}
+            {/* ── Modal de confirmación: se abre SOLO desde handleConfirmAndSend() ── */}
             <Dialog
                 open={modalConfirmar && !!resultado}
                 onOpenChange={(abierto) => { if (!abierto && !confirmando) rechazar(); }}
@@ -1016,22 +1166,30 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                 <DialogContent id="modal-confirmar-cotizacion" className="max-h-[90vh] gap-4 overflow-y-auto sm:max-w-lg">
                     <DialogTitle>
                         {resultado?.estado === 'ATENCION_PERSONALIZADA'
-                            ? 'No pudimos calcular el precio automáticamente'
-                            : 'Precio estimado de tu envío'}
+                            ? 'Cotización a confirmar'
+                            : resultado?.es_estimado
+                                ? 'Confirmar precio estimado'
+                                : 'Confirmar cotización'}
                     </DialogTitle>
                     <DialogDescription>
                         {resultado?.estado === 'ATENCION_PERSONALIZADA'
-                            ? 'Podés enviar tu pedido y SET Logística te va a pasar el precio a la brevedad.'
-                            : 'Revisá el valor estimado. Si lo confirmás, se genera la cotización con tus datos.'}
+                            ? 'Al confirmar, SET Logística revisará tu pedido y te contactará con el precio final a la brevedad.'
+                            : resultado?.es_estimado
+                                ? 'Al confirmar se registrará tu cotización con el precio estimado indicado. El precio final podría variar levemente. Te enviaremos los detalles por correo.'
+                                : 'Al confirmar se generará la cotización con tus datos. Te enviaremos los detalles por correo.'}
                     </DialogDescription>
-                    {resultado && (
-                        <ResultadoPanel
-                            resultado={resultado}
-                            origenNombre={origenNombre}
-                            destinoNombre={destinoNombre}
-                            codigo={null}
-                        />
-                    )}
+
+                    {/* Resumen de datos del remitente */}
+                    <div style={{
+                        background: 'var(--muted, #f3f4f6)', borderRadius: 10, padding: '12px 16px',
+                        fontSize: '0.875rem', lineHeight: 1.6,
+                    }}>
+                        <p style={{ fontWeight: 600, marginBottom: 4 }}>📋 Datos de contacto</p>
+                        <p>{persona.nombre} {persona.apellido} — DNI {persona.dni}</p>
+                        <p>📧 {persona.email}</p>
+                        <p>📱 {persona.telefono}</p>
+                    </div>
+
                     {errorConfirmar && (
                         <p className="cot-error" role="alert">{errorConfirmar}</p>
                     )}
@@ -1043,7 +1201,7 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                             onClick={rechazar}
                             className="rounded-lg border px-5 py-2.5 text-sm font-semibold hover:bg-muted disabled:opacity-50"
                         >
-                            Rechazar
+                            Cancelar
                         </button>
                         <button
                             id="btn-confirmar-cotizacion"
@@ -1056,7 +1214,7 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                                 ? 'Generando…'
                                 : resultado?.estado === 'ATENCION_PERSONALIZADA'
                                     ? 'Confirmar y enviar a revisión'
-                                    : 'Confirmar'}
+                                    : 'Confirmar y enviar'}
                         </button>
                     </div>
                 </DialogContent>

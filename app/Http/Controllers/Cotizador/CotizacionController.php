@@ -9,11 +9,14 @@ use App\Models\ConfiguracionCotizador;
 use App\Models\Cotizacion;
 use App\Models\CotizacionLead;
 use App\Models\EstadoCotizacion;
+use App\Notifications\CotizacionConfirmada;
 use App\Services\Cotizador\CodigoCotizacionGenerator;
 use App\Services\Cotizador\CotizacionRepository;
 use App\Services\Cotizador\CotizadorService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -76,6 +79,7 @@ class CotizacionController extends Controller
             'codigo'    => $codigoGuardado,
             'resultado' => [
                 'estado'              => $resultado->estado,
+                'es_estimado'         => $resultado->esEstimado,
                 'costo_troncal'       => $resultado->costoTroncal,
                 'costo_primera_milla' => $resultado->costoPrimeraMilla,
                 'costo_ultima_milla'  => $resultado->costoUltimaMilla,
@@ -100,13 +104,18 @@ class CotizacionController extends Controller
     /**
      * Calcula Y guarda la cotización en la BD.
      *
+     * Seguridad: si el usuario está autenticado, sus datos personales
+     * se toman de auth()->user() y NO del payload del request,
+     * ignorando cualquier intento de sobreescritura desde el cliente.
+     *
      * Para usuarios anónimos también acepta datos de contacto (lead).
      */
     public function guardar(CotizarRequest $cotizarRequest, GuardarCotizacionRequest $guardarRequest): JsonResponse
     {
-        $cliente     = auth()->user()?->cliente;
+        $usuario     = auth()->user();
+        $cliente     = $usuario?->cliente;
         $clienteId   = $cliente?->id;
-        $usuarioId   = auth()->id();
+        $usuarioId   = $usuario?->id;
         $tipoClienteId = $cliente?->tipo_cliente_id ?? $this->tipoPublicoId();
 
         $dto = $cotizarRequest->toDto($clienteId, $usuarioId);
@@ -119,8 +128,8 @@ class CotizacionController extends Controller
         $codigo = $this->codigoGenerator->generar();
 
         // Resolver estado_id según resultado
-        // El cliente ya vio el precio y lo confirmó → ENVIADA (pendiente de confirmación por SET)
-        $estadoCodigo = $resultado->estado === 'ATENCION_PERSONALIZADA'
+        // Si es estimado (pero tiene precio) → ENVIADA; si total=0 → EN_REVISION
+        $estadoCodigo = ($resultado->estado === 'ATENCION_PERSONALIZADA' || ($resultado->esEstimado && $resultado->totalFinal == 0))
             ? 'EN_REVISION'
             : 'ENVIADA';
 
@@ -159,17 +168,81 @@ class CotizacionController extends Controller
 
         $cotizacion = $this->repository->guardar($payload, $resultado, $codigo);
 
-        // Lead: datos personales de quien cotiza (también para usuarios con cuenta)
+        // ─────────────────────────────────────────────────────────────────────
+        // Lead: datos personales.
+        //
+        // SEGURIDAD: si el usuario está autenticado, los datos se toman del
+        // perfil del USUARIO y de su CLIENTE (empresa), NO del payload.
+        //
+        // Mapeo de campos para usuarios autenticados con empresa:
+        //   nombre_cliente   ← cliente.razon_social (o nombre_fantasia si no hay)
+        //   apellido_cliente ← null (no aplica para empresas)
+        //   dni_cliente      ← cliente.cuit (CUIT de la empresa)
+        //   email_cliente    ← cliente.email_facturacion
+        //   telefono_cliente ← cliente.telefono (o usuario.telefono como fallback)
+        //   empresa          ← cliente.nombre_fantasia
+        // ─────────────────────────────────────────────────────────────────────
         $guardarValidated = $guardarRequest->validated();
-        CotizacionLead::create([
+
+        if ($usuario && $cliente) {
+            // Usuario con empresa asociada
+            $nombreCliente   = $cliente->razon_social ?? $cliente->nombre_fantasia ?? $usuario->name;
+            $apellidoCliente = null; // no aplica para personas jurídicas
+            $dniCliente      = $cliente->cuit;
+            $emailCliente    = $cliente->email_facturacion ?? $usuario->email;
+            $telefonoCliente = $cliente->telefono ?? $usuario->telefono;
+            $empresa         = $cliente->nombre_fantasia ?? $cliente->razon_social;
+        } elseif ($usuario) {
+            // Usuario sin empresa (caso inusual)
+            $nombreCliente   = $usuario->name;
+            $apellidoCliente = $guardarValidated['apellido_cliente'] ?? null;
+            $dniCliente      = $guardarValidated['dni_cliente'] ?? null;
+            $emailCliente    = $usuario->email;
+            $telefonoCliente = $usuario->telefono;
+            $empresa         = $guardarValidated['empresa'] ?? null;
+        } else {
+            // Usuario anónimo: todo del payload
+            $nombreCliente   = $guardarValidated['nombre_cliente'];
+            $apellidoCliente = $guardarValidated['apellido_cliente'] ?? null;
+            $dniCliente      = $guardarValidated['dni_cliente'];
+            $emailCliente    = $guardarValidated['email_cliente'];
+            $telefonoCliente = $guardarValidated['telefono_cliente'];
+            $empresa         = $guardarValidated['empresa'] ?? null;
+        }
+
+        $lead = CotizacionLead::create([
             'cotizacion_id'    => $cotizacion->id,
-            'nombre_cliente'   => $guardarValidated['nombre_cliente'],
-            'apellido_cliente' => $guardarValidated['apellido_cliente'],
-            'dni_cliente'      => $guardarValidated['dni_cliente'],
-            'email_cliente'    => $guardarValidated['email_cliente'],
-            'telefono_cliente' => $guardarValidated['telefono_cliente'],
-            'empresa'          => $guardarValidated['empresa'] ?? null,
+            'nombre_cliente'   => $nombreCliente,
+            'apellido_cliente' => $apellidoCliente,
+            'dni_cliente'      => $dniCliente,
+            'email_cliente'    => $emailCliente,
+            'telefono_cliente' => $telefonoCliente,
+            'empresa'          => $empresa,
         ]);
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Notificaciones: mail + WhatsApp
+        // TODO: mover a config/env cuando esté en producción.
+        // Por ahora se envía siempre a los destinos hardcodeados.
+        // ─────────────────────────────────────────────────────────────────────
+        $mailDestino     = 'winckjoaquin@gmail.com';  // destino temporal de desarrollo
+        $whatsappDestino = '+543755508324';             // destino temporal de desarrollo
+
+        try {
+            Notification::route('mail', $mailDestino)
+                ->notify(new CotizacionConfirmada(
+                    cotizacion:       $cotizacion,
+                    lead:             $lead,
+                    totalFinal:       (float) $resultado->totalFinal,
+                    estadoCotizacion: $resultado->estado,
+                ));
+        } catch (\Throwable $e) {
+            \Log::error("[guardar] Error enviando email cotizacion {$codigo}: {$e->getMessage()}");
+        }
+
+        // WhatsApp: se envía también a la notificación dummy (el canal no está activo aún)
+        // Cuando se active el canal custom, agregar 'whatsapp' en CotizacionConfirmada::via()
+        \Log::info("[guardar] WhatsApp pendiente para {$whatsappDestino} — cotizacion {$codigo}");
 
         return response()->json([
             'status'  => 'ok',

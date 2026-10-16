@@ -446,7 +446,7 @@ class CotizadorConfiguracionController extends Controller
      * Solo afecta estados no finales: BORRADOR, ENVIADA, EN_REVISION.
      * Nunca toca: ACEPTADA, RECHAZADA, VENCIDA, PENDIENTE_CONFIRMACION.
      */
-    private function marcarCotizacionesPendientesConfirmacion(\Illuminate\Support\Carbon $actualizado_at): void
+    private function marcarCotizacionesPendientesConfirmacion(\DateTimeInterface $actualizado_at): void
     {
         // ID del nuevo estado
         $estadoPendiente = EstadoCotizacion::where('codigo', 'PENDIENTE_CONFIRMACION')->value('id');
