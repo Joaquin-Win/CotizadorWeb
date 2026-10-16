@@ -18,6 +18,7 @@ export interface Localidad {
     id: number;
     nombre: string;
     codigo_postal?: string;
+    tiene_deposito?: boolean;
 }
 
 export interface TipoBulto {

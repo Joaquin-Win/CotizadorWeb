@@ -8,6 +8,7 @@ import {
     ClipboardList,
     Clock,
     ExternalLink,
+    MessageCircle,
     Search,
     User,
 } from 'lucide-react';
@@ -31,6 +32,16 @@ interface CotizacionRow {
     created_date: string;
     created_time: string;
     updated_at: string | null;
+    seguimiento_estado?: 'pendiente' | 'contactado' | 'sin_telefono' | 'no_aplica';
+    ultimo_contacto?: string | null;
+    contacto_reciente?: boolean;
+    telefono_disponible?: boolean;
+}
+
+/** Lee la cookie XSRF para peticiones fetch (mismo mecanismo que usa Laravel). */
+function xsrfToken(): string {
+    const m = document.cookie.match(/(?:^|; )XSRF-TOKEN=([^;]*)/);
+    return m ? decodeURIComponent(m[1]) : '';
 }
 
 interface Paginado<T> {
@@ -95,12 +106,17 @@ function FilaPendiente({
     cot,
     onConfirmar,
     confirmando,
+    onWhatsapp,
+    contactando,
 }: {
     cot: CotizacionRow;
     onConfirmar: (id: number) => void;
     confirmando: number | null;
+    onWhatsapp: (cot: CotizacionRow) => void;
+    contactando: number | null;
 }) {
     const cargando = confirmando === cot.id;
+    const seg = cot.seguimiento_estado ?? 'no_aplica';
 
     return (
         <tr className="group border-b border-border/60 bg-orange-50/30 dark:bg-orange-950/5 hover:bg-orange-50/60 dark:hover:bg-orange-950/10 transition-colors">
@@ -152,7 +168,23 @@ function FilaPendiente({
 
             {/* Estado */}
             <td className="px-4 py-3">
-                <EstadoBadge codigo="PENDIENTE_CONFIRMACION" nombre="Cotización a confirmar" />
+                <div className="flex flex-col items-start gap-1">
+                    <EstadoBadge codigo="PENDIENTE_CONFIRMACION" nombre="Cotización a confirmar" />
+                    {seg === 'contactado' && (
+                        <span
+                            className="inline-flex items-center rounded-full border border-emerald-300/60 bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                            title="Se generó el enlace de WhatsApp; no garantiza que el mensaje se haya enviado ni respondido."
+                        >
+                            Contactado · {cot.ultimo_contacto}
+                        </span>
+                    )}
+                    {seg === 'pendiente' && (
+                        <span className="text-[10px] text-muted-foreground">Pendiente de contacto</span>
+                    )}
+                    {seg === 'sin_telefono' && (
+                        <span className="text-[10px] text-red-600">Sin teléfono válido</span>
+                    )}
+                </div>
             </td>
 
             {/* Acciones */}
@@ -169,6 +201,18 @@ function FilaPendiente({
                             Revisar cotización
                         </Link>
                     </Button>
+                    {(seg === 'pendiente' || seg === 'contactado') && (
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2.5 text-xs gap-1.5 font-medium border-green-300 text-green-700 hover:bg-green-50 dark:border-green-700 dark:text-green-400 dark:hover:bg-green-950/40"
+                            disabled={contactando === cot.id}
+                            onClick={() => onWhatsapp(cot)}
+                        >
+                            <MessageCircle className="h-3 w-3" />
+                            {contactando === cot.id ? 'Preparando…' : 'Contactar por WhatsApp'}
+                        </Button>
+                    )}
                     <Button
                         variant="outline"
                         size="sm"
@@ -288,6 +332,54 @@ export default function CotizacionesAdmin({ pendientes, completadas }: Props) {
         );
     }
 
+    // Genera el enlace wa.me en el backend (valida estado/teléfono y registra el contacto)
+    // y lo abre en una pestaña nueva. El usuario envía el mensaje manualmente.
+    const [contactando, setContactando] = useState<number | null>(null);
+
+    async function handleWhatsapp(cot: CotizacionRow) {
+        let forzar = false;
+        if (cot.contacto_reciente) {
+            const ok = window.confirm(
+                `Ya se contactó a este cliente el ${cot.ultimo_contacto}. ¿Querés volver a contactarlo?`,
+            );
+            if (!ok) return;
+            forzar = true;
+        }
+
+        setContactando(cot.id);
+        // Se abre la pestaña en el clic para que el navegador no la bloquee.
+        const ventana = window.open('', '_blank');
+        try {
+            const res = await fetch(`/admin/cotizaciones/${cot.id}/whatsapp`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': xsrfToken(),
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({ forzar }),
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok || !data.url) {
+                ventana?.close();
+                window.alert(data.message ?? 'No se pudo preparar el mensaje de WhatsApp.');
+                return;
+            }
+            if (ventana) {
+                ventana.location.href = data.url;
+            } else {
+                window.location.href = data.url;
+            }
+            router.reload({ only: ['pendientes'] });
+        } catch {
+            ventana?.close();
+            window.alert('Error de red al preparar el mensaje de WhatsApp.');
+        } finally {
+            setContactando(null);
+        }
+    }
+
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Cotizaciones" />
@@ -360,6 +452,8 @@ export default function CotizacionesAdmin({ pendientes, completadas }: Props) {
                                                 cot={cot}
                                                 onConfirmar={handleConfirmar}
                                                 confirmando={confirmando}
+                                                onWhatsapp={handleWhatsapp}
+                                                contactando={contactando}
                                             />
                                         ))}
                                     </tbody>

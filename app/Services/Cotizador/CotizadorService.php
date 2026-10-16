@@ -7,6 +7,7 @@ use App\Data\Cotizador\CotizacionRequestData;
 use App\Data\Cotizador\CostoTramo;
 use App\Data\Cotizador\ResultadoCotizacion;
 use App\Models\ConfiguracionCotizador;
+use App\Models\Localidad;
 use App\Models\Proveedor;
 use App\Models\TipoServicio;
 use Illuminate\Support\Facades\Log;
@@ -73,6 +74,25 @@ class CotizadorService
             $resultado->acuerdoId  = $acuerdo?->id;
             $seguroIncluido   = $this->acuerdoService->tieneSeguroIncluido($acuerdo);
             $descuentoPorcentaje = $this->acuerdoService->calcularDescuentoNeto($acuerdo, $data->clienteId);
+
+            // 2b. Depósitos: el troncal va de depósito a depósito, así que debe haber
+            //     al menos un depósito en la provincia de origen y en la de destino.
+            //     Cobros: primera milla solo si la empresa retira; última milla solo si
+            //     se entrega a domicilio (ver RutaResolver). Si el cliente lleva/retira en
+            //     depósito, ese tramo no se cobra.
+            $sinDeposito = [];
+            if (! Localidad::conDeposito()->where('provincia_id', $data->origen->provinciaId)->exists()) {
+                $sinDeposito[] = 'origen';
+            }
+            if (! Localidad::conDeposito()->where('provincia_id', $data->destino->provinciaId)->exists()) {
+                $sinDeposito[] = 'destino';
+            }
+            if (! empty($sinDeposito)) {
+                return $this->atencionPersonalizada(
+                    $resultado,
+                    'Sin depósito configurado en la provincia de ' . implode(' y ', $sinDeposito) . '.'
+                );
+            }
 
             // 3. Determinar tramos candidatos
             $tramos = $this->rutaResolver->resolverTramos($data);

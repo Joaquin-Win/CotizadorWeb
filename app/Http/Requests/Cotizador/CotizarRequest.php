@@ -29,12 +29,12 @@ class CotizarRequest extends FormRequest
         return [
             // Origen
             'origen.provincia_id'     => ['required', 'integer', 'exists:provincias,id'],
-            'origen.localidad_id'     => ['nullable', 'integer', 'exists:localidades,id'],
+            'origen.localidad_id'     => ['required_if:origen.solicita_retiro,true,1', 'nullable', 'integer', 'exists:localidades,id'],
             'origen.solicita_retiro'  => ['boolean'],
 
             // Destino
             'destino.provincia_id'    => ['required', 'integer', 'exists:provincias,id'],
-            'destino.localidad_id'    => ['nullable', 'integer', 'exists:localidades,id'],
+            'destino.localidad_id'    => ['required_if:destino.solicita_entrega,true,1', 'nullable', 'integer', 'exists:localidades,id'],
             'destino.solicita_entrega'=> ['boolean'],
             'destino.retiro_en_sucursal' => ['boolean'],
 
@@ -63,6 +63,8 @@ class CotizarRequest extends FormRequest
         return [
             'origen.provincia_id.required'   => 'Debe indicar la provincia de origen.',
             'destino.provincia_id.required'  => 'Debe indicar la provincia de destino.',
+            'origen.localidad_id.required_if'  => 'Seleccioná la localidad de retiro.',
+            'destino.localidad_id.required_if' => 'Seleccioná la localidad de entrega.',
             'bultos.required'                => 'Debe informar al menos un bulto.',
             'bultos.min'                     => 'Debe informar al menos un bulto.',
             'bultos.max'                     => 'No puede cotizar más de 50 bultos a la vez.',

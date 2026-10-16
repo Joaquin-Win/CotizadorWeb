@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { Head, useForm, router } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
@@ -24,6 +24,9 @@ import {
     Power,
     CheckSquare,
     Square,
+    Download,
+    Upload,
+    FileSpreadsheet,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -77,6 +80,7 @@ interface Provincia {
     activo: boolean;
     total_localidades?: number;
     localidades_activas?: number;
+    localidades_con_deposito?: number;
 }
 
 interface LocalidadItem {
@@ -85,6 +89,7 @@ interface LocalidadItem {
     codigo_postal: string | null;
     codigo_georef: string;
     activo: boolean;
+    tiene_deposito: boolean;
 }
 
 interface CatalogoItem {
@@ -102,6 +107,13 @@ interface Props {
     unidadesMedida: CatalogoItem[];
     proveedor: { id: number; nombre: string } | null;
     activeTab?: string;
+    importacion?: {
+        ok: boolean;
+        creadas: number;
+        actualizadas: number;
+        total_errores: number;
+        errores: string[];
+    } | null;
 }
 
 const breadcrumbs: BreadcrumbItem[] = [
@@ -118,10 +130,40 @@ export default function CotizadorConfiguracion({
     unidadesMedida,
     proveedor,
     activeTab: initialTab = 'precios',
+    importacion,
 }: Props) {
     const [tab, setTab] = useState<'precios' | 'tarifas' | 'geografia'>(
         (initialTab as 'precios' | 'tarifas' | 'geografia') || 'precios'
     );
+
+    // Importación de tarifas por Excel
+    const inputExcelRef = useRef<HTMLInputElement>(null);
+    const [importando, setImportando] = useState(false);
+    const [resultadoVisible, setResultadoVisible] = useState(true);
+
+    useEffect(() => {
+        if (importacion) {
+            setResultadoVisible(true);
+        }
+    }, [importacion]);
+
+    const handleArchivoExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const archivo = e.target.files?.[0];
+        e.target.value = '';
+        if (!archivo) return;
+
+        router.post(
+            '/admin/cotizador/tarifas/importar',
+            { archivo },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                preserveState: true,
+                onStart: () => setImportando(true),
+                onFinish: () => setImportando(false),
+            }
+        );
+    };
 
     // ─────────────────────────────────────────────────────────────────────────
     // TAB 1: PRECIOS Y PARÁMETROS
@@ -298,6 +340,7 @@ export default function CotizadorConfiguracion({
     const [localidades, setLocalidades] = useState<LocalidadItem[]>([]);
     const [cargandoLocalidades, setCargandoLocalidades] = useState(false);
     const [busquedaLocalidad, setBusquedaLocalidad] = useState('');
+    const [soloDeposito, setSoloDeposito] = useState(false);
     const [busquedaProvincia, setBusquedaProvincia] = useState('');
 
     const cargarLocalidades = (prov: Provincia) => {
@@ -378,6 +421,37 @@ export default function CotizadorConfiguracion({
         }
     };
 
+    // Agrega o quita el depósito de la empresa en una localidad
+    const handleToggleDeposito = async (loc: LocalidadItem) => {
+        try {
+            const resp = await fetch(`/admin/cotizador/localidades/${loc.id}/deposito`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN':
+                        (document.querySelector('meta[name="csrf-token"]') as HTMLMetaElement)?.content ?? '',
+                    Accept: 'application/json',
+                },
+            });
+            const data = await resp.json();
+            if (data.ok) {
+                setLocalidades((prev) =>
+                    prev.map((l) => (l.id === loc.id ? { ...l, tiene_deposito: data.tiene_deposito } : l))
+                );
+                const aplicar = <T extends Provincia>(p: T): T => ({
+                    ...p,
+                    tiene_deposito: data.provincia_tiene_deposito,
+                    localidades_con_deposito: data.localidades_con_deposito,
+                });
+                setProvincias((prev) =>
+                    prev.map((p) => (p.id === provinciaSeleccionada?.id ? aplicar(p) : p))
+                );
+                setProvinciaSeleccionada((p) => (p ? aplicar(p) : p));
+            }
+        } catch (err) {
+            console.error('Error actualizando depósito:', err);
+        }
+    };
+
     const handleToggleTodasLocalidades = async (activo: boolean) => {
         if (!provinciaSeleccionada) return;
         try {
@@ -420,12 +494,13 @@ export default function CotizadorConfiguracion({
     }, [provincias, busquedaProvincia]);
 
     const localidadesFiltradas = useMemo(() => {
-        if (!busquedaLocalidad) return localidades;
+        const base = soloDeposito ? localidades.filter((l) => l.tiene_deposito) : localidades;
+        if (!busquedaLocalidad) return base;
         const q = busquedaLocalidad.toLowerCase();
-        return localidades.filter(
+        return base.filter(
             (l) => l.nombre.toLowerCase().includes(q) || (l.codigo_postal && l.codigo_postal.includes(q))
         );
-    }, [localidades, busquedaLocalidad]);
+    }, [localidades, busquedaLocalidad, soloDeposito]);
 
     const totalProvinciasActivas = useMemo(
         () => provincias.filter((p) => p.activo).length,
@@ -796,11 +871,92 @@ export default function CotizadorConfiguracion({
                                 </select>
                             </div>
 
-                            <Button onClick={abrirCrearTarifa} className="gap-2 text-xs font-semibold h-9">
-                                <Plus className="h-4 w-4" />
-                                Nueva Tarifa
-                            </Button>
+                            <div className="flex flex-wrap items-center gap-2">
+                                <input
+                                    ref={inputExcelRef}
+                                    type="file"
+                                    accept=".xlsx"
+                                    className="hidden"
+                                    onChange={handleArchivoExcel}
+                                />
+                                <Button asChild variant="outline" className="gap-2 text-xs font-semibold h-9">
+                                    <a href="/admin/cotizador/tarifas/plantilla">
+                                        <FileSpreadsheet className="h-4 w-4" />
+                                        Plantilla
+                                    </a>
+                                </Button>
+                                <Button asChild variant="outline" className="gap-2 text-xs font-semibold h-9">
+                                    <a href="/admin/cotizador/tarifas/exportar">
+                                        <Download className="h-4 w-4" />
+                                        Exportar Excel
+                                    </a>
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    disabled={importando}
+                                    onClick={() => inputExcelRef.current?.click()}
+                                    className="gap-2 text-xs font-semibold h-9"
+                                >
+                                    <Upload className="h-4 w-4" />
+                                    {importando ? 'Importando...' : 'Importar Excel'}
+                                </Button>
+                                <Button onClick={abrirCrearTarifa} className="gap-2 text-xs font-semibold h-9">
+                                    <Plus className="h-4 w-4" />
+                                    Nueva Tarifa
+                                </Button>
+                            </div>
                         </div>
+
+                        {importacion && resultadoVisible && (
+                            <div
+                                className={`rounded-xl border p-4 text-xs ${
+                                    importacion.ok
+                                        ? 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200 dark:border-emerald-800'
+                                        : 'border-red-300 bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-200 dark:border-red-800'
+                                }`}
+                            >
+                                <div className="flex items-start justify-between gap-3">
+                                    <div className="flex items-start gap-2">
+                                        {importacion.ok ? (
+                                            <CheckCircle2 className="h-4 w-4 mt-0.5 shrink-0" />
+                                        ) : (
+                                            <AlertCircle className="h-4 w-4 mt-0.5 shrink-0" />
+                                        )}
+                                        <div>
+                                            {importacion.ok ? (
+                                                <p className="font-semibold">
+                                                    Importación lista: {importacion.creadas} tarifas creadas y {importacion.actualizadas} actualizadas.
+                                                </p>
+                                            ) : (
+                                                <>
+                                                    <p className="font-semibold">
+                                                        No se importó nada. Corregí el Excel y volvé a subirlo ({importacion.total_errores} error/es):
+                                                    </p>
+                                                    <ul className="mt-2 list-disc pl-5 space-y-0.5 max-h-48 overflow-y-auto">
+                                                        {importacion.errores.map((err, i) => (
+                                                            <li key={i}>{err}</li>
+                                                        ))}
+                                                    </ul>
+                                                    {importacion.total_errores > importacion.errores.length && (
+                                                        <p className="mt-1 opacity-80">
+                                                            ... y {importacion.total_errores - importacion.errores.length} más.
+                                                        </p>
+                                                    )}
+                                                </>
+                                            )}
+                                        </div>
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => setResultadoVisible(false)}
+                                        className="opacity-70 hover:opacity-100"
+                                        aria-label="Cerrar"
+                                    >
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        )}
 
                         {/* Listado de tarifas */}
                         <div className="rounded-xl border bg-card overflow-hidden shadow-xs">
@@ -963,6 +1119,8 @@ export default function CotizadorConfiguracion({
                                                 </div>
                                                 <p className="text-[11px] text-muted-foreground mt-0.5">
                                                     {prov.localidades_activas ?? 0} de {prov.total_localidades ?? 0} localidades activas
+                                                    {(prov.localidades_con_deposito ?? 0) > 0 &&
+                                                        ` · ${prov.localidades_con_deposito} con depósito`}
                                                 </p>
                                             </div>
 
@@ -1049,6 +1207,15 @@ export default function CotizadorConfiguracion({
                                                 className="pl-9 h-8 text-xs"
                                             />
                                         </div>
+                                        <label className="mt-2 flex items-center gap-2 text-xs text-muted-foreground cursor-pointer w-fit">
+                                            <input
+                                                id="filtro-solo-deposito"
+                                                type="checkbox"
+                                                checked={soloDeposito}
+                                                onChange={(e) => setSoloDeposito(e.target.checked)}
+                                            />
+                                            Mostrar solo localidades con depósito
+                                        </label>
                                     </div>
 
                                     {/* Lista de localidades */}
@@ -1088,6 +1255,20 @@ export default function CotizadorConfiguracion({
                                                         </span>
                                                     </div>
 
+                                                    <div className="flex items-center gap-3 shrink-0">
+                                                    <button
+                                                        type="button"
+                                                        id={`deposito-${loc.id}`}
+                                                        title={loc.tiene_deposito ? 'Quitar depósito de esta localidad' : 'Marcar que la empresa tiene depósito aquí'}
+                                                        onClick={() => void handleToggleDeposito(loc)}
+                                                        className={`rounded-md border px-2 py-1 text-[11px] font-semibold transition-colors ${
+                                                            loc.tiene_deposito
+                                                                ? 'border-blue-300 bg-blue-100 text-blue-700 hover:bg-blue-200 dark:border-blue-800 dark:bg-blue-950/50 dark:text-blue-300'
+                                                                : 'border-dashed text-muted-foreground hover:bg-muted'
+                                                        }`}
+                                                    >
+                                                        {loc.tiene_deposito ? '✓ Depósito · Quitar' : '+ Agregar depósito'}
+                                                    </button>
                                                     <button
                                                         type="button"
                                                         title={loc.activo ? 'Desactivar localidad' : 'Activar localidad'}
@@ -1102,6 +1283,7 @@ export default function CotizadorConfiguracion({
                                                             }`}
                                                         />
                                                     </button>
+                                                    </div>
                                                 </div>
                                             ))
                                         )}

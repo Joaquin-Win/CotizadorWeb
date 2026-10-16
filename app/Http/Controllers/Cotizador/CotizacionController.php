@@ -67,56 +67,8 @@ class CotizacionController extends Controller
 
         $codigoGuardado = null;
 
-        // Persistir automáticamente si el usuario está autenticado
-        if ($usuarioId !== null) {
-            try {
-                $estadoCodigo = $resultado->estado === 'ATENCION_PERSONALIZADA'
-                    ? 'EN_REVISION'
-                    : 'BORRADOR';
-
-                $estadoId = EstadoCotizacion::where('codigo', $estadoCodigo)->value('id')
-                         ?? EstadoCotizacion::first()?->id
-                         ?? 1;
-
-                $codigo = $this->codigoGenerator->generar();
-
-                $validated = $request->validated();
-                $payload = [
-                    'origen_id'            => $validated['origen_cotizacion_id'] ?? 1,
-                    'tipo_cliente_id'      => $tipoClienteId,
-                    'cliente_id'           => $clienteId,
-                    'usuario_id'           => $usuarioId,
-                    'estado_id'            => $estadoId,
-                    'provincia_origen_id'  => $validated['origen']['provincia_id'],
-                    'localidad_origen_id'  => $validated['origen']['localidad_id'] ?? null,
-                    'provincia_destino_id' => $validated['destino']['provincia_id'],
-                    'localidad_destino_id' => $validated['destino']['localidad_id'] ?? null,
-                    'solicita_retiro'      => $validated['origen']['solicita_retiro'] ?? false,
-                    'solicita_entrega'     => $validated['destino']['solicita_entrega'] ?? false,
-                    'retira_en_sucursal'   => $validated['destino']['retiro_en_sucursal'] ?? false,
-                    'valor_declarado'      => $validated['valor_declarado'] ?? null,
-                    'bultos'               => array_map(fn ($b) => [
-                        'tipo_bulto_id' => $b['tipo_bulto_id'],
-                        'largo_cm'      => $b['largo_cm'],
-                        'ancho_cm'      => $b['ancho_cm'],
-                        'alto_cm'       => $b['alto_cm'],
-                        'peso_kg'       => $b['peso_kg'],
-                        'cantidad'      => $b['cantidad'],
-                        'palletizado'   => $b['palletizado'] ?? false,
-                    ], $validated['bultos']),
-                ];
-
-                $this->repository->guardar($payload, $resultado, $codigo);
-                $codigoGuardado = $codigo;
-            } catch (\Throwable $e) {
-                // Si falla la persistencia, la cotización igual se muestra
-                // Solo loguear el error, no interrumpir la respuesta
-                \Illuminate\Support\Facades\Log::error('Error al persistir cotización calculada', [
-                    'usuario_id' => $usuarioId,
-                    'error'      => $e->getMessage(),
-                ]);
-            }
-        }
+        // La cotización NO se persiste aquí: el cliente primero ve el precio estimado
+        // y solo al confirmar se genera mediante guardar().
 
         return response()->json([
             'status'    => $resultado->estado,
@@ -167,9 +119,10 @@ class CotizacionController extends Controller
         $codigo = $this->codigoGenerator->generar();
 
         // Resolver estado_id según resultado
+        // El cliente ya vio el precio y lo confirmó → ENVIADA (pendiente de confirmación por SET)
         $estadoCodigo = $resultado->estado === 'ATENCION_PERSONALIZADA'
             ? 'EN_REVISION'
-            : 'BORRADOR';
+            : 'ENVIADA';
 
         $estadoId = EstadoCotizacion::where('codigo', $estadoCodigo)->value('id')
                  ?? EstadoCotizacion::first()?->id
@@ -206,20 +159,17 @@ class CotizacionController extends Controller
 
         $cotizacion = $this->repository->guardar($payload, $resultado, $codigo);
 
-        // Lead: guardar datos de contacto para cotizaciones anónimas o con ATENCION_PERSONALIZADA
+        // Lead: datos personales de quien cotiza (también para usuarios con cuenta)
         $guardarValidated = $guardarRequest->validated();
-        if (! $clienteId && ! empty(array_filter([
-            $guardarValidated['nombre_cliente'] ?? null,
-            $guardarValidated['email_cliente']  ?? null,
-        ]))) {
-            CotizacionLead::create([
-                'cotizacion_id'   => $cotizacion->id,
-                'nombre_cliente'  => $guardarValidated['nombre_cliente'] ?? null,
-                'email_cliente'   => $guardarValidated['email_cliente']  ?? null,
-                'telefono_cliente'=> $guardarValidated['telefono_cliente'] ?? null,
-                'empresa'         => $guardarValidated['empresa'] ?? null,
-            ]);
-        }
+        CotizacionLead::create([
+            'cotizacion_id'    => $cotizacion->id,
+            'nombre_cliente'   => $guardarValidated['nombre_cliente'],
+            'apellido_cliente' => $guardarValidated['apellido_cliente'],
+            'dni_cliente'      => $guardarValidated['dni_cliente'],
+            'email_cliente'    => $guardarValidated['email_cliente'],
+            'telefono_cliente' => $guardarValidated['telefono_cliente'],
+            'empresa'          => $guardarValidated['empresa'] ?? null,
+        ]);
 
         return response()->json([
             'status'  => 'ok',
