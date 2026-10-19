@@ -69,7 +69,7 @@ class AforoService
         $tarifaKg = $tarifasPorUnidad['KG'] ?? 0;
 
         if ($tarifaM3 <= 0 && $tarifaKg <= 0) {
-            // Sin tarifas disponibles — el caller debe manejar este caso (ATENCION_PERSONALIZADA)
+            // Sin tarifas disponibles — el caller marca el resultado como estimado
             return 'M3';
         }
 
