@@ -143,6 +143,37 @@ class SeguimientoCotizacionService
     }
 
     /**
+     * Genera el preview del mensaje SIN registrar el contacto.
+     * Usado para mostrar al admin el mensaje antes de confirmar.
+     *
+     * @return array{url:string, telefono:string, mensaje:string, advertencia:string|null}
+     * @throws \DomainException
+     */
+    public function resolverPreview(Cotizacion $cotizacion): array
+    {
+        $contacto = $this->resolverContacto($cotizacion);
+        if ($contacto['telefono'] === null) {
+            throw new \DomainException('El cliente no tiene un teléfono válido registrado.');
+        }
+
+        $total   = (float) ($cotizacion->resultadoActual()?->total_final ?? 0);
+        $mensaje = $this->construirMensaje($cotizacion, $contacto['nombre'], $total);
+
+        $ultimo      = $this->ultimoContacto($cotizacion);
+        $advertencia = null;
+        if ($this->dentroDeVentanaAntiDuplicado($ultimo)) {
+            $advertencia = 'Ya se contactó a este cliente el '.$ultimo->created_at->format('d/m/Y H:i').'. Si confirmás, se enviará igualmente.';
+        }
+
+        return [
+            'url'         => $this->construirEnlace($contacto['telefono'], $mensaje),
+            'telefono'    => $contacto['telefono'],
+            'mensaje'     => $mensaje,
+            'advertencia' => $advertencia,
+        ];
+    }
+
+    /**
      * Genera el enlace y registra el contacto. Lanza \DomainException con mensaje claro si no corresponde.
      *
      * @return array{url:string, telefono:string, mensaje:string}
@@ -163,22 +194,22 @@ class SeguimientoCotizacionService
             throw new \DomainException('Ya se contactó a este cliente el '.$ultimo->created_at->format('d/m/Y H:i').'. Confirmá para volver a contactarlo.');
         }
 
-        $total = (float) ($cotizacion->resultadoActual()?->total_final ?? 0);
+        $total   = (float) ($cotizacion->resultadoActual()?->total_final ?? 0);
         $mensaje = $this->construirMensaje($cotizacion, $contacto['nombre'], $total);
 
         CotizacionContactoWhatsapp::create([
             'cotizacion_id' => $cotizacion->id,
-            'usuario_id' => $usuarioId,
-            'telefono' => $contacto['telefono'],
-            'mensaje' => $mensaje,
-            'canal' => 'wa_me',
-            'created_at' => now(),
+            'usuario_id'    => $usuarioId,
+            'telefono'      => $contacto['telefono'],
+            'mensaje'       => $mensaje,
+            'canal'         => 'wa_me',
+            'created_at'    => now(),
         ]);
 
         return [
-            'url' => $this->construirEnlace($contacto['telefono'], $mensaje),
+            'url'      => $this->construirEnlace($contacto['telefono'], $mensaje),
             'telefono' => $contacto['telefono'],
-            'mensaje' => $mensaje,
+            'mensaje'  => $mensaje,
         ];
     }
 }

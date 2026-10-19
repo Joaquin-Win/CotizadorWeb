@@ -43,12 +43,16 @@ interface CotizacionResultado {
 interface CotizacionEnvio {
     provincia_origen_id: number;
     provincia_destino_id: number;
+    localidad_origen_id?: number | null;
+    localidad_destino_id?: number | null;
     solicita_retiro: boolean;
     solicita_entrega: boolean;
     retira_en_sucursal: boolean;
     valor_declarado: string | number | null;
     provinciaOrigen?: { nombre: string } | null;
     provinciaDestino?: { nombre: string } | null;
+    localidadOrigen?: { nombre: string } | null;
+    localidadDestino?: { nombre: string } | null;
 }
 
 interface CotizacionBulto {
@@ -294,11 +298,17 @@ export default function ResultadoCotizacion({ cotizacion, resultado }: Props) {
                     >
                         <InfoRow
                             label="Origen"
-                            value={cotizacion.envio?.provinciaOrigen?.nombre ?? 'N/D'}
+                            value={[
+                                cotizacion.envio?.localidadOrigen?.nombre,
+                                cotizacion.envio?.provinciaOrigen?.nombre,
+                            ].filter(Boolean).join(', ') || 'Sin datos'}
                         />
                         <InfoRow
                             label="Destino"
-                            value={cotizacion.envio?.provinciaDestino?.nombre ?? 'N/D'}
+                            value={[
+                                cotizacion.envio?.localidadDestino?.nombre,
+                                cotizacion.envio?.provinciaDestino?.nombre,
+                            ].filter(Boolean).join(', ') || 'Sin datos'}
                         />
                         <InfoRow
                             label="Retiro en domicilio"

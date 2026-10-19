@@ -331,10 +331,19 @@ class CotizadorService
         }
 
         // Calcular la cantidad en la unidad de cobro
+        $cantidadBultos = array_sum(array_map(fn($b) => $b instanceof BultoData ? $b->cantidad : ($b['cantidad'] ?? 1), $bultos));
+        $cantidadPallets = array_sum(array_map(function($b) {
+            if ($b instanceof BultoData) {
+                return ($b->paletizado ?? false) ? $b->cantidad : 0;
+            }
+            return ($b['palletizado'] ?? false) ? ($b['cantidad'] ?? 1) : 0;
+        }, $bultos));
+
         $cantidad = match ($unidadCobro) {
             'M3'     => $volumenTotalM3,
             'KG'     => $pesoTotalKg,
-            'PALLET' => 1.0, // por defecto 1 pallet si no hay equivalencia calculada
+            'PALLET' => max(1.0, $cantidadPallets),
+            'BULTO'  => max(1.0, $cantidadBultos),
             default  => $volumenTotalM3,
         };
 
