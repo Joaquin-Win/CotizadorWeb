@@ -10,6 +10,7 @@ use App\Http\Controllers\Admin\CotizadorConfiguracionController;
 use App\Http\Controllers\Admin\MargenGananciaController;
 use App\Http\Controllers\Admin\TarifaController;
 use App\Http\Controllers\Admin\TransoftConfiguracionController;
+use App\Http\Controllers\Admin\ClientesExcelController;
 use App\Http\Controllers\Admin\UsuarioController;
 use App\Http\Controllers\Portal\ClientePortalController;
 use App\Http\Controllers\Portal\DocumentoController;
@@ -48,10 +49,10 @@ Route::post('invitacion/{token}', [InvitacionController::class, 'confirmar'])->n
 Route::middleware(['auth', 'verified'])->group(function () {
 
     // Dashboard
-    Route::get('dashboard', DashboardController::class)->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard')->middleware(['redirige.a.portal']);
 
     // Gestión de usuarios (admin): empresas + accesos + ver plataforma.
-    Route::get('usuarios', [ClienteController::class, 'usuarios'])->name('usuarios.index');
+    Route::get('usuarios', [ClienteController::class, 'usuarios'])->name('usuarios.index')->middleware('can:esAdmin');
 
     // -------------------------------------------------------
     // Mis cotizaciones (panel de cliente logueado)
@@ -65,15 +66,23 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // Gestión de Clientes (backoffice SET)
     // -------------------------------------------------------
     Route::prefix('clientes')->name('clientes.')->group(function () {
-        Route::get('/',                                  [ClienteController::class, 'index'])->name('index');
-        Route::post('/',                                 [ClienteController::class, 'store'])->name('store');
-        Route::get('{cliente}',                          [ClienteController::class, 'show'])->name('show');
-        Route::put('{cliente}',                          [ClienteController::class, 'update'])->name('update');
-        Route::put('{cliente}/inactivar',                 [ClienteController::class, 'setInactive'])->name('inactivar');
-        Route::put('{cliente}/activar',                   [ClienteController::class, 'setActive'])->name('activar');
 
-        // Portal del cliente (visto desde backoffice)
-        Route::prefix('{cliente}/portal')->name('portal.')->group(function () {
+        // Administración de empresas - solo administradores
+        Route::middleware('can:esAdmin')->group(function () {
+            Route::get('/',                                  [ClienteController::class, 'index'])->name('index');
+            Route::post('/',                                 [ClienteController::class, 'store'])->name('store');
+            Route::get('{cliente}',                          [ClienteController::class, 'show'])->name('show');
+            Route::put('{cliente}',                          [ClienteController::class, 'update'])->name('update');
+            Route::put('{cliente}/inactivar',                 [ClienteController::class, 'setInactive'])->name('inactivar');
+            Route::put('{cliente}/activar',                   [ClienteController::class, 'setActive'])->name('activar');
+
+            // Excel de clientes
+            Route::get('excel/exportar',                     [ClientesExcelController::class, 'exportar'])->name('excel.exportar');
+            Route::post('excel/importar',                    [ClientesExcelController::class, 'importar'])->name('excel.importar');
+        });
+
+        // Portal del cliente - admin o el propio cliente (redirige.a.portal)
+        Route::prefix('{cliente}/portal')->name('portal.')->middleware('redirige.a.portal')->group(function () {
             Route::get('resumen',     [ClienteController::class, 'portalResumen'])->name('resumen');
             Route::get('pedidos',     [ClienteController::class, 'portalPedidos'])->name('pedidos');
             Route::get('documentos',  [ClienteController::class, 'portalDocumentos'])->name('documentos');
@@ -84,15 +93,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
         });
 
         // Invitaciones de acceso a portal por cliente
-        Route::post('{cliente}/invitaciones',                       [InvitacionController::class, 'store'])->name('invitaciones.store');
-        Route::delete('{cliente}/invitaciones/{invitacion}',        [InvitacionController::class, 'destroy'])->name('invitaciones.destroy');
-        Route::delete('{cliente}/usuarios/{usuario}',               [InvitacionController::class, 'quitarAcceso'])->name('usuarios.quitar-acceso');
-        Route::put('{cliente}/clave',                               [InvitacionController::class, 'cambiarClave'])->name('usuarios.cambiar-clave');
+        Route::post('{cliente}/invitaciones',                       [InvitacionController::class, 'store'])->name('invitaciones.store')->middleware('redirige.a.portal');
+        Route::delete('{cliente}/invitaciones/{invitacion}',        [InvitacionController::class, 'destroy'])->name('invitaciones.destroy')->middleware('redirige.a.portal');
+        Route::delete('{cliente}/usuarios/{usuario}',               [InvitacionController::class, 'quitarAcceso'])->name('usuarios.quitar-acceso')->middleware('redirige.a.portal');
+        Route::put('{cliente}/clave',                               [InvitacionController::class, 'cambiarClave'])->name('usuarios.cambiar-clave')->middleware('redirige.a.portal');
 
         // Documentos
-        Route::post('{cliente}/documentos',                         [DocumentoController::class, 'store'])->name('documentos.store');
-        Route::get('{cliente}/documentos/{documento}/descargar',    [DocumentoController::class, 'descargar'])->name('documentos.descargar');
-        Route::delete('{cliente}/documentos/{documento}',           [DocumentoController::class, 'destroy'])->name('documentos.destroy');
+        Route::post('{cliente}/documentos',                         [DocumentoController::class, 'store'])->name('documentos.store')->middleware('redirige.a.portal');
+        Route::get('{cliente}/documentos/{documento}/descargar',    [DocumentoController::class, 'descargar'])->name('documentos.descargar')->middleware('redirige.a.portal');
+        Route::delete('{cliente}/documentos/{documento}',           [DocumentoController::class, 'destroy'])->name('documentos.destroy')->middleware('redirige.a.portal');
     });
 
     // -------------------------------------------------------

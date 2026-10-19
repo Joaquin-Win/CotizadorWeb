@@ -1,6 +1,15 @@
 import { Head, Link, router } from '@inertiajs/react';
-import { Users, Eye, Search } from 'lucide-react';
-import { useState } from 'react';
+import {
+    AlertCircle,
+    CheckCircle2,
+    Download,
+    Eye,
+    FileSpreadsheet,
+    Users,
+    Search,
+    Upload,
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import {
@@ -58,6 +67,13 @@ interface ClienteRow {
 interface Props {
     usuarios: Usuario[];
     clientes: ClienteRow[];
+    importacion?: {
+        ok: boolean;
+        creadas: number;
+        actualizadas: number;
+        total_errores: number;
+        errores: string[];
+    } | null;
 }
 
 const rolLabel = (rol_id: number) =>
@@ -68,10 +84,37 @@ const rolBadgeClass = (rol_id: number) =>
         ? 'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300'
         : 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300';
 
-export default function AdminUsuariosIndex({ usuarios, clientes = [] }: Props) {
+export default function AdminUsuariosIndex({ usuarios, clientes = [], importacion }: Props) {
     const [search, setSearch] = useState('');
     const [cambio, setCambio] = useState<{ usuario: Usuario; activo: boolean } | null>(null);
+    const [importando, setImportando] = useState(false);
+    const [resultadoVisible, setResultadoVisible] = useState(true);
+    const inputExcelRef = useRef<HTMLInputElement>(null);
+    const [alcance, setAlcance] = useState<'todos' | 'activos'>('todos');
     const q0 = search.toLowerCase();
+
+    useEffect(() => {
+        if (importacion) setResultadoVisible(true);
+    }, [importacion]);
+
+    const handleArchivoExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const archivo = e.target.files?.[0];
+        e.target.value = '';
+        if (!archivo) return;
+
+        router.post(
+            '/clientes/excel/importar',
+            { archivo },
+            {
+                forceFormData: true,
+                preserveScroll: true,
+                preserveState: true,
+                onStart: () => setImportando(true),
+                onFinish: () => setImportando(false),
+            }
+        );
+    };
+
     const clientesFiltrados = clientes.filter(
         (c) =>
             c.razon_social.toLowerCase().includes(q0) ||
@@ -105,6 +148,47 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [] }: Props) {
                     </div>
                 </div>
 
+                {/* Import / export Excel */}
+                <div className="flex flex-wrap items-center gap-2">
+                    <input
+                        ref={inputExcelRef}
+                        type="file"
+                        accept=".xlsx"
+                        className="hidden"
+                        onChange={handleArchivoExcel}
+                    />
+                    <Button asChild variant="outline" className="gap-2 text-xs font-semibold h-9">
+                        <a href="/clientes/excel/exportar">
+                            <Download className="h-4 w-4" /> Exportar Excel
+                        </a>
+                    </Button>
+                    <div className="w-40">
+                        <Select
+                            value={alcance}
+                            onValueChange={(v) => setAlcance(v as 'todos' | 'activos')}
+                        >
+                            <SelectTrigger>
+                                <SelectValue
+                                    placeholder={alcance === 'todos' ? 'Todos' : 'Solo activos'}
+                                />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="todos">Todos los clientes</SelectItem>
+                                <SelectItem value="activos">Solo activos</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <Button
+                        variant="outline"
+                        disabled={importando}
+                        onClick={() => inputExcelRef.current?.click()}
+                        className="gap-2 text-xs font-semibold h-9"
+                    >
+                        <Upload className="h-4 w-4" />
+                        {importando ? 'Importando...' : 'Importar Excel'}
+                    </Button>
+                </div>
+
                 {/* Buscador */}
                 <div className="relative max-w-sm">
                     <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
@@ -116,6 +200,49 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [] }: Props) {
                         onChange={(e) => setSearch(e.target.value)}
                     />
                 </div>
+
+                {importacion && resultadoVisible && (
+                    <div className={`rounded-xl border p-4 text-xs ${
+                        importacion.ok
+                            ? 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200 dark:border-emerald-800'
+                            : 'border-red-300 bg-red-50 text-red-900 dark:bg-red-950/30 dark:text-red-200 dark:border-red-800'
+                    }`}>
+                        <div className="flex items-center gap-2">
+                            {importacion.ok ? (
+                                <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                            ) : (
+                                <AlertCircle className="h-4 w-4 text-red-600" />
+                            )}
+                            <span className="font-semibold">
+                                {importacion.ok
+                                    ? `Importación lista: ${importacion.creadas} creadas, ${importacion.actualizadas} actualizadas.`
+                                    : 'No se importó nada. Corregí el Excel y volvé a subirlo.'}
+                            </span>
+                        </div>
+                        {!importacion.ok && importacion.errores.length > 0 && (
+                            <>
+                                <p className="mt-2 text-sm">({importacion.total_errores} error/es):</p>
+                                <ul className="mt-1 list-disc pl-5 space-y-0.5 max-h-48 overflow-y-auto">
+                                    {importacion.errores.map((err, i) => (
+                                        <li key={i}>{err}</li>
+                                    ))}
+                                </ul>
+                                {importacion.total_errores > importacion.errores.length && (
+                                    <p className="mt-1 opacity-80">
+                                        ... y {importacion.total_errores - importacion.errores.length} más.
+                                    </p>
+                                )}
+                            </>
+                        )}
+                        <button
+                            type="button"
+                            onClick={() => setResultadoVisible(false)}
+                            className="ml-auto underline underline-offset-4 hover:text-primary"
+                        >
+                            Cerrar
+                        </button>
+                    </div>
+                )}
 
                 {/* Tabla */}
                 <div className="overflow-x-auto rounded-xl border">

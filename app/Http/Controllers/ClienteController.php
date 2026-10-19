@@ -133,7 +133,6 @@ class ClienteController extends Controller
         abort_if(! $inactivoId, 500, 'Falta el estado INACTIVO.');
 
         $cliente->update(['estado_id' => $inactivoId, 'updated_by' => auth()->id()]);
-        $cliente->users()->update(['activo' => false]);
 
         return back()->with('success', 'Cliente inhabilitado.');
     }
@@ -147,7 +146,7 @@ class ClienteController extends Controller
         abort_if(! $activoId, 500, 'Falta el estado ACTIVO.');
 
         $cliente->update(['estado_id' => $activoId, 'updated_by' => auth()->id()]);
-        $cliente->users()->update(['activo' => true]);
+        $cliente->usuarios()->update(['activo' => true]);
 
         return back()->with('success', 'Cliente habilitado.');
     }
