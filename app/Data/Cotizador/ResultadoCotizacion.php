@@ -45,9 +45,18 @@ class ResultadoCotizacion
     public float   $iva               = 0.0;
     public float   $totalFinal        = 0.0;
 
-    // Tiempo estimado de entrega
+    // Tiempo estimado de entrega — total (suma de tramos)
     public ?int    $tiempoMin         = null;
     public ?int    $tiempoMax         = null;
+
+    // Tiempos por tramo (días hábiles)
+    // null = tramo no aplicable o sin dato configurado
+    public ?int    $tiempoPrimeraMillaMin  = null;
+    public ?int    $tiempoPrimeraMillaMax  = null;
+    public ?int    $tiempoTroncalMin       = null;
+    public ?int    $tiempoTroncalMax       = null;
+    public ?int    $tiempoUltimaMillaMin   = null;
+    public ?int    $tiempoUltimaMillaMax   = null;
 
     // Metadatos
     public string  $versionAlgoritmo  = 'v2.0.0';
