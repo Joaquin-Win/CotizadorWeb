@@ -242,15 +242,65 @@ class CotizadorService
             $resultado->costoCargaDescarga = $adicionales['total'];
             $resultado->adicionales        = $adicionales['items'];
 
-            // 6. Tiempo estimado
-            $tiempo = $this->tiempoEntregaService->resolver(
-                $data->origen->provinciaId,
-                $data->destino->provinciaId,
-                $data->origen->localidadId  ?? null,
-                $data->destino->localidadId ?? null
-            );
-            $resultado->tiempoMin = $tiempo['min'];
-            $resultado->tiempoMax = $tiempo['max'];
+            // 6. Tiempo estimado por tramo
+            //    Primera milla: recojo dentro de la provincia origen (pOrigen → pOrigen + loc)
+            //    Troncal:        viaje entre depósitos (pOrigen → pDestino)
+            //    Última milla:   entrega dentro de la provincia destino (pDestino → pDestino + loc)
+            //    Total:          suma de los tres (null = sin dato; se omite del total)
+
+            // — Primera milla (solo si aplica: el cliente solicitó retiro)
+            if ($data->origen->solicitaRetiro && $costoPrimeraMilla > 0) {
+                $tPM = $this->tiempoEntregaService->resolver(
+                    $data->origen->provinciaId,
+                    $data->origen->provinciaId,       // ida y vuelta en la misma provincia
+                    $data->origen->localidadId ?? null,
+                    null
+                );
+                $resultado->tiempoPrimeraMillaMin = $tPM['min'];
+                $resultado->tiempoPrimeraMillaMax = $tPM['max'];
+            }
+
+            // — Troncal (siempre que haya precio troncal o puerta a puerta)
+            if ($costoTroncal > 0 || $costoPuertaPuerta > 0) {
+                $tTR = $this->tiempoEntregaService->resolver(
+                    $data->origen->provinciaId,
+                    $data->destino->provinciaId,
+                    null,
+                    null
+                );
+                $resultado->tiempoTroncalMin = $tTR['min'];
+                $resultado->tiempoTroncalMax = $tTR['max'];
+            }
+
+            // — Última milla (solo si el cliente solicitó entrega a domicilio)
+            if ($data->destino->solicitaEntrega && $costoUltimaMilla > 0) {
+                $tUM = $this->tiempoEntregaService->resolver(
+                    $data->destino->provinciaId,
+                    $data->destino->provinciaId,
+                    null,
+                    $data->destino->localidadId ?? null
+                );
+                $resultado->tiempoUltimaMillaMin = $tUM['min'];
+                $resultado->tiempoUltimaMillaMax = $tUM['max'];
+            }
+
+            // — Total: suma de tramos disponibles
+            $totalMin = ($resultado->tiempoPrimeraMillaMin ?? 0)
+                      + ($resultado->tiempoTroncalMin      ?? 0)
+                      + ($resultado->tiempoUltimaMillaMin  ?? 0);
+            $totalMax = ($resultado->tiempoPrimeraMillaMax ?? 0)
+                      + ($resultado->tiempoTroncalMax      ?? 0)
+                      + ($resultado->tiempoUltimaMillaMax  ?? 0);
+
+            // Solo asignamos si al menos un tramo tiene dato
+            $hayTiempo = ($resultado->tiempoPrimeraMillaMin !== null)
+                      || ($resultado->tiempoTroncalMin      !== null)
+                      || ($resultado->tiempoUltimaMillaMin  !== null);
+
+            if ($hayTiempo) {
+                $resultado->tiempoMin = $totalMin > 0 ? $totalMin : null;
+                $resultado->tiempoMax = $totalMax > 0 ? $totalMax : null;
+            }
 
             // 7. Aplicar pipeline de precios (seguro, margen, descuento, IVA, total)
             $tipoClienteId = $data->tipoClienteId ?? $this->tipoClientePublicoId();

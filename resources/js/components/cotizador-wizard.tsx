@@ -312,16 +312,76 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
                         </span>
                     </div>
 
-                    {/* Tiempo de entrega */}
-                    {(resultado.tiempo_min != null || resultado.tiempo_max != null) && (
-                        <div className="cot-tiempo">
-                            <span className="cot-tiempo__icon">🕐</span>
-                            <span className="cot-tiempo__texto">
-                                Tiempo estimado:{' '}
-                                {resultado.tiempo_min === resultado.tiempo_max
-                                    ? `${resultado.tiempo_min} días hábiles`
-                                    : `${resultado.tiempo_min ?? '?'} – ${resultado.tiempo_max ?? '?'} días hábiles`}
-                            </span>
+                    {/* Tiempo de entrega — total + desglose por tramo */}
+                    {(resultado.tiempo_min != null || resultado.tiempo_max != null ||
+                      resultado.tiempo_troncal_min != null) && (
+                        <div className="cot-seccion">
+                            <h4 className="cot-seccion__titulo">⏱ Tiempo estimado de entrega</h4>
+
+                            {/* Total */}
+                            {(resultado.tiempo_min != null || resultado.tiempo_max != null) && (
+                                <div
+                                    style={{
+                                        background: 'var(--color-primary-50, #eff6ff)',
+                                        border: '1px solid var(--color-primary-200, #bfdbfe)',
+                                        borderRadius: '0.5rem',
+                                        padding: '0.625rem 0.875rem',
+                                        marginBottom: '0.75rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.5rem',
+                                        fontSize: '0.9375rem',
+                                        fontWeight: 600,
+                                        color: 'var(--color-primary-800, #1e40af)',
+                                    }}
+                                >
+                                    <span>🚚</span>
+                                    <span>
+                                        Total:{' '}
+                                        {resultado.tiempo_min === resultado.tiempo_max
+                                            ? `${resultado.tiempo_min} días hábiles`
+                                            : `${resultado.tiempo_min ?? '?'} – ${resultado.tiempo_max ?? '?'} días hábiles`}
+                                    </span>
+                                </div>
+                            )}
+
+                            {/* Desglose por tramo */}
+                            {(resultado.tiempo_primera_milla_min != null ||
+                              resultado.tiempo_troncal_min != null ||
+                              resultado.tiempo_ultima_milla_min != null) && (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                                    {resultado.tiempo_primera_milla_min != null && (
+                                        <div className="cot-fila" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-500, #6b7280)' }}>
+                                            <span>📦 Retiro {origenNombre} → Depósito origen</span>
+                                            <span>
+                                                {resultado.tiempo_primera_milla_min === resultado.tiempo_primera_milla_max
+                                                    ? `${resultado.tiempo_primera_milla_min} día${resultado.tiempo_primera_milla_min !== 1 ? 's' : ''}`
+                                                    : `${resultado.tiempo_primera_milla_min ?? '?'}–${resultado.tiempo_primera_milla_max ?? '?'} días`}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {resultado.tiempo_troncal_min != null && (
+                                        <div className="cot-fila" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-500, #6b7280)' }}>
+                                            <span>🏭 Depósito origen → Depósito {destinoNombre}</span>
+                                            <span>
+                                                {resultado.tiempo_troncal_min === resultado.tiempo_troncal_max
+                                                    ? `${resultado.tiempo_troncal_min} día${resultado.tiempo_troncal_min !== 1 ? 's' : ''}`
+                                                    : `${resultado.tiempo_troncal_min ?? '?'}–${resultado.tiempo_troncal_max ?? '?'} días`}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {resultado.tiempo_ultima_milla_min != null && (
+                                        <div className="cot-fila" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-500, #6b7280)' }}>
+                                            <span>🏠 Depósito destino → Entrega {destinoNombre}</span>
+                                            <span>
+                                                {resultado.tiempo_ultima_milla_min === resultado.tiempo_ultima_milla_max
+                                                    ? `${resultado.tiempo_ultima_milla_min} día${resultado.tiempo_ultima_milla_min !== 1 ? 's' : ''}`
+                                                    : `${resultado.tiempo_ultima_milla_min ?? '?'}–${resultado.tiempo_ultima_milla_max ?? '?'} días`}
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     )}
                 </div>

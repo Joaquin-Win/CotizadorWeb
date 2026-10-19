@@ -251,6 +251,10 @@ export default function CotizadorConfiguracion({
     const [mostrarModalTarifa, setMostrarModalTarifa] = useState(false);
     const [tarifaEditando, setTarifaEditando] = useState<Tarifa | null>(null);
 
+    // Localidades dinámicas para el modal de tarifas
+    const [localidadesModal, setLocalidadesModal] = useState<LocalidadItem[]>([]);
+    const [cargandoLocalidadesModal, setCargandoLocalidadesModal] = useState(false);
+
     const [formTarifa, setFormTarifa] = useState({
         provincia_origen_id: '',
         provincia_destino_id: '',
@@ -262,6 +266,64 @@ export default function CotizadorConfiguracion({
         vigente_desde: new Date().toISOString().split('T')[0],
         vigente_hasta: '',
     });
+
+    /**
+     * Código del tipo de servicio seleccionado actualmente en el modal.
+     * Determina qué campos se muestran y qué etiquetas se usan.
+     */
+    const codigoTipoServicioModal = useMemo(() => {
+        if (!formTarifa.tipo_servicio_id) return '';
+        return tiposServicio.find((s) => String(s.id) === formTarifa.tipo_servicio_id)?.codigo ?? '';
+    }, [formTarifa.tipo_servicio_id, tiposServicio]);
+
+    /**
+     * Para PRIMERA_MILLA y ULTIMA_MILLA, la "provincia del depósito" es:
+     *   - PRIMERA_MILLA → provincia_origen_id
+     *   - ULTIMA_MILLA  → provincia_destino_id
+     * Devuelve el ID de esa provincia para cargar sus localidades.
+     */
+    const provinciaDepositoModalId = useMemo((): string => {
+        if (codigoTipoServicioModal === 'PRIMERA_MILLA') return formTarifa.provincia_origen_id;
+        if (codigoTipoServicioModal === 'ULTIMA_MILLA')  return formTarifa.provincia_destino_id;
+        return '';
+    }, [codigoTipoServicioModal, formTarifa.provincia_origen_id, formTarifa.provincia_destino_id]);
+
+    /** Carga localidades de una provincia (para el selector del modal de tarifas). */
+    const cargarLocalidadesModal = (provinciaId: string) => {
+        if (!provinciaId) {
+            setLocalidadesModal([]);
+            return;
+        }
+        setCargandoLocalidadesModal(true);
+        fetch(`/admin/cotizador/provincias/${provinciaId}/localidades?q=`)
+            .then((r) => r.json())
+            .then((res) => setLocalidadesModal((res.localidades ?? []) as LocalidadItem[]))
+            .catch(console.error)
+            .finally(() => setCargandoLocalidadesModal(false));
+    };
+
+    // Cargar localidades cuando cambia la provincia relevante o el tipo de servicio
+    useEffect(() => {
+        if (mostrarModalTarifa && provinciaDepositoModalId) {
+            cargarLocalidadesModal(provinciaDepositoModalId);
+        } else {
+            setLocalidadesModal([]);
+        }
+    }, [mostrarModalTarifa, provinciaDepositoModalId]);
+
+    /** Provincias con depósito configurado (para selectores de PRIMERA/ULTIMA MILLA). */
+    const provinciasConDeposito = useMemo(
+        () => initialProvincias.filter((p) => p.tiene_deposito),
+        [initialProvincias]
+    );
+
+    /** ¿TRONCAL con misma provincia origen y destino? → error de validación visual. */
+    const troncalOrigenIgualDestino = useMemo(() =>
+        codigoTipoServicioModal === 'TRONCAL' &&
+        formTarifa.provincia_origen_id !== '' &&
+        formTarifa.provincia_origen_id === formTarifa.provincia_destino_id,
+        [codigoTipoServicioModal, formTarifa.provincia_origen_id, formTarifa.provincia_destino_id]
+    );
 
     const tarifasFiltradas = useMemo(() => {
         return tarifas.filter((t) => {
@@ -280,9 +342,10 @@ export default function CotizadorConfiguracion({
 
     const abrirCrearTarifa = () => {
         setTarifaEditando(null);
+        const primerDeposito = provinciasConDeposito[0] ?? initialProvincias[0];
         setFormTarifa({
-            provincia_origen_id: initialProvincias[0]?.id ? String(initialProvincias[0].id) : '',
-            provincia_destino_id: initialProvincias[0]?.id ? String(initialProvincias[0].id) : '',
+            provincia_origen_id: primerDeposito?.id ? String(primerDeposito.id) : '',
+            provincia_destino_id: primerDeposito?.id ? String(primerDeposito.id) : '',
             localidad_destino_id: '',
             tipo_servicio_id: tiposServicio[0]?.id ? String(tiposServicio[0].id) : '',
             unidad_medida_id: unidadesMedida[0]?.id ? String(unidadesMedida[0].id) : '',
@@ -312,13 +375,27 @@ export default function CotizadorConfiguracion({
 
     const handleGuardarTarifa = (e: React.FormEvent) => {
         e.preventDefault();
+        if (troncalOrigenIgualDestino) return; // doble protección
+
+        // Para TRONCAL: limpiar localidad_destino_id (debe ser NULL en BD)
+        // Para PRIMERA_MILLA: provincia_destino_id = provincia_origen_id (convención)
+        // Para ULTIMA_MILLA:  provincia_origen_id  = provincia_destino_id (convención)
+        let payload = { ...formTarifa };
+        if (codigoTipoServicioModal === 'TRONCAL') {
+            payload.localidad_destino_id = '';
+        } else if (codigoTipoServicioModal === 'PRIMERA_MILLA') {
+            payload.provincia_destino_id = payload.provincia_origen_id;
+        } else if (codigoTipoServicioModal === 'ULTIMA_MILLA') {
+            payload.provincia_origen_id = payload.provincia_destino_id;
+        }
+
         if (tarifaEditando) {
-            router.put(`/admin/cotizador/tarifas/${tarifaEditando.id}`, formTarifa, {
+            router.put(`/admin/cotizador/tarifas/${tarifaEditando.id}`, payload, {
                 preserveScroll: true,
                 onSuccess: () => setMostrarModalTarifa(false),
             });
         } else {
-            router.post('/admin/cotizador/tarifas', formTarifa, {
+            router.post('/admin/cotizador/tarifas', payload, {
                 preserveScroll: true,
                 onSuccess: () => setMostrarModalTarifa(false),
             });
@@ -983,7 +1060,7 @@ export default function CotizadorConfiguracion({
                                                 <th className="py-3 px-4">Servicio</th>
                                                 <th className="py-3 px-4">Unidad</th>
                                                 <th className="py-3 px-4 text-right">Costo Unitario</th>
-                                                <th className="py-3 px-4 text-right">Escalón Máximo</th>
+                                                <th className="py-3 px-4 text-right">Tope cobro ($)</th>
                                                 <th className="py-3 px-4">Vigencia</th>
                                                 <th className="py-3 px-4 text-right">Acciones</th>
                                             </tr>
@@ -1395,10 +1472,20 @@ export default function CotizadorConfiguracion({
                 {mostrarModalTarifa && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
                         <div className="w-full max-w-lg rounded-xl border bg-card p-6 shadow-xl animate-in fade-in-0 zoom-in-95 max-h-[90vh] overflow-y-auto">
+                            {/* Encabezado */}
                             <div className="flex items-center justify-between pb-3 border-b">
-                                <h3 className="font-bold text-base">
-                                    {tarifaEditando ? 'Editar Tarifa de Flete' : 'Nueva Tarifa de Flete'}
-                                </h3>
+                                <div>
+                                    <h3 className="font-bold text-base">
+                                        {tarifaEditando ? 'Editar Tarifa de Flete' : 'Nueva Tarifa de Flete'}
+                                    </h3>
+                                    {codigoTipoServicioModal && (
+                                        <p className="text-[11px] text-muted-foreground mt-0.5">
+                                            {codigoTipoServicioModal === 'TRONCAL' && 'Tarifa entre depósitos (tramo central)'}
+                                            {codigoTipoServicioModal === 'PRIMERA_MILLA' && 'Tarifa recojo del cliente al depósito de origen'}
+                                            {codigoTipoServicioModal === 'ULTIMA_MILLA' && 'Tarifa entrega desde depósito de destino al cliente'}
+                                        </p>
+                                    )}
+                                </div>
                                 <button
                                     onClick={() => setMostrarModalTarifa(false)}
                                     className="text-muted-foreground hover:text-foreground"
@@ -1408,54 +1495,22 @@ export default function CotizadorConfiguracion({
                             </div>
 
                             <form onSubmit={handleGuardarTarifa} className="flex flex-col gap-4 mt-4 text-xs">
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div>
-                                        <Label className="text-xs mb-1 block">Provincia Origen</Label>
-                                        <select
-                                            required
-                                            value={formTarifa.provincia_origen_id}
-                                            onChange={(e) =>
-                                                setFormTarifa({ ...formTarifa, provincia_origen_id: e.target.value })
-                                            }
-                                            className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
-                                        >
-                                            <option value="">Seleccione provincia...</option>
-                                            {initialProvincias.map((p) => (
-                                                <option key={p.id} value={p.id}>
-                                                    {p.nombre}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                    <div>
-                                        <Label className="text-xs mb-1 block">Provincia Destino</Label>
-                                        <select
-                                            required
-                                            value={formTarifa.provincia_destino_id}
-                                            onChange={(e) =>
-                                                setFormTarifa({ ...formTarifa, provincia_destino_id: e.target.value })
-                                            }
-                                            className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
-                                        >
-                                            <option value="">Seleccione provincia...</option>
-                                            {initialProvincias.map((p) => (
-                                                <option key={p.id} value={p.id}>
-                                                    {p.nombre}
-                                                </option>
-                                            ))}
-                                        </select>
-                                    </div>
-                                </div>
 
+                                {/* ── Tipo de Servicio + Unidad ── */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <Label className="text-xs mb-1 block">Tipo de Servicio</Label>
                                         <select
                                             required
                                             value={formTarifa.tipo_servicio_id}
-                                            onChange={(e) =>
-                                                setFormTarifa({ ...formTarifa, tipo_servicio_id: e.target.value })
-                                            }
+                                            onChange={(e) => {
+                                                // Al cambiar tipo: limpiar localidad
+                                                setFormTarifa({
+                                                    ...formTarifa,
+                                                    tipo_servicio_id: e.target.value,
+                                                    localidad_destino_id: '',
+                                                });
+                                            }}
                                             className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
                                         >
                                             <option value="">Seleccione servicio...</option>
@@ -1486,6 +1541,183 @@ export default function CotizadorConfiguracion({
                                     </div>
                                 </div>
 
+                                {/* ── TRONCAL: Depósito origen → Depósito destino ── */}
+                                {codigoTipoServicioModal === 'TRONCAL' && (
+                                    <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex flex-col gap-3">
+                                        <p className="text-[11px] font-semibold text-primary">Ruta entre depósitos</p>
+                                        <div className="grid grid-cols-2 gap-3">
+                                            <div>
+                                                <Label className="text-xs mb-1 block">Depósito / Provincia Origen</Label>
+                                                <select
+                                                    required
+                                                    value={formTarifa.provincia_origen_id}
+                                                    onChange={(e) =>
+                                                        setFormTarifa({ ...formTarifa, provincia_origen_id: e.target.value })
+                                                    }
+                                                    className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
+                                                >
+                                                    <option value="">Seleccione...</option>
+                                                    {initialProvincias.map((p) => (
+                                                        <option key={p.id} value={p.id}>
+                                                            {p.nombre}{p.tiene_deposito ? ' 🏭' : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs mb-1 block">Depósito / Provincia Destino</Label>
+                                                <select
+                                                    required
+                                                    value={formTarifa.provincia_destino_id}
+                                                    onChange={(e) =>
+                                                        setFormTarifa({ ...formTarifa, provincia_destino_id: e.target.value })
+                                                    }
+                                                    className={`w-full h-9 rounded-md border px-3 text-xs ${
+                                                        troncalOrigenIgualDestino
+                                                            ? 'border-red-400 bg-red-50 dark:bg-red-950/20'
+                                                            : 'border-input bg-background'
+                                                    }`}
+                                                >
+                                                    <option value="">Seleccione...</option>
+                                                    {initialProvincias.map((p) => (
+                                                        <option key={p.id} value={p.id}>
+                                                            {p.nombre}{p.tiene_deposito ? ' 🏭' : ''}
+                                                        </option>
+                                                    ))}
+                                                </select>
+                                                {troncalOrigenIgualDestino && (
+                                                    <p className="mt-1 text-[11px] text-red-600 font-medium">
+                                                        ⚠ Origen y destino deben ser diferentes en TRONCAL
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        <p className="text-[10px] text-muted-foreground">
+                                            Las provincias marcadas con 🏭 tienen un depósito de SET configurado.
+                                        </p>
+                                    </div>
+                                )}
+
+                                {/* ── PRIMERA_MILLA: Depósito de origen + Localidad del cliente ── */}
+                                {codigoTipoServicioModal === 'PRIMERA_MILLA' && (
+                                    <div className="rounded-lg border border-blue-200/60 bg-blue-50/50 dark:bg-blue-950/10 p-3 flex flex-col gap-3">
+                                        <p className="text-[11px] font-semibold text-blue-700 dark:text-blue-400">
+                                            Recojo: localidad del cliente → depósito de origen
+                                        </p>
+                                        <div>
+                                            <Label className="text-xs mb-1 block">Provincia del depósito de origen</Label>
+                                            <select
+                                                required
+                                                value={formTarifa.provincia_origen_id}
+                                                onChange={(e) => {
+                                                    setFormTarifa({
+                                                        ...formTarifa,
+                                                        provincia_origen_id: e.target.value,
+                                                        provincia_destino_id: e.target.value, // convención
+                                                        localidad_destino_id: '',
+                                                    });
+                                                }}
+                                                className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
+                                            >
+                                                <option value="">Seleccione provincia con depósito...</option>
+                                                {(provinciasConDeposito.length > 0 ? provinciasConDeposito : initialProvincias).map((p) => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.nombre}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs mb-1 block">
+                                                Localidad del cliente (origen)
+                                                {cargandoLocalidadesModal && <span className="ml-1 text-muted-foreground">(cargando...)</span>}
+                                            </Label>
+                                            <select
+                                                value={formTarifa.localidad_destino_id}
+                                                onChange={(e) =>
+                                                    setFormTarifa({ ...formTarifa, localidad_destino_id: e.target.value })
+                                                }
+                                                className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
+                                                disabled={!formTarifa.provincia_origen_id || cargandoLocalidadesModal}
+                                            >
+                                                <option value="">Cualquier localidad (tarifa provincial)</option>
+                                                {localidadesModal.map((l) => (
+                                                    <option key={l.id} value={l.id}>
+                                                        {l.nombre}{l.codigo_postal ? ` (CP ${l.codigo_postal})` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <p className="mt-1 text-[10px] text-muted-foreground">
+                                                Si no seleccionás localidad, la tarifa aplica a toda la provincia.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ── ULTIMA_MILLA: Depósito de destino + Localidad del cliente ── */}
+                                {codigoTipoServicioModal === 'ULTIMA_MILLA' && (
+                                    <div className="rounded-lg border border-emerald-200/60 bg-emerald-50/50 dark:bg-emerald-950/10 p-3 flex flex-col gap-3">
+                                        <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                                            Entrega: depósito de destino → localidad del cliente
+                                        </p>
+                                        <div>
+                                            <Label className="text-xs mb-1 block">Provincia del depósito de destino</Label>
+                                            <select
+                                                required
+                                                value={formTarifa.provincia_destino_id}
+                                                onChange={(e) => {
+                                                    setFormTarifa({
+                                                        ...formTarifa,
+                                                        provincia_destino_id: e.target.value,
+                                                        provincia_origen_id: e.target.value, // convención
+                                                        localidad_destino_id: '',
+                                                    });
+                                                }}
+                                                className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
+                                            >
+                                                <option value="">Seleccione provincia con depósito...</option>
+                                                {(provinciasConDeposito.length > 0 ? provinciasConDeposito : initialProvincias).map((p) => (
+                                                    <option key={p.id} value={p.id}>
+                                                        {p.nombre}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <Label className="text-xs mb-1 block">
+                                                Localidad del cliente (destino)
+                                                {cargandoLocalidadesModal && <span className="ml-1 text-muted-foreground">(cargando...)</span>}
+                                            </Label>
+                                            <select
+                                                value={formTarifa.localidad_destino_id}
+                                                onChange={(e) =>
+                                                    setFormTarifa({ ...formTarifa, localidad_destino_id: e.target.value })
+                                                }
+                                                className="w-full h-9 rounded-md border border-input bg-background px-3 text-xs"
+                                                disabled={!formTarifa.provincia_destino_id || cargandoLocalidadesModal}
+                                            >
+                                                <option value="">Cualquier localidad (tarifa provincial)</option>
+                                                {localidadesModal.map((l) => (
+                                                    <option key={l.id} value={l.id}>
+                                                        {l.nombre}{l.codigo_postal ? ` (CP ${l.codigo_postal})` : ''}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                            <p className="mt-1 text-[10px] text-muted-foreground">
+                                                Si no seleccionás localidad, la tarifa aplica a toda la provincia.
+                                            </p>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* ── Sin tipo seleccionado aún ── */}
+                                {!codigoTipoServicioModal && (
+                                    <div className="rounded-lg border border-dashed border-muted-foreground/30 p-3 text-center text-xs text-muted-foreground">
+                                        Seleccioná un tipo de servicio para configurar la ruta.
+                                    </div>
+                                )}
+
+                                {/* ── Costo y Escalón ── */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <Label className="text-xs mb-1 block">Costo Unitario ($)</Label>
@@ -1502,18 +1734,19 @@ export default function CotizadorConfiguracion({
                                         />
                                     </div>
                                     <div>
-                                        <Label className="text-xs mb-1 block">Escalón Máximo (tope opcional)</Label>
+                                        <Label className="text-xs mb-1 block">Tope de cobro $ (opcional)</Label>
                                         <Input
                                             type="number"
                                             step="0.01"
                                             min="0"
-                                            placeholder="Vació = sin tope"
+                                            placeholder="Vacío = sin tope"
                                             value={formTarifa.maximo}
                                             onChange={(e) => setFormTarifa({ ...formTarifa, maximo: e.target.value })}
                                         />
                                     </div>
                                 </div>
 
+                                {/* ── Vigencia ── */}
                                 <div className="grid grid-cols-2 gap-3">
                                     <div>
                                         <Label className="text-xs mb-1 block">Vigente Desde</Label>
@@ -1547,7 +1780,11 @@ export default function CotizadorConfiguracion({
                                     >
                                         Cancelar
                                     </Button>
-                                    <Button type="submit" size="sm">
+                                    <Button
+                                        type="submit"
+                                        size="sm"
+                                        disabled={troncalOrigenIgualDestino}
+                                    >
                                         {tarifaEditando ? 'Guardar Cambios' : 'Registrar Tarifa'}
                                     </Button>
                                 </div>

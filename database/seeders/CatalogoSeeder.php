@@ -68,15 +68,18 @@ class CatalogoSeeder extends Seeder
         ]);
 
         // -------------------------------------------------------
-        // tipos_bulto
+        // tipos_bulto — solo los que usa SET Logística
+        // BOLSA, TAMBOR y MUEBLE desactivados por decisión operativa.
+        // BULTO agregado como tipo genérico para paquetes individuales.
         // -------------------------------------------------------
         DB::table('tipos_bulto')->insertOrIgnore([
-            ['codigo' => 'CAJA',   'nombre' => 'Caja',   'activo' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['codigo' => 'PALLET', 'nombre' => 'Pallet', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['codigo' => 'BOLSA',  'nombre' => 'Bolsa',  'activo' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['codigo' => 'TAMBOR', 'nombre' => 'Tambor', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['codigo' => 'MUEBLE', 'nombre' => 'Mueble', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
-            ['codigo' => 'GRANEL', 'nombre' => 'Granel', 'activo' => true, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'CAJA',   'nombre' => 'Caja',   'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'PALLET', 'nombre' => 'Pallet', 'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'BULTO',  'nombre' => 'Bulto',  'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'GRANEL', 'nombre' => 'Granel', 'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'BOLSA',  'nombre' => 'Bolsa',  'activo' => false, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'TAMBOR', 'nombre' => 'Tambor', 'activo' => false, 'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'MUEBLE', 'nombre' => 'Mueble', 'activo' => false, 'created_at' => $now, 'updated_at' => $now],
         ]);
 
         // -------------------------------------------------------
