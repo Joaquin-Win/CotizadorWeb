@@ -18,8 +18,8 @@ use OpenSpout\Writer\XLSX\Writer;
  * Importación / exportación masiva de tarifas en Excel (.xlsx).
  *
  * Formato (una fila por escalón de tarifa):
- *   Servicio | Provincia origen | Provincia destino | Localidad | Código postal |
- *   Unidad | Costo | Máximo | Vigente desde | Vigente hasta
+ *   Servicio | Provincia origen | Provincia destino | Localidad |
+ *   Unidad | Costo | Máximo | Máx. m3 por bulto | Máx. unidades | Vigente desde | Vigente hasta
  *
  * Convenciones (las mismas que usa el motor de cotización):
  *  - TRONCAL:        provincia origen → provincia destino, sin localidad.
@@ -30,8 +30,8 @@ use OpenSpout\Writer\XLSX\Writer;
 class TarifasExcelService
 {
     public const ENCABEZADOS = [
-        'Servicio', 'Provincia origen', 'Provincia destino', 'Localidad', 'Código postal',
-        'Unidad', 'Costo', 'Máximo', 'Vigente desde', 'Vigente hasta',
+        'Servicio', 'Provincia origen', 'Provincia destino', 'Localidad',
+        'Unidad', 'Costo', 'Máximo', 'Máx. m3 por bulto', 'Máx. unidades', 'Vigente desde', 'Vigente hasta',
     ];
 
     /** Servicios que se pueden cargar por Excel. */
@@ -47,6 +47,8 @@ class TarifasExcelService
         'unidad' => 'unidad', 'unidad de medida' => 'unidad', 'tipo de bulto' => 'unidad', 'bulto' => 'unidad',
         'costo' => 'costo', 'costo unitario' => 'costo', 'precio' => 'costo', 'tarifa' => 'costo',
         'maximo' => 'maximo', 'hasta' => 'maximo', 'tope' => 'maximo',
+        'max m3 por bulto' => 'max_m3', 'max m3' => 'max_m3', 'maximo m3 por bulto' => 'max_m3',
+        'max unidades' => 'max_unidades', 'maximo unidades' => 'max_unidades',
         'vigente desde' => 'desde', 'desde' => 'desde',
         'vigente hasta' => 'hasta',
     ];
@@ -63,6 +65,7 @@ class TarifasExcelService
             'localidadDestino:id,nombre,codigo_postal',
             'tipoServicio:id,codigo,nombre', 'unidadMedida:id,codigo,nombre',
         ])
+            ->whereHas('tipoServicio', fn ($q) => $q->whereIn('codigo', self::SERVICIOS_IMPORTABLES))
             ->orderBy('tipo_servicio_id')->orderBy('provincia_origen_id')
             ->orderBy('provincia_destino_id')->orderBy('localidad_destino_id')
             ->orderBy('unidad_medida_id')->orderBy('maximo')
@@ -79,10 +82,11 @@ class TarifasExcelService
                 $t->provinciaOrigen?->nombre,
                 $t->provinciaDestino?->nombre,
                 $t->localidadDestino?->nombre,
-                $t->localidadDestino?->codigo_postal,
                 $t->unidadMedida?->nombre,
                 (float) $t->costo_unitario,
                 $t->maximo !== null ? (float) $t->maximo : null,
+                $t->max_m3_bulto !== null ? (float) $t->max_m3_bulto : null,
+                $t->max_unidades,
                 $t->vigente_desde?->format('Y-m-d'),
                 $t->vigente_hasta?->format('Y-m-d'),
             ]));
@@ -101,11 +105,12 @@ class TarifasExcelService
 
         $hoy = now()->toDateString();
         foreach ([
-            ['Primera milla', 'Santa Fe', null, 'Reconquista', null, 'Kilogramo', 10, 100, $hoy, null],
-            ['Primera milla', 'Santa Fe', null, 'Reconquista', null, 'Kilogramo', 8, null, $hoy, null],
-            ['Troncal', 'Santa Fe', 'Córdoba', null, null, 'Kilogramo', 25, 100, $hoy, null],
-            ['Troncal', 'Santa Fe', 'Córdoba', null, null, 'Kilogramo', 20, null, $hoy, null],
-            ['Última milla', null, 'Córdoba', 'Córdoba', null, 'Bulto', 1500, null, $hoy, null],
+            ['Primera milla', 'Santa Fe', null, 'Reconquista', 'Kilogramo', 10, 100, null, null, $hoy, null],
+            ['Primera milla', 'Santa Fe', null, 'Reconquista', 'Kilogramo', 8, null, null, null, $hoy, null],
+            ['Troncal', 'Santa Fe', 'Córdoba', null, 'Kilogramo', 25, 100, null, null, $hoy, null],
+            ['Troncal', 'Santa Fe', 'Córdoba', null, 'Kilogramo', 20, null, null, null, $hoy, null],
+            ['Última milla', null, 'Córdoba', 'Córdoba', 'Bulto', 1500, null, 2.3, 3, $hoy, null],
+            ['Última milla', null, 'Córdoba', 'Córdoba', 'Bulto', 2800, null, 6, 10, $hoy, null],
         ] as $fila) {
             $writer->addRow(Row::fromValues($fila));
         }
@@ -118,10 +123,11 @@ class TarifasExcelService
             'Troncal: completar Provincia origen y Provincia destino (Localidad vacía).',
             'Primera milla: completar Provincia origen y Localidad (de origen).',
             'Última milla: completar Provincia destino y Localidad (vacía = toda la provincia).',
-            'Máximo: tope del escalón. Vacío = escalón abierto (sin tope).',
+            'Máximo (Kilogramo / m3 / Pallet): cantidad máxima que cubre el escalón. Vacío = escalón abierto (sin tope).',
+            'Máximo (Bulto): peso máximo por bulto en kg (opcional).',
+            'Bulto: "Máx. m3 por bulto" y "Máx. unidades" definen hasta qué tamaño y cantidad aplica la tarifa; si la carga los supera se usa la siguiente tarifa.',
             'Vigente desde vacío = hoy. Vigente hasta vacío = sin vencimiento.',
-            'Si ya existe una tarifa igual (mismo servicio, ruta, localidad, unidad y máximo) se actualiza; si no, se crea.',
-            'Código postal es opcional: sirve para distinguir localidades con el mismo nombre.',
+            'Si ya existe una tarifa igual (mismo servicio, ruta, localidad, unidad y límites) se actualiza; si no, se crea.',
         ] as $linea) {
             $writer->addRow(Row::fromValues([$linea]));
         }
@@ -203,6 +209,8 @@ class TarifasExcelService
                     'localidad_destino_id' => $reg['localidad_destino_id'],
                     'unidad_medida_id'     => $reg['unidad_medida_id'],
                     'maximo'               => $reg['maximo'],
+                    'max_m3_bulto'         => $reg['max_m3_bulto'],
+                    'max_unidades'         => $reg['max_unidades'],
                 ];
 
                 $query = Tarifa::query();
@@ -267,7 +275,8 @@ class TarifasExcelService
                         $valor = $celdas[$indice] ?? null;
                         if (is_string($valor)) {
                             $valor = trim($valor);
-                            if ($valor === '') {
+                            // Celdas "vacías" que dejan Excel/usuarios: '', '-', 'N/A'
+                            if ($valor === '' || in_array(mb_strtolower($valor), ['-', '—', 'n/a', 'null'], true)) {
                                 $valor = null;
                             }
                         }
@@ -343,8 +352,25 @@ class TarifasExcelService
         if (($f['maximo'] ?? null) !== null) {
             $maximo = $this->numero($f['maximo']);
             if ($maximo === null || $maximo < 0) {
-                return 'máximo inválido.';
+                return 'máximo inválido ("' . $this->mostrar($f['maximo']) . '").';
             }
+        }
+
+        $maxM3 = null;
+        if (($f['max_m3'] ?? null) !== null) {
+            $maxM3 = $this->numero($f['max_m3']);
+            if ($maxM3 === null || $maxM3 < 0) {
+                return '"Máx. m3 por bulto" inválido ("' . $this->mostrar($f['max_m3']) . '").';
+            }
+        }
+
+        $maxUnidades = null;
+        if (($f['max_unidades'] ?? null) !== null) {
+            $n = $this->numero($f['max_unidades']);
+            if ($n === null || $n < 1 || floor($n) != $n) {
+                return '"Máx. unidades" debe ser un entero mayor a 0 ("' . $this->mostrar($f['max_unidades']) . '").';
+            }
+            $maxUnidades = (int) $n;
         }
 
         // Provincias
@@ -419,6 +445,8 @@ class TarifasExcelService
             'unidad_medida_id'     => $unidadId,
             'costo_unitario'       => round($costo, 2),
             'maximo'               => $maximo !== null ? round($maximo, 2) : null,
+            'max_m3_bulto'         => $maxM3 !== null ? round($maxM3, 3) : null,
+            'max_unidades'         => $maxUnidades,
             'vigente_desde'        => $desde,
             'vigente_hasta'        => $hasta,
         ];
@@ -462,7 +490,8 @@ class TarifasExcelService
         }
 
         $unidades = [];
-        foreach (UnidadMedida::where('activo', true)->get() as $u) {
+        // Incluye unidades inactivas: una tarifa exportada puede usar una unidad dada de baja.
+        foreach (UnidadMedida::all() as $u) {
             $unidades[$this->normalizar($u->codigo)] = $u->id;
             $unidades[$this->normalizar($u->nombre)] = $u->id;
         }
@@ -528,7 +557,7 @@ class TarifasExcelService
         }
 
         $s = trim((string) $valor);
-        foreach (['Y-m-d', 'd/m/Y', 'd-m-Y'] as $formato) {
+        foreach (['Y-m-d', 'd/m/Y', 'd-m-Y', 'Y-m-d H:i:s', 'Y-m-d\TH:i:s', 'd/m/Y H:i:s', 'd/m/Y H:i', 'Y/m/d', 'j/n/Y', 'j/n/y'] as $formato) {
             $d = \DateTimeImmutable::createFromFormat('!' . $formato, $s);
             if ($d && $d->format($formato) === $s) {
                 return $d->format('Y-m-d');
@@ -536,5 +565,11 @@ class TarifasExcelService
         }
 
         return null;
+    }
+
+    /** Representación legible del valor crudo de una celda (para mensajes de error). */
+    private function mostrar(mixed $valor): string
+    {
+        return $valor instanceof \DateTimeInterface ? $valor->format('Y-m-d') : (string) $valor;
     }
 }

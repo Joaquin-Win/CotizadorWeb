@@ -50,6 +50,9 @@ class CotizadorService
         private readonly PalletEquivalenceService  $palletEquivalenceService,
     ) {}
 
+    /** Desglose por tramo del cálculo en curso (se reinicia en cada calcular()). */
+    private array $desgloseTramos = [];
+
     /**
      * Calcula la cotización completa.
      *
@@ -59,6 +62,7 @@ class CotizadorService
     public function calcular(CotizacionRequestData $data): ResultadoCotizacion
     {
         $resultado = new ResultadoCotizacion();
+        $this->desgloseTramos = [];
         $resultado->versionAlgoritmo = ConfiguracionCotizador::texto(
             'algoritmo_version',
             config('cotizador.algorithm_version', 'v2.0.0')
@@ -220,13 +224,17 @@ class CotizadorService
                 }
             }
 
-            // Si faltan tramos → siempre marcar como estimado y continuar.
-            // Nunca devolvemos ATENCION_PERSONALIZADA aquí:
-            // el usuario siempre puede confirmar y SET Logística le dará el precio final.
+            // Si falta tarifa para algún tramo → NO inventamos precio: se deriva a
+            // atención personalizada (un asesor contacta al cliente; el controller
+            // dispara las notificaciones de email/WhatsApp al guardar).
             if (! empty($tramosFaltantes)) {
-                $resultado->esEstimado = true;
-                $resultado->errores[]  = 'Sin tarifa exacta para tramos: ' . implode(', ', $tramosFaltantes) . '. Precio estimado — el precio final lo confirmará SET Logística.';
-                Log::info('[CotizadorService] Sin tarifa para tramos: ' . implode(', ', $tramosFaltantes) . ' — devolviendo precio estimado ($0 si no hay ninguna tarifa).');
+                $resultado->estado       = 'ATENCION_PERSONALIZADA';
+                $resultado->esEstimado   = true;
+                $resultado->totalFinal   = 0.0;
+                $resultado->errores[]    = 'Sin tarifa para: ' . implode(', ', $tramosFaltantes) . '. Un asesor se comunicará a la brevedad.';
+                $resultado->desglose     = ['tramos_sin_tarifa' => $tramosFaltantes, 'tramos' => array_values($this->desgloseTramos)];
+                Log::info('[CotizadorService] Sin tarifa para tramos: ' . implode(', ', $tramosFaltantes) . ' — ATENCION_PERSONALIZADA.');
+                return $resultado;
             }
 
             // Cargar costos de tramos en el DTO
@@ -319,6 +327,23 @@ class CotizadorService
             // El frontend diferencia visualmente OK vs OK+esEstimado
             $resultado->estado = 'OK';
 
+            // Desglose de cálculo para la vista admin
+            $resultado->desglose = [
+                'tramos'  => array_values($this->desgloseTramos),
+                'pipeline' => [
+                    'subtotal_tramos'     => round($costoPrimeraMilla + $costoTroncal + $costoUltimaMilla + $costoPuertaPuerta, 2),
+                    'carga_descarga'      => $resultado->costoCargaDescarga,
+                    'seguro'              => $resultado->costoSeguro,
+                    'margen_porcentaje'   => $resultado->margenPorcentaje,
+                    'margen_monto'        => $resultado->margenMonto,
+                    'descuento_porcentaje'=> $resultado->descuentoPorcentaje,
+                    'descuento_monto'     => $resultado->descuentoMonto,
+                    'iva'                 => $resultado->iva,
+                    'total_final'         => $resultado->totalFinal,
+                    'formula'             => 'total = (tramos + carga/descarga + seguro + margen) − descuento + IVA',
+                ],
+            ];
+
         } catch (\Throwable $e) {
             Log::error('[CotizadorService] Error al calcular cotización', [
                 'error'   => $e->getMessage(),
@@ -359,64 +384,134 @@ class CotizadorService
             return null;
         }
 
-        // Construir mapa de tarifas por unidad de medida
-        $mapaTarifas = $this->escalonResolver->mapaTarifas($tarifas);
+        $porUnidad = fn (string $codigo) => $tarifas
+            ->filter(fn ($t) => optional($t->unidadMedida)->codigo === $codigo)->values();
 
-        // Determinar unidad de cobro usando el primer bulto como referencia
-        // (simplificación: si todos los bultos son del mismo tipo, usar la misma unidad)
-        $primerBulto = $bultos[0] ?? null;
-        if ($primerBulto instanceof BultoData) {
-            $unidadCobro = $this->aforoService->determinarUnidadCobro($primerBulto, $mapaTarifas);
-        } else {
-            $unidadCobro = 'M3';
-        }
-
-        // Elegir la tarifa correcta para la unidad
-        $tarifaParaUnidad = $tarifas->filter(function ($tarifa) use ($unidadCobro) {
-            return optional($tarifa->unidadMedida)->codigo === $unidadCobro;
-        });
-
-        if ($tarifaParaUnidad->isEmpty()) {
-            // Fallback a la primera tarifa disponible
-            $tarifaParaUnidad = $tarifas;
-            $unidadCobro = optional($tarifas->first()->unidadMedida)->codigo ?? 'M3';
-        }
-
-        // Calcular la cantidad en la unidad de cobro
-        $cantidadBultos = array_sum(array_map(fn($b) => $b instanceof BultoData ? $b->cantidad : ($b['cantidad'] ?? 1), $bultos));
-        $cantidadPallets = array_sum(array_map(function($b) {
-            if ($b instanceof BultoData) {
-                return ($b->paletizado ?? false) ? $b->cantidad : 0;
+        // ── Métricas de la carga ──────────────────────────────────────────
+        $cantidadBultos  = 0;
+        $cantidadPallets = 0;
+        $maxM3PorBulto   = 0.0;
+        $maxPesoPorBulto = 0.0;
+        foreach ($bultos as $b) {
+            if (! $b instanceof BultoData) {
+                continue;
             }
-            return ($b['palletizado'] ?? false) ? ($b['cantidad'] ?? 1) : 0;
-        }, $bultos));
-
-        $cantidad = match ($unidadCobro) {
-            'M3'     => $volumenTotalM3,
-            'KG'     => $pesoTotalKg,
-            'PALLET' => max(1.0, $cantidadPallets),
-            'BULTO'  => max(1.0, $cantidadBultos),
-            default  => $volumenTotalM3,
-        };
-
-        $costo = $this->escalonResolver->calcular($tarifaParaUnidad, $cantidad);
-
-        if ($costo === null) {
-            return null;
+            $cantidadBultos += $b->cantidad;
+            if ($b->paletizado) {
+                $cantidadPallets += $b->cantidad;
+            }
+            $maxM3PorBulto   = max($maxM3PorBulto, ($b->largoCm / 100) * ($b->anchoCm / 100) * ($b->altoCm / 100));
+            $maxPesoPorBulto = max($maxPesoPorBulto, $b->pesoKg);
         }
 
-        // Obtener tipo_servicio_id para el mínimo
-        $tipoServicioId = optional($tarifas->first()->tipoServicio)->id
+        $candidatos = [];   // unidad => ['tarifa' => Tarifa, 'cantidad' => float, 'costo' => float]
+
+        // BULTO: importan cantidad, peso y m³ por bulto contra los límites de la tarifa.
+        // (Un bulto de 200 m³ NO son 200 bultos: se compara contra max_m3_bulto.)
+        $tarifasBulto = $porUnidad('BULTO');
+        if ($tarifasBulto->isNotEmpty() && $cantidadBultos > 0) {
+            $tarifaBulto = $tarifasBulto
+                ->sortBy([
+                    fn ($a, $b) => ($a->max_m3_bulto ?? INF) <=> ($b->max_m3_bulto ?? INF),
+                    fn ($a, $b) => ($a->max_unidades ?? INF) <=> ($b->max_unidades ?? INF),
+                    fn ($a, $b) => ((float) $a->maximo ?: INF) <=> ((float) $b->maximo ?: INF),
+                ])
+                ->first(function ($t) use ($cantidadBultos, $maxM3PorBulto, $maxPesoPorBulto) {
+                    return ($t->max_m3_bulto === null || $maxM3PorBulto <= (float) $t->max_m3_bulto)
+                        && ($t->max_unidades === null || $cantidadBultos <= (int) $t->max_unidades)
+                        && ($t->maximo === null || (float) $t->maximo <= 0 || $maxPesoPorBulto <= (float) $t->maximo);
+                });
+
+            if ($tarifaBulto) {
+                $candidatos['BULTO'] = [
+                    'tarifa' => $tarifaBulto, 'cantidad' => (float) $cantidadBultos,
+                    'costo'  => round((float) $tarifaBulto->costo_unitario * $cantidadBultos, 2),
+                ];
+            }
+        }
+
+        // PALLET
+        $tarifasPallet = $porUnidad('PALLET');
+        if ($tarifasPallet->isNotEmpty() && $cantidadPallets > 0) {
+            $t = $this->escalonResolver->seleccionarEscalon($tarifasPallet, (float) $cantidadPallets);
+            if ($t) {
+                $candidatos['PALLET'] = ['tarifa' => $t, 'cantidad' => (float) $cantidadPallets,
+                    'costo' => round((float) $t->costo_unitario * $cantidadPallets, 2)];
+            }
+        }
+
+        // GRANEL (m³): solo importa el volumen
+        $tarifasM3 = $porUnidad('M3');
+        if ($tarifasM3->isNotEmpty() && $volumenTotalM3 > 0) {
+            $t = $this->escalonResolver->seleccionarEscalon($tarifasM3, $volumenTotalM3);
+            if ($t) {
+                $candidatos['M3'] = ['tarifa' => $t, 'cantidad' => $volumenTotalM3,
+                    'costo' => round((float) $t->costo_unitario * $volumenTotalM3, 2)];
+            }
+        }
+
+        // KG: solo importa el peso
+        $tarifasKg = $porUnidad('KG');
+        if ($tarifasKg->isNotEmpty() && $pesoTotalKg > 0) {
+            $t = $this->escalonResolver->seleccionarEscalon($tarifasKg, $pesoTotalKg);
+            if ($t) {
+                $candidatos['KG'] = ['tarifa' => $t, 'cantidad' => $pesoTotalKg,
+                    'costo' => round((float) $t->costo_unitario * $pesoTotalKg, 2)];
+            }
+        }
+
+        if ($candidatos === []) {
+            return null;   // sin tarifa aplicable → el caller deriva a atención personalizada
+        }
+
+        // Prioridad: BULTO / PALLET (precio por unidad logística) y, si no, el mayor entre M3 y KG (aforo).
+        if (isset($candidatos['BULTO'])) {
+            $unidadCobro = 'BULTO';
+        } elseif (isset($candidatos['PALLET'])) {
+            $unidadCobro = 'PALLET';
+        } else {
+            $unidadCobro = collect($candidatos)->sortByDesc('costo')->keys()->first();
+        }
+
+        $elegido = $candidatos[$unidadCobro];
+        $costoBruto = $elegido['costo'];
+
+        // Mínimo del tramo
+        $tipoServicioId = optional($elegido['tarifa']->tipoServicio)->id
                        ?? TipoServicio::where('codigo', $tipoTramo)->value('id');
 
-        // Aplicar mínimo
         $costo = $this->minimoService->aplicar(
-            $costo,
+            $costoBruto,
             $provinciaOrigenId,
             $provinciaDestinoId,
             $tipoServicioId ?? 0,
             $localidadId
         );
+
+        $tarifa = $elegido['tarifa'];
+        $this->desgloseTramos[$tipoTramo] = [
+            'tramo'            => $tipoTramo,
+            'unidad_cobro'     => $unidadCobro,
+            'tarifa_id'        => $tarifa->id,
+            'costo_unitario'   => (float) $tarifa->costo_unitario,
+            'cantidad'         => round($elegido['cantidad'], 3),
+            'limites_tarifa'   => [
+                'maximo'       => $tarifa->maximo !== null ? (float) $tarifa->maximo : null,
+                'max_m3_bulto' => $tarifa->max_m3_bulto !== null ? (float) $tarifa->max_m3_bulto : null,
+                'max_unidades' => $tarifa->max_unidades,
+            ],
+            'formula'          => sprintf('%s × %s = %s', $tarifa->costo_unitario, round($elegido['cantidad'], 3), number_format($costoBruto, 2, '.', '')),
+            'costo_bruto'      => $costoBruto,
+            'minimo_aplicado'  => $costo > $costoBruto,
+            'costo_final'      => round($costo, 2),
+            'alternativas'     => collect($candidatos)->map(fn ($c) => $c['costo'])->all(),
+            'medidas'          => [
+                'volumen_total_m3' => round($volumenTotalM3, 3),
+                'peso_total_kg'    => round($pesoTotalKg, 2),
+                'bultos'           => $cantidadBultos,
+                'm3_max_por_bulto' => round($maxM3PorBulto, 3),
+            ],
+        ];
 
         return $costo;
     }

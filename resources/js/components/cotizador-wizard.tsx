@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { usePage } from '@inertiajs/react';
 import {
     Dialog,
@@ -99,29 +99,75 @@ interface SelectLocalidadProps {
     required?: boolean;
 }
 
+// Selección en cascada: Provincia (padre) → Departamento (CABA 1, CABA 2…) → Localidad.
+// Evita mostrar de golpe todas las localidades de la provincia.
 function SelectLocalidad({ id, label, value, localidades, loading, disabled, onChange, required }: SelectLocalidadProps) {
+    const [departamento, setDepartamento] = useState<string>('');
+
+    const departamentos = useMemo(() => {
+        const set = new Set<string>();
+        localidades.forEach((l) => set.add(l.departamento ?? 'Otras localidades'));
+        return Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+    }, [localidades]);
+
+    // Al cambiar de provincia (nueva lista) se reinicia el departamento; si solo hay uno, se preselecciona.
+    useEffect(() => {
+        setDepartamento(departamentos.length === 1 ? departamentos[0] : '');
+    }, [departamentos]);
+
+    const filtradas = useMemo(
+        () => localidades.filter((l) => (l.departamento ?? 'Otras localidades') === departamento),
+        [localidades, departamento],
+    );
+
+    const esCaba = departamentos.some((d) => d.startsWith('CABA '));
+
     return (
-        <div className="cot-field">
-            <label htmlFor={id} className="cot-label">
-                {label} {required && <span className="cot-required">*</span>}
-            </label>
-            <select
-                id={id}
-                className="cot-select"
-                value={value}
-                disabled={disabled || loading}
-                onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
-            >
-                <option value="">
-                    {disabled ? 'Seleccioná primero una provincia' : loading ? 'Cargando…' : 'Seleccioná una localidad'}
-                </option>
-                {localidades.map((l) => (
-                    <option key={l.id} value={l.id}>
-                        {l.nombre}{l.tiene_deposito ? ' — 🏢 Depósito' : ''}
+        <>
+            <div className="cot-field">
+                <label htmlFor={`${id}-departamento`} className="cot-label">
+                    {esCaba ? 'Zona' : 'Departamento'} {required && <span className="cot-required">*</span>}
+                </label>
+                <select
+                    id={`${id}-departamento`}
+                    className="cot-select"
+                    value={departamento}
+                    disabled={disabled || loading || departamentos.length === 0}
+                    onChange={(e) => {
+                        setDepartamento(e.target.value);
+                        onChange('');
+                    }}
+                >
+                    <option value="">
+                        {disabled ? 'Seleccioná primero una provincia' : loading ? 'Cargando…' : esCaba ? 'Seleccioná una zona' : 'Seleccioná un departamento'}
                     </option>
-                ))}
-            </select>
-        </div>
+                    {departamentos.map((d) => (
+                        <option key={d} value={d}>{d}</option>
+                    ))}
+                </select>
+            </div>
+            <div className="cot-field">
+                <label htmlFor={id} className="cot-label">
+                    {label} {required && <span className="cot-required">*</span>}
+                </label>
+                <select
+                    id={id}
+                    className="cot-select"
+                    value={value}
+                    disabled={disabled || loading || departamento === ''}
+                    onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
+                >
+                    <option value="">
+                        {departamento === '' ? 'Elegí primero el departamento' : 'Seleccioná una localidad'}
+                    </option>
+                    {filtradas.map((l) => (
+                        <option key={l.id} value={l.id}>
+                            {l.nombre}{l.tiene_deposito ? ' — 🏢 Depósito' : ''}
+                        </option>
+                    ))}
+                </select>
+            </div>
+        </>
     );
 }
 

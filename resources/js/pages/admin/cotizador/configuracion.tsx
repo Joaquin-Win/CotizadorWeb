@@ -63,6 +63,8 @@ interface Tarifa {
     unidad_medida_id: number;
     costo_unitario: string | number;
     maximo: string | number | null;
+    max_m3_bulto?: string | number | null;
+    max_unidades?: number | null;
     vigente_desde: string;
     vigente_hasta: string | null;
     provincia_origen?: { id: number; nombre: string };
@@ -263,6 +265,8 @@ export default function CotizadorConfiguracion({
         unidad_medida_id: '',
         costo_unitario: '',
         maximo: '',
+        max_m3_bulto: '',
+        max_unidades: '',
         vigente_desde: new Date().toISOString().split('T')[0],
         vigente_hasta: '',
     });
@@ -351,6 +355,8 @@ export default function CotizadorConfiguracion({
             unidad_medida_id: unidadesMedida[0]?.id ? String(unidadesMedida[0].id) : '',
             costo_unitario: '',
             maximo: '',
+            max_m3_bulto: '',
+            max_unidades: '',
             vigente_desde: new Date().toISOString().split('T')[0],
             vigente_hasta: '',
         });
@@ -367,6 +373,8 @@ export default function CotizadorConfiguracion({
             unidad_medida_id: String(tarifa.unidad_medida_id),
             costo_unitario: String(tarifa.costo_unitario),
             maximo: tarifa.maximo ? String(tarifa.maximo) : '',
+            max_m3_bulto: tarifa.max_m3_bulto ? String(tarifa.max_m3_bulto) : '',
+            max_unidades: tarifa.max_unidades ? String(tarifa.max_unidades) : '',
             vigente_desde: tarifa.vigente_desde,
             vigente_hasta: tarifa.vigente_hasta ?? '',
         });
@@ -1099,7 +1107,13 @@ export default function CotizadorConfiguracion({
                                                         ${Number(t.costo_unitario).toLocaleString('es-AR', { minimumFractionDigits: 2 })}
                                                     </td>
                                                     <td className="py-3.5 px-4 text-right font-mono text-muted-foreground">
-                                                        {t.maximo ? `${t.maximo} ${t.unidad_medida?.codigo}` : 'Sin tope'}
+                                                        {t.unidad_medida?.codigo === 'BULTO'
+                                                            ? [
+                                                                  t.max_m3_bulto ? `hasta ${Number(t.max_m3_bulto)} m³/bulto` : null,
+                                                                  t.max_unidades ? `hasta ${t.max_unidades} un.` : null,
+                                                                  t.maximo ? `${t.maximo} kg/bulto` : null,
+                                                              ].filter(Boolean).join(' · ') || 'Sin límite'
+                                                            : t.maximo ? `hasta ${t.maximo} ${t.unidad_medida?.codigo}` : 'Sin tope'}
                                                     </td>
                                                     <td className="py-3.5 px-4 text-muted-foreground">
                                                         <div>Desde: {t.vigente_desde}</div>
@@ -1733,17 +1747,44 @@ export default function CotizadorConfiguracion({
                                             }
                                         />
                                     </div>
-                                    <div>
-                                        <Label className="text-xs mb-1 block">Tope de cobro $ (opcional)</Label>
-                                        <Input
-                                            type="number"
-                                            step="0.01"
-                                            min="0"
-                                            placeholder="Vacío = sin tope"
-                                            value={formTarifa.maximo}
-                                            onChange={(e) => setFormTarifa({ ...formTarifa, maximo: e.target.value })}
-                                        />
-                                    </div>
+                                    {formTarifa.unidad_medida_id !== '' &&
+                                    unidadesMedida.find((u) => String(u.id) === formTarifa.unidad_medida_id)?.codigo === 'BULTO' ? (
+                                        <div className="col-span-2 grid grid-cols-3 gap-3">
+                                            <div>
+                                                <Label className="text-xs mb-1 block">Hasta m³ por bulto</Label>
+                                                <Input
+                                                    type="number" step="0.001" min="0" placeholder="Ej: 2.3"
+                                                    value={formTarifa.max_m3_bulto}
+                                                    onChange={(e) => setFormTarifa({ ...formTarifa, max_m3_bulto: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs mb-1 block">Hasta unidades</Label>
+                                                <Input
+                                                    type="number" step="1" min="1" placeholder="Ej: 3"
+                                                    value={formTarifa.max_unidades}
+                                                    onChange={(e) => setFormTarifa({ ...formTarifa, max_unidades: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs mb-1 block">Peso máx. por bulto (kg)</Label>
+                                                <Input
+                                                    type="number" step="0.01" min="0" placeholder="Vacío = sin tope"
+                                                    value={formTarifa.maximo}
+                                                    onChange={(e) => setFormTarifa({ ...formTarifa, maximo: e.target.value })}
+                                                />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div>
+                                            <Label className="text-xs mb-1 block">Cantidad máxima del escalón (opcional)</Label>
+                                            <Input
+                                                type="number" step="0.01" min="0" placeholder="Vacío = escalón abierto"
+                                                value={formTarifa.maximo}
+                                                onChange={(e) => setFormTarifa({ ...formTarifa, maximo: e.target.value })}
+                                            />
+                                        </div>
+                                    )}
                                 </div>
 
                                 {/* ── Vigencia ── */}

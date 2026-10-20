@@ -223,6 +223,8 @@ class CotizadorConfiguracionController extends Controller
             'unidad_medida_id'     => ['required', 'integer', 'exists:unidades_medida,id'],
             'costo_unitario'       => ['required', 'numeric', 'min:0'],
             'maximo'               => ['nullable', 'numeric', 'min:0'],
+            'max_m3_bulto'         => ['nullable', 'numeric', 'min:0'],
+            'max_unidades'         => ['nullable', 'integer', 'min:1'],
             'vigente_desde'        => ['required', 'date'],
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);
@@ -266,6 +268,8 @@ class CotizadorConfiguracionController extends Controller
             'unidad_medida_id'     => ['required', 'integer', 'exists:unidades_medida,id'],
             'costo_unitario'       => ['required', 'numeric', 'min:0'],
             'maximo'               => ['nullable', 'numeric', 'min:0'],
+            'max_m3_bulto'         => ['nullable', 'numeric', 'min:0'],
+            'max_unidades'         => ['nullable', 'integer', 'min:1'],
             'vigente_desde'        => ['required', 'date'],
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);
@@ -509,10 +513,7 @@ class CotizadorConfiguracionController extends Controller
         // Se usa una subconsulta para obtener el calculado_at del último resultado.
         $cotizacionIds = DB::table('cotizacion_resultados as cr')
             ->select('cr.cotizacion_id')
-            ->whereIn(
-                'cr.numero_version',
-                DB::raw('(SELECT MAX(cr2.numero_version) FROM cotizacion_resultados cr2 WHERE cr2.cotizacion_id = cr.cotizacion_id)')
-            )
+            ->whereRaw('cr.numero_version = (SELECT MAX(cr2.numero_version) FROM cotizacion_resultados cr2 WHERE cr2.cotizacion_id = cr.cotizacion_id)')
             ->where('cr.calculado_at', '<', $actualizado_at)
             ->pluck('cotizacion_id')
             ->toArray();

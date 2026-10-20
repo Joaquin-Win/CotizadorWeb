@@ -14,6 +14,7 @@ use App\Services\Cotizador\CodigoCotizacionGenerator;
 use App\Services\Cotizador\CotizacionRepository;
 use App\Services\Cotizador\CotizadorService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Notifications\AnonymousNotifiable;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
@@ -103,6 +104,8 @@ class CotizacionController extends Controller
                 'version_algoritmo'   => $resultado->versionAlgoritmo,
                 'adicionales'         => $resultado->adicionales,
                 'errores'             => $resultado->errores,
+                // Desglose de fórmulas/tarifas: SOLO administradores
+                'desglose'            => auth()->user()?->esAdmin() ? $resultado->desglose : null,
             ],
         ]);
     }
@@ -261,8 +264,20 @@ class CotizacionController extends Controller
     /**
      * Muestra el resultado de una cotización por código público.
      */
-    public function resultado(string $codigo): Response
+    public function resultado(string $codigo): Response|RedirectResponse
     {
+        $usuario = auth()->user();
+
+        // Invitados: deben iniciar sesión (nunca ven datos internos de la cotización)
+        if (! $usuario) {
+            return redirect()->guest(route('login'));
+        }
+
+        // Clientes: SOLO la vista del portal (sección Pedidos), nunca el panel admin
+        if (! $usuario->esAdmin()) {
+            return $this->vistaPortalCliente($codigo);
+        }
+
         $cotizacion = Cotizacion::where('codigo', $codigo)
             ->with([
                 'estado:id,codigo,nombre,es_final',
@@ -340,6 +355,57 @@ class CotizacionController extends Controller
         return Inertia::render('cotizador/resultado', [
             'cotizacion' => $cotizacionData,
             'resultado'  => $resultado,
+            // Desglose exacto del cálculo (solo admin; la ruta ya filtra por rol)
+            'desglose'   => $resultado?->desglose_calculo,
+        ]);
+    }
+
+    /**
+     * Vista de una cotización dentro del portal de clientes (sección Pedidos).
+     * Solo expone datos comerciales: sin márgenes, tarifas ni desglose interno.
+     */
+    private function vistaPortalCliente(string $codigo): Response
+    {
+        $cliente = auth()->user()?->cliente;
+
+        if (! $cliente) {
+            abort(403);
+        }
+
+        $cotizacion = Cotizacion::where('codigo', $codigo)
+            ->where('cliente_id', $cliente->id)
+            ->with([
+                'estado:id,codigo,nombre',
+                'envio.provinciaOrigen:id,nombre',
+                'envio.provinciaDestino:id,nombre',
+                'envio.localidadOrigen:id,nombre',
+                'envio.localidadDestino:id,nombre',
+                'bultos.tipoBulto:id,nombre',
+            ])
+            ->firstOrFail();
+
+        $r = $cotizacion->resultados()->latest('numero_version')->first();
+
+        return Inertia::render('clientes/portal/cotizacion', [
+            'cliente' => $cliente,
+            'esAdmin' => false,
+            'cotizacion' => [
+                'codigo'     => $cotizacion->codigo,
+                'created_at' => $cotizacion->created_at?->toIso8601String(),
+                'estado'     => $cotizacion->estado?->nombre,
+                'origen'     => collect([$cotizacion->envio?->localidadOrigen?->nombre, $cotizacion->envio?->provinciaOrigen?->nombre])->filter()->implode(', '),
+                'destino'    => collect([$cotizacion->envio?->localidadDestino?->nombre, $cotizacion->envio?->provinciaDestino?->nombre])->filter()->implode(', '),
+                'solicita_retiro'  => (bool) $cotizacion->envio?->solicita_retiro,
+                'solicita_entrega' => (bool) $cotizacion->envio?->solicita_entrega,
+                'bultos' => $cotizacion->bultos->map(fn ($b) => [
+                    'tipo'     => $b->tipoBulto?->nombre,
+                    'largo_cm' => $b->largo_cm, 'ancho_cm' => $b->ancho_cm, 'alto_cm' => $b->alto_cm,
+                    'peso_kg'  => $b->peso_kg, 'cantidad' => $b->cantidad,
+                ])->values(),
+                'total'       => $r && (float) $r->total_final > 0 ? (float) $r->total_final : null,
+                'tiempo_min'  => $r?->tiempo_estimado_min,
+                'tiempo_max'  => $r?->tiempo_estimado_max,
+            ],
         ]);
     }
 
@@ -367,23 +433,9 @@ class CotizacionController extends Controller
     /**
      * Muestra una cotización específica del cliente autenticado.
      */
-    public function show(string $codigo): Response
+    public function show(string $codigo): Response|RedirectResponse
     {
-        $cliente = auth()->user()?->cliente;
-
-        if (! $cliente) {
-            abort(403);
-        }
-
-        $cotizacion = Cotizacion::where('codigo', $codigo)
-            ->where('cliente_id', $cliente->id)
-            ->with(['envio', 'bultos', 'resultados', 'costosAdicionales.costoAdicional'])
-            ->firstOrFail();
-
-        return Inertia::render('cotizador/detalle', [
-            'cotizacion' => $cotizacion,
-            'resultado'  => $cotizacion->resultadoActual(),
-        ]);
+        return $this->vistaPortalCliente($codigo);
     }
 
     // -----------------------------------------------

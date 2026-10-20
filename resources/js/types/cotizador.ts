@@ -19,6 +19,8 @@ export interface Localidad {
     nombre: string;
     codigo_postal?: string;
     tiene_deposito?: boolean;
+    departamento_id?: string | null;
+    departamento?: string | null;
 }
 
 export interface TipoBulto {
@@ -69,6 +71,7 @@ export interface AdicionalResultado {
 
 export interface ResultadoCotizacion {
     estado: 'OK' | 'ATENCION_PERSONALIZADA';
+    desglose?: unknown;
     /**
      * true  → precio calculado con tarifas pero puede variar (sin depósito exacto, tramo con fallback, etc.)
      * false → precio calculado con todas las tarifas exactas

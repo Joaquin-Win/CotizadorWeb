@@ -62,7 +62,9 @@ class TarifaResolver
 
         return Tarifa::with('unidadMedida')
             ->where('proveedor_id', $proveedorId)
-            ->where('provincia_origen_id', $provinciaOrigenId)
+            ->where(fn ($q) => $q
+                ->where('provincia_origen_id', $provinciaOrigenId)
+                ->orWhere('provincia_destino_id', $provinciaOrigenId))
             ->where('localidad_destino_id', $localidadOrigenId)   // reutilización del campo
             ->where('tipo_servicio_id', $this->tipoServicioId('PRIMERA_MILLA'))
             ->whereNull('deleted_at')

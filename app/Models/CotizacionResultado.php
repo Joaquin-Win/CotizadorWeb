@@ -14,7 +14,7 @@ class CotizacionResultado extends Model
         'subtotal_flete', 'costo_seguro', 'costo_carga_descarga', 'incluye_carga_descarga',
         'margen_ganancia', 'descuento_porcentaje', 'descuento_monto',
         'iva', 'total_final', 'tiempo_estimado_min', 'tiempo_estimado_max', 'version_algoritmo',
-        'calculado_at',
+        'calculado_at', 'desglose_calculo',
     ];
 
     protected $casts = [
@@ -33,6 +33,7 @@ class CotizacionResultado extends Model
         'total_final'          => 'decimal:2',
         'incluye_carga_descarga' => 'boolean',
         'calculado_at'         => 'datetime',
+        'desglose_calculo'     => 'array',
     ];
 
     public function margen() { return $this->belongsTo(MargenGanancia::class); }

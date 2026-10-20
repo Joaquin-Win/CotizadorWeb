@@ -16,7 +16,8 @@ class Tarifa extends Model
     protected $fillable = [
         'proveedor_id', 'provincia_origen_id', 'provincia_destino_id',
         'localidad_destino_id', 'tipo_servicio_id', 'unidad_medida_id',
-        'costo_unitario', 'maximo', 'vigente_desde', 'vigente_hasta',
+        'costo_unitario', 'maximo', 'max_m3_bulto', 'max_unidades',
+        'vigente_desde', 'vigente_hasta',
         'created_by', 'updated_by',
     ];
 
@@ -25,6 +26,8 @@ class Tarifa extends Model
         'vigente_hasta' => 'date',
         'costo_unitario'=> 'decimal:2',
         'maximo'        => 'decimal:2',
+        'max_m3_bulto'  => 'decimal:3',
+        'max_unidades'  => 'integer',
     ];
 
     // -----------------------------------------------

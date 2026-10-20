@@ -11,7 +11,15 @@ import {
     User,
     AlertTriangle,
     Info,
+    Calculator,
 } from 'lucide-react';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from '@/components/ui/dialog';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/types';
@@ -82,9 +90,31 @@ interface Cotizacion {
     lead?: CotizacionLead | null;
 }
 
+interface DesgloseTramo {
+    tramo: string;
+    unidad_cobro: string;
+    tarifa_id: number;
+    costo_unitario: number;
+    cantidad: number;
+    formula: string;
+    costo_bruto: number;
+    minimo_aplicado: boolean;
+    costo_final: number;
+    limites_tarifa: { maximo: number | null; max_m3_bulto: number | null; max_unidades: number | null };
+    alternativas: Record<string, number>;
+    medidas: { volumen_total_m3: number; peso_total_kg: number; bultos: number; m3_max_por_bulto: number };
+}
+
+interface Desglose {
+    tramos?: DesgloseTramo[];
+    tramos_sin_tarifa?: string[];
+    pipeline?: Record<string, number | string>;
+}
+
 interface Props {
     cotizacion: Cotizacion;
     resultado: CotizacionResultado | null;
+    desglose?: Desglose | null;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -163,10 +193,108 @@ function SectionCard({
     );
 }
 
+const NOMBRE_TRAMO: Record<string, string> = {
+    PRIMERA_MILLA: 'Primera milla',
+    TRONCAL: 'Flete troncal',
+    ULTIMA_MILLA: 'Última milla',
+    PUERTA_PUERTA: 'Puerta a puerta',
+};
+
+/** Modal exclusivo de administradores: cómo se llegó al precio final. */
+function DesgloseCalculoDialog({
+    open,
+    onOpenChange,
+    desglose,
+}: {
+    open: boolean;
+    onOpenChange: (v: boolean) => void;
+    desglose?: Desglose | null;
+}) {
+    const p = desglose?.pipeline;
+    return (
+        <Dialog open={open} onOpenChange={onOpenChange}>
+            <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                <DialogHeader>
+                    <DialogTitle>Desglose de cálculo</DialogTitle>
+                    <DialogDescription>
+                        Tarifas aplicadas y fórmulas usadas para llegar al precio final (solo administradores).
+                    </DialogDescription>
+                </DialogHeader>
+
+                {!desglose || (!desglose.tramos?.length && !desglose.tramos_sin_tarifa?.length) ? (
+                    <p className="text-sm text-muted-foreground py-4">
+                        Esta cotización es anterior al registro de desgloses: no hay detalle disponible.
+                    </p>
+                ) : (
+                    <div className="space-y-4">
+                        {desglose.tramos_sin_tarifa && desglose.tramos_sin_tarifa.length > 0 && (
+                            <div className="rounded-lg border border-orange-300/60 bg-orange-50 px-3 py-2 text-xs text-orange-800">
+                                Sin tarifa cargada para: {desglose.tramos_sin_tarifa.map((t) => NOMBRE_TRAMO[t] ?? t).join(', ')}.
+                                La cotización quedó para atención personalizada.
+                            </div>
+                        )}
+
+                        {desglose.tramos?.map((t) => (
+                            <div key={t.tramo} className="rounded-lg border bg-muted/20 p-3 space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-sm font-semibold">{NOMBRE_TRAMO[t.tramo] ?? t.tramo}</span>
+                                    <span className="font-mono text-sm font-bold">{formatARS(t.costo_final)}</span>
+                                </div>
+                                <InfoRow label="Tarifa aplicada" value={`#${t.tarifa_id} · ${t.unidad_cobro}`} mono />
+                                <InfoRow label="Fórmula (costo unitario × cantidad)" value={t.formula} mono />
+                                <InfoRow
+                                    label="Límites de la tarifa"
+                                    value={
+                                        [
+                                            t.limites_tarifa.max_m3_bulto != null ? `≤ ${t.limites_tarifa.max_m3_bulto} m³/bulto` : null,
+                                            t.limites_tarifa.max_unidades != null ? `≤ ${t.limites_tarifa.max_unidades} un.` : null,
+                                            t.limites_tarifa.maximo != null ? `máx. ${t.limites_tarifa.maximo}` : null,
+                                        ]
+                                            .filter(Boolean)
+                                            .join(' · ') || 'Sin límites'
+                                    }
+                                />
+                                <InfoRow
+                                    label="Carga"
+                                    value={`${t.medidas.bultos} bulto(s) · ${t.medidas.peso_total_kg} kg · ${t.medidas.volumen_total_m3} m³ (máx. ${t.medidas.m3_max_por_bulto} m³/bulto)`}
+                                />
+                                <InfoRow
+                                    label="Alternativas evaluadas"
+                                    value={Object.entries(t.alternativas).map(([u, c]) => `${u}: ${formatARS(c)}`).join(' · ')}
+                                />
+                                {t.minimo_aplicado && (
+                                    <p className="text-[11px] text-amber-700">
+                                        Se aplicó el mínimo del tramo (bruto {formatARS(t.costo_bruto)}).
+                                    </p>
+                                )}
+                            </div>
+                        ))}
+
+                        {p && (
+                            <div className="rounded-lg border p-3 space-y-1">
+                                <p className="text-sm font-semibold mb-1">Pipeline de precio</p>
+                                <InfoRow label="Subtotal tramos" value={formatARS(p.subtotal_tramos)} mono />
+                                <InfoRow label="Carga / descarga" value={formatARS(p.carga_descarga)} mono />
+                                <InfoRow label="Seguro" value={formatARS(p.seguro)} mono />
+                                <InfoRow label={`Margen (${p.margen_porcentaje}%)`} value={formatARS(p.margen_monto)} mono />
+                                <InfoRow label={`Descuento (${p.descuento_porcentaje}%)`} value={`-${formatARS(p.descuento_monto)}`} mono />
+                                <InfoRow label="IVA" value={formatARS(p.iva)} mono />
+                                <InfoRow label="Total final" value={formatARS(p.total_final)} mono />
+                                <p className="text-[11px] text-muted-foreground pt-1 font-mono">{String(p.formula)}</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </DialogContent>
+        </Dialog>
+    );
+}
+
 // ─── Página principal ─────────────────────────────────────────────────────────
 
-export default function ResultadoCotizacion({ cotizacion, resultado }: Props) {
+export default function ResultadoCotizacion({ cotizacion, resultado, desglose }: Props) {
     const [confirmando, setConfirmando] = useState(false);
+    const [verDesglose, setVerDesglose] = useState(false);
 
     function handleConfirmar() {
         if (!confirm('\u00bfConfirmar esta cotizaci\u00f3n como Aceptada?')) return;
@@ -227,7 +355,13 @@ export default function ResultadoCotizacion({ cotizacion, resultado }: Props) {
                             Detalle completo de la cotización
                         </p>
                     </div>
+                    <Button variant="outline" size="sm" className="gap-2" onClick={() => setVerDesglose(true)}>
+                        <Calculator className="h-3.5 w-3.5" />
+                        Ver desglose de cálculo
+                    </Button>
                 </div>
+
+                <DesgloseCalculoDialog open={verDesglose} onOpenChange={setVerDesglose} desglose={desglose} />
 
                 {/* Alerta si requiere atención */}
                 {requiereAtencion && (

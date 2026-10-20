@@ -70,15 +70,18 @@ class LocalidadesSeeder extends Seeder
                 'nombre'        => $l['nombre'],
                 'codigo_postal' => null,
                 'codigo_georef' => (string) $l['id'],
+                'departamento_georef' => isset($l['departamento']['id']) ? (string) $l['departamento']['id'] : null,
+                'departamento'  => $l['departamento']['nombre'] ?? null,
                 'activo'        => true,
                 'created_at'    => $now,
                 'updated_at'    => $now,
             ];
         }
 
-        // Idempotente: insertOrIgnore por UNIQUE(codigo_georef)
+        // Idempotente: upsert por UNIQUE(codigo_georef). En filas existentes solo se
+        // completa el departamento (no se pisa activo ni tiene_deposito).
         foreach (array_chunk($localidades, 1000) as $chunk) {
-            DB::table('localidades')->insertOrIgnore($chunk);
+            DB::table('localidades')->upsert($chunk, ['codigo_georef'], ['departamento_georef', 'departamento']);
         }
 
         $this->command->info('Localidades insertadas/omitidas correctamente: ' . count($localidades));

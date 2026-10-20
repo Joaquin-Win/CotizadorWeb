@@ -110,6 +110,7 @@ class CotizacionRepository
                 'tiempo_estimado_max'   => $resultado->tiempoMax ?? null,
                 'version_algoritmo'     => $resultado->versionAlgoritmo,
                 'calculado_at'          => now(),
+                'desglose_calculo'      => $resultado->desglose ?: null,
             ]);
 
             // 6. Costos adicionales con snapshot
@@ -160,6 +161,7 @@ class CotizacionRepository
                 'tiempo_estimado_max'   => $resultado->tiempoMax ?? null,
                 'version_algoritmo'     => $resultado->versionAlgoritmo,
                 'calculado_at'          => now(),
+                'desglose_calculo'      => $resultado->desglose ?: null,
             ]);
         });
     }

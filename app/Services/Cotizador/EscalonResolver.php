@@ -38,22 +38,36 @@ class EscalonResolver
      */
     public function calcular(Collection $tarifas, float $cantidad): ?float
     {
+        $tarifa = $this->seleccionarEscalon($tarifas, $cantidad);
+
+        return $tarifa ? round((float) $tarifa->costo_unitario * $cantidad, 2) : null;
+    }
+
+    /**
+     * Elige el escalón aplicable según la cantidad.
+     *
+     * `maximo` = cantidad máxima que cubre el escalón (NULL = abierto).
+     * Se toma el escalón cerrado más chico que cubre la cantidad; si ninguno
+     * la cubre, el abierto; si no hay abierto, el de mayor tope.
+     * (El orden se resuelve en PHP: MySQL ordena NULL primero en ASC.)
+     */
+    public function seleccionarEscalon(Collection $tarifas, float $cantidad): ?Tarifa
+    {
         if ($tarifas->isEmpty() || $cantidad <= 0) {
             return null;
         }
 
-        // Usar la primera tarifa (ordenadas por maximo ASC en TarifaResolver)
-        /** @var Tarifa $tarifa */
-        $tarifa = $tarifas->first();
+        $cerrados = $tarifas->filter(fn ($t) => $t->maximo !== null && (float) $t->maximo > 0)
+            ->sortBy(fn ($t) => (float) $t->maximo)->values();
 
-        $costoCalculado = $tarifa->costo_unitario * $cantidad;
-
-        // Aplicar tope de cobro si existe
-        if ($tarifa->maximo !== null && $tarifa->maximo > 0) {
-            $costoCalculado = min($costoCalculado, $tarifa->maximo);
+        $cubre = $cerrados->first(fn ($t) => (float) $t->maximo >= $cantidad);
+        if ($cubre) {
+            return $cubre;
         }
 
-        return round($costoCalculado, 2);
+        $abierto = $tarifas->first(fn ($t) => $t->maximo === null || (float) $t->maximo <= 0);
+
+        return $abierto ?? $cerrados->last();
     }
 
     /**

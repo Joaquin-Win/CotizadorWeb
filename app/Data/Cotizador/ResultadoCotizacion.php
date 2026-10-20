@@ -65,6 +65,9 @@ class ResultadoCotizacion
     // Desglose de adicionales (snapshots para persistencia)
     public array   $adicionales       = [];   // [{id, nombre, unidad, monto_calculado}]
 
+    // Desglose de cálculo (fórmulas, tarifas aplicadas) — solo vista admin
+    public array   $desglose          = [];
+
     // Errores funcionales (no exceptions — para mostrar al cliente)
     public array   $errores           = [];
 }

@@ -9,7 +9,7 @@ class Localidad extends Model
     protected $table = 'localidades';
     public $timestamps = false;
 
-    protected $fillable = ['nombre', 'provincia_id', 'codigo_postal', 'codigo_georef', 'activo', 'tiene_deposito'];
+    protected $fillable = ['nombre', 'provincia_id', 'codigo_postal', 'codigo_georef', 'departamento_georef', 'departamento', 'activo', 'tiene_deposito'];
 
     protected $casts = [
         'activo' => 'boolean',
