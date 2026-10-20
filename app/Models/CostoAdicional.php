@@ -12,7 +12,7 @@ class CostoAdicional extends Model
     protected $table = 'costos_adicionales';
 
     protected $fillable = [
-        'nombre', 'monto', 'unidad', 'descripcion', 'activo',
+        'codigo', 'nombre', 'monto', 'unidad', 'descripcion', 'activo', 'created_by',
     ];
 
     protected $casts = [

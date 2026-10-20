@@ -94,6 +94,12 @@ class CotizacionController extends Controller
                 'total_final'         => $resultado->totalFinal,
                 'tiempo_min'          => $resultado->tiempoMin,
                 'tiempo_max'          => $resultado->tiempoMax,
+                'tiempo_primera_milla_min' => $resultado->tiempoPrimeraMillaMin,
+                'tiempo_primera_milla_max' => $resultado->tiempoPrimeraMillaMax,
+                'tiempo_troncal_min'       => $resultado->tiempoTroncalMin,
+                'tiempo_troncal_max'       => $resultado->tiempoTroncalMax,
+                'tiempo_ultima_milla_min'  => $resultado->tiempoUltimaMillaMin,
+                'tiempo_ultima_milla_max'  => $resultado->tiempoUltimaMillaMax,
                 'version_algoritmo'   => $resultado->versionAlgoritmo,
                 'adicionales'         => $resultado->adicionales,
                 'errores'             => $resultado->errores,
@@ -262,7 +268,9 @@ class CotizacionController extends Controller
                 'estado:id,codigo,nombre,es_final',
                 'envio.provinciaOrigen:id,nombre',
                 'envio.provinciaDestino:id,nombre',
-                'bultos',
+                'envio.localidadOrigen:id,nombre',
+                'envio.localidadDestino:id,nombre',
+                'bultos.tipoBulto:id,nombre',
                 'resultados',
                 'costosAdicionales.costoAdicional',
                 'lead',
@@ -272,8 +280,65 @@ class CotizacionController extends Controller
 
         $resultado = $cotizacion->resultados()->latest('numero_version')->first();
 
+        // Mapear explícitamente para que el frontend reciba camelCase
+        $cotizacionData = [
+            'id'         => $cotizacion->id,
+            'codigo'     => $cotizacion->codigo,
+            'created_at' => $cotizacion->created_at?->toIso8601String(),
+            'estado'     => $cotizacion->estado ? [
+                'id'       => $cotizacion->estado->id,
+                'codigo'   => $cotizacion->estado->codigo,
+                'nombre'   => $cotizacion->estado->nombre,
+                'es_final' => $cotizacion->estado->es_final,
+            ] : null,
+            'envio'      => $cotizacion->envio ? [
+                'provincia_origen_id'  => $cotizacion->envio->provincia_origen_id,
+                'provincia_destino_id' => $cotizacion->envio->provincia_destino_id,
+                'localidad_origen_id'  => $cotizacion->envio->localidad_origen_id,
+                'localidad_destino_id' => $cotizacion->envio->localidad_destino_id,
+                'solicita_retiro'      => $cotizacion->envio->solicita_retiro,
+                'solicita_entrega'     => $cotizacion->envio->solicita_entrega,
+                'retira_en_sucursal'   => $cotizacion->envio->retira_en_sucursal,
+                'valor_declarado'      => $cotizacion->envio->valor_declarado,
+                // Relaciones cargadas — se exponen con camelCase para que el frontend las encuentre
+                'provinciaOrigen'  => $cotizacion->envio->provinciaOrigen
+                    ? ['id' => $cotizacion->envio->provinciaOrigen->id, 'nombre' => $cotizacion->envio->provinciaOrigen->nombre]
+                    : null,
+                'provinciaDestino' => $cotizacion->envio->provinciaDestino
+                    ? ['id' => $cotizacion->envio->provinciaDestino->id, 'nombre' => $cotizacion->envio->provinciaDestino->nombre]
+                    : null,
+                'localidadOrigen'  => $cotizacion->envio->localidadOrigen
+                    ? ['id' => $cotizacion->envio->localidadOrigen->id, 'nombre' => $cotizacion->envio->localidadOrigen->nombre]
+                    : null,
+                'localidadDestino' => $cotizacion->envio->localidadDestino
+                    ? ['id' => $cotizacion->envio->localidadDestino->id, 'nombre' => $cotizacion->envio->localidadDestino->nombre]
+                    : null,
+            ] : null,
+            'bultos'    => $cotizacion->bultos->map(fn ($b) => [
+                'id'           => $b->id,
+                'tipo_bulto_id'=> $b->tipo_bulto_id,
+                'tipo_bulto'   => $b->tipoBulto ? ['nombre' => $b->tipoBulto->nombre] : null,
+                'largo_cm'     => $b->largo_cm,
+                'ancho_cm'     => $b->ancho_cm,
+                'alto_cm'      => $b->alto_cm,
+                'peso_kg'      => $b->peso_kg,
+                'cantidad'     => $b->cantidad,
+                'palletizado'  => $b->palletizado ?? false,
+            ])->values()->toArray(),
+            'resultados' => $cotizacion->resultados->toArray(),
+            'lead'       => $cotizacion->lead ? [
+                'nombre_cliente' => $cotizacion->lead->nombre_cliente,
+                'email_cliente'  => $cotizacion->lead->email_cliente,
+            ] : null,
+            'usuario'    => $cotizacion->usuario ? [
+                'id'    => $cotizacion->usuario->id,
+                'name'  => $cotizacion->usuario->name,
+                'email' => $cotizacion->usuario->email,
+            ] : null,
+        ];
+
         return Inertia::render('cotizador/resultado', [
-            'cotizacion' => $cotizacion,
+            'cotizacion' => $cotizacionData,
             'resultado'  => $resultado,
         ]);
     }

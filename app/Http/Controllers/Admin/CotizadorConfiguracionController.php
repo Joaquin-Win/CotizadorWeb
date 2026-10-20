@@ -71,8 +71,14 @@ class CotizadorConfiguracionController extends Controller
             ->get(['id', 'nombre', 'codigo_georef', 'tiene_deposito', 'activo']);
 
         // 6. Catálogos para formulario de tarifas
-        $tiposServicio = TipoServicio::where('activo', true)->get(['id', 'codigo', 'nombre']);
-        $unidadesMedida = UnidadMedida::where('activo', true)->get(['id', 'codigo', 'nombre']);
+        // Solo se ofrecen los tipos de servicio logísticos reales (sin EXPRESO, FLEX, PUERTA_PUERTA)
+        $tiposServicio = TipoServicio::where('activo', true)
+            ->whereNotIn('codigo', ['EXPRESO', 'FLEX', 'PUERTA_PUERTA'])
+            ->get(['id', 'codigo', 'nombre']);
+        // Solo las unidades de medida válidas para el sistema
+        $unidadesMedida = UnidadMedida::where('activo', true)
+            ->whereIn('codigo', ['KG', 'M3', 'PALLET', 'BULTO'])
+            ->get(['id', 'codigo', 'nombre']);
 
         return Inertia::render('admin/cotizador/configuracion', [
             'configuraciones'   => $configuraciones,
@@ -221,6 +227,23 @@ class CotizadorConfiguracionController extends Controller
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);
 
+        // Validar que el tipo de servicio esté activo y no sea uno excluido
+        $tipoServicio = TipoServicio::find($data['tipo_servicio_id']);
+        if (! $tipoServicio || ! $tipoServicio->activo || in_array($tipoServicio->codigo, ['EXPRESO', 'FLEX', 'PUERTA_PUERTA'])) {
+            return back()->withErrors(['tipo_servicio_id' => 'El tipo de servicio seleccionado no está disponible para nuevas tarifas.'])->withInput();
+        }
+
+        // Validar que la unidad de medida sea válida
+        $unidad = \App\Models\UnidadMedida::find($data['unidad_medida_id']);
+        if (! $unidad || ! $unidad->activo || ! in_array($unidad->codigo, ['KG', 'M3', 'PALLET', 'BULTO'])) {
+            return back()->withErrors(['unidad_medida_id' => 'La unidad de medida seleccionada no es válida. Use: KG, M3, PALLET o BULTO.'])->withInput();
+        }
+
+        // Validar regla especial para TRONCAL: origen ≠ destino
+        if ($tipoServicio->codigo === 'TRONCAL' && (int) $data['provincia_origen_id'] === (int) $data['provincia_destino_id']) {
+            return back()->withErrors(['provincia_destino_id' => 'En una tarifa TRONCAL, la provincia de origen y destino deben ser diferentes.'])->withInput();
+        }
+
         $proveedor = Proveedor::principal();
         $data['proveedor_id'] = $proveedor?->id;
         $data['created_by']   = auth()->id();
@@ -246,6 +269,23 @@ class CotizadorConfiguracionController extends Controller
             'vigente_desde'        => ['required', 'date'],
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);
+
+        // Validar tipo de servicio activo (no excluido)
+        $tipoServicio = TipoServicio::find($data['tipo_servicio_id']);
+        if (! $tipoServicio || in_array($tipoServicio->codigo, ['EXPRESO', 'FLEX', 'PUERTA_PUERTA'])) {
+            return back()->withErrors(['tipo_servicio_id' => 'El tipo de servicio seleccionado no está disponible.'])->withInput();
+        }
+
+        // Validar unidad de medida válida
+        $unidad = \App\Models\UnidadMedida::find($data['unidad_medida_id']);
+        if (! $unidad || ! in_array($unidad->codigo, ['KG', 'M3', 'PALLET', 'BULTO'])) {
+            return back()->withErrors(['unidad_medida_id' => 'La unidad de medida no es válida. Use: KG, M3, PALLET o BULTO.'])->withInput();
+        }
+
+        // Validar TRONCAL: origen ≠ destino
+        if ($tipoServicio->codigo === 'TRONCAL' && (int) $data['provincia_origen_id'] === (int) $data['provincia_destino_id']) {
+            return back()->withErrors(['provincia_destino_id' => 'En una tarifa TRONCAL, la provincia de origen y destino deben ser diferentes.'])->withInput();
+        }
 
         $data['updated_by'] = auth()->id();
         $tarifa->update($data);

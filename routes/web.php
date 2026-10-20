@@ -112,7 +112,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // Cotizaciones administrativas (solo admin)
         Route::get('cotizaciones',                         [CotizacionesAdminController::class, 'index'])->name('cotizaciones.index');
         Route::post('cotizaciones/{cotizacion}/confirmar', [CotizacionesAdminController::class, 'confirmar'])->name('cotizaciones.confirmar');
-        Route::post('cotizaciones/{cotizacion}/whatsapp',  [CotizacionesAdminController::class, 'contactarWhatsapp'])->name('cotizaciones.whatsapp');
+        Route::post('cotizaciones/{cotizacion}/whatsapp',         [CotizacionesAdminController::class, 'contactarWhatsapp'])->name('cotizaciones.whatsapp');
+        Route::get('cotizaciones/{cotizacion}/whatsapp/preview',   [CotizacionesAdminController::class, 'previewWhatsapp'])->name('cotizaciones.whatsapp.preview');
 
         // Usuarios internos SET
         Route::resource('usuarios', UsuarioController::class)->except(['show']);

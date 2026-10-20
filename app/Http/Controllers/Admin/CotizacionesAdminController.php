@@ -129,6 +129,23 @@ class CotizacionesAdminController extends Controller
         return response()->json(['url' => $contacto['url']]);
     }
 
+    /**
+     * Genera el preview del mensaje sin registrar el contacto.
+     *
+     * Devuelve url, telefono, mensaje y advertencia (si ya fue contactado recientemente).
+     * No modifica ningún estado ni registra nada en BD.
+     */
+    public function previewWhatsapp(Cotizacion $cotizacion): JsonResponse
+    {
+        try {
+            $preview = $this->whatsapp->resolverPreview($cotizacion);
+        } catch (\DomainException $e) {
+            return response()->json(['message' => $e->getMessage()], 422);
+        }
+
+        return response()->json($preview);
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // Helpers privados
     // ─────────────────────────────────────────────────────────────────────────

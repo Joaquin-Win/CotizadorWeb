@@ -88,6 +88,12 @@ export interface ResultadoCotizacion {
     total_final: number;
     tiempo_min: number | null;
     tiempo_max: number | null;
+    tiempo_primera_milla_min: number | null;
+    tiempo_primera_milla_max: number | null;
+    tiempo_troncal_min: number | null;
+    tiempo_troncal_max: number | null;
+    tiempo_ultima_milla_min: number | null;
+    tiempo_ultima_milla_max: number | null;
     version_algoritmo: string;
     adicionales: AdicionalResultado[];
     errores: string[];

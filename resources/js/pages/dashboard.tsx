@@ -293,7 +293,7 @@ export default function Dashboard({ stats, ultimosClientes, ultimasCotizaciones 
                         icon={Calculator}
                         color="bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400"
                         sub={`${stats.cotizaciones_mes} cotizadas este mes`}
-                        href="/cotizador"
+                        href="/admin/cotizaciones"
                     />
 
                     <StatCard

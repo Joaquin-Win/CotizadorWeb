@@ -9,12 +9,145 @@ import {
     Clock,
     ExternalLink,
     MessageCircle,
+    Phone,
     Search,
+    Send,
     User,
+    X,
 } from 'lucide-react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import type { BreadcrumbItem } from '@/types';
+
+// ─── Modal de preview de contacto ────────────────────────────────────────────
+
+interface PreviewData {
+    url: string;
+    telefono: string;
+    mensaje: string;
+    advertencia: string | null;
+}
+
+function ModalContactar({
+    cotizacion,
+    preview,
+    onConfirmar,
+    onCerrar,
+    confirmando,
+}: {
+    cotizacion: CotizacionRow;
+    preview: PreviewData;
+    onConfirmar: (mensaje: string) => void;
+    onCerrar: () => void;
+    confirmando: boolean;
+}) {
+    const [mensajeEditado, setMensajeEditado] = useState(preview.mensaje);
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Overlay */}
+            <div
+                className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+                onClick={onCerrar}
+            />
+
+            {/* Panel */}
+            <div className="relative z-10 w-full max-w-lg rounded-2xl border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                {/* Barra superior */}
+                <div className="h-1.5 w-full bg-gradient-to-r from-green-400 via-emerald-400 to-teal-500" />
+
+                <div className="p-6">
+                    {/* Encabezado */}
+                    <div className="flex items-start gap-3 mb-4">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-green-100 text-green-600 dark:bg-green-950/60 dark:text-green-400">
+                            <MessageCircle className="h-5 w-5" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                            <h2 className="font-bold text-base text-foreground leading-tight">
+                                Contactar cliente
+                            </h2>
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                                Cotización{' '}
+                                <span className="font-mono font-semibold">
+                                    {cotizacion.codigo}
+                                </span>{' '}
+                                · {cotizacion.cliente_nombre}
+                            </p>
+                        </div>
+                        <button
+                            onClick={onCerrar}
+                            className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+
+                    {/* Advertencia anti-duplicado */}
+                    {preview.advertencia && (
+                        <div className="flex items-start gap-2 rounded-lg border border-amber-200/60 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-700/40 px-3.5 py-2.5 mb-4">
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-600 shrink-0 mt-0.5" />
+                            <p className="text-xs text-amber-800 dark:text-amber-300">
+                                {preview.advertencia}
+                            </p>
+                        </div>
+                    )}
+
+                    {/* Teléfono */}
+                    <div className="flex items-center gap-2 mb-3">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+                        <span className="text-xs text-muted-foreground font-mono">
+                            {preview.telefono}
+                        </span>
+                    </div>
+
+                    {/* Mensaje editable */}
+                    <div className="mb-4">
+                        <label className="text-xs font-medium text-foreground mb-1.5 block">
+                            Mensaje a enviar{' '}
+                            <span className="text-muted-foreground font-normal">
+                                (podés editarlo antes de confirmar)
+                            </span>
+                        </label>
+                        <textarea
+                            className="w-full rounded-lg border bg-muted/30 px-3 py-2.5 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/40 resize-none"
+                            rows={6}
+                            value={mensajeEditado}
+                            onChange={(e) => setMensajeEditado(e.target.value)}
+                        />
+                    </div>
+
+                    {/* Nota informativa */}
+                    <p className="text-[11px] text-muted-foreground mb-5 leading-relaxed">
+                        Al confirmar, se abrirá WhatsApp con este mensaje listo para enviar.
+                        El envío lo realizás vos desde la app. Se registrará que generaste este contacto.
+                    </p>
+
+                    {/* Acciones */}
+                    <div className="flex items-center gap-2.5">
+                        <Button
+                            className="flex-1 gap-2 font-semibold bg-green-600 hover:bg-green-700 text-white"
+                            size="sm"
+                            disabled={confirmando || !mensajeEditado.trim()}
+                            onClick={() => onConfirmar(mensajeEditado)}
+                        >
+                            <Send className="h-3.5 w-3.5" />
+                            {confirmando ? 'Abriendo…' : 'Confirmar y abrir WhatsApp'}
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={onCerrar}
+                            className="font-medium"
+                            disabled={confirmando}
+                        >
+                            Cancelar
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
+}
 
 // ─── Tipos ───────────────────────────────────────────────────────────────────
 
@@ -210,7 +343,7 @@ function FilaPendiente({
                             onClick={() => onWhatsapp(cot)}
                         >
                             <MessageCircle className="h-3 w-3" />
-                            {contactando === cot.id ? 'Preparando…' : 'Contactar por WhatsApp'}
+                            {contactando === cot.id ? 'Cargando…' : 'Contactar'}
                         </Button>
                     )}
                     <Button
@@ -317,7 +450,7 @@ function TablaVacia({ mensaje }: { mensaje: string }) {
 // ─── Componente principal ─────────────────────────────────────────────────────
 
 export default function CotizacionesAdmin({ pendientes, completadas }: Props) {
-    // ID de la cotización que está siendo confirmada (para deshabilitar botón)
+    // ── Confirmar cotización ──────────────────────────────────────────────────
     const [confirmando, setConfirmando] = useState<number | null>(null);
 
     function handleConfirmar(id: number) {
@@ -332,25 +465,55 @@ export default function CotizacionesAdmin({ pendientes, completadas }: Props) {
         );
     }
 
-    // Genera el enlace wa.me en el backend (valida estado/teléfono y registra el contacto)
-    // y lo abre en una pestaña nueva. El usuario envía el mensaje manualmente.
+    // ── Contactar (flujo de dos pasos: preview → confirmación) ────────────────
     const [contactando, setContactando] = useState<number | null>(null);
+    const [modalPreview, setModalPreview] = useState<{
+        cotizacion: CotizacionRow;
+        preview: PreviewData;
+    } | null>(null);
+    const [enviandoContacto, setEnviandoContacto] = useState(false);
 
+    /**
+     * Paso 1: clic en "Contactar".
+     * Hace GET al endpoint de preview (no registra nada) y abre el modal.
+     */
     async function handleWhatsapp(cot: CotizacionRow) {
-        let forzar = false;
-        if (cot.contacto_reciente) {
-            const ok = window.confirm(
-                `Ya se contactó a este cliente el ${cot.ultimo_contacto}. ¿Querés volver a contactarlo?`,
-            );
-            if (!ok) return;
-            forzar = true;
-        }
-
         setContactando(cot.id);
-        // Se abre la pestaña en el clic para que el navegador no la bloquee.
+        try {
+            const res = await fetch(`/admin/cotizaciones/${cot.id}/whatsapp/preview`, {
+                method: 'GET',
+                headers: {
+                    Accept: 'application/json',
+                    'X-XSRF-TOKEN': xsrfToken(),
+                },
+                credentials: 'same-origin',
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!res.ok) {
+                window.alert(data.message ?? 'No se pudo obtener el preview del mensaje.');
+                return;
+            }
+            setModalPreview({ cotizacion: cot, preview: data as PreviewData });
+        } catch {
+            window.alert('Error de red al preparar el mensaje de WhatsApp.');
+        } finally {
+            setContactando(null);
+        }
+    }
+
+    /**
+     * Paso 2: el admin confirma desde el modal.
+     * Hace POST (registra el contacto) y abre wa.me con el mensaje (editado).
+     */
+    async function handleConfirmarContacto(mensajeEditado: string) {
+        if (!modalPreview) return;
+        const { cotizacion } = modalPreview;
+
+        setEnviandoContacto(true);
+        // Abrimos la pestaña en el clic para evitar bloqueo del navegador
         const ventana = window.open('', '_blank');
         try {
-            const res = await fetch(`/admin/cotizaciones/${cot.id}/whatsapp`, {
+            const res = await fetch(`/admin/cotizaciones/${cotizacion.id}/whatsapp`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -358,31 +521,45 @@ export default function CotizacionesAdmin({ pendientes, completadas }: Props) {
                     'X-XSRF-TOKEN': xsrfToken(),
                 },
                 credentials: 'same-origin',
-                body: JSON.stringify({ forzar }),
+                body: JSON.stringify({ forzar: true }),
             });
             const data = await res.json().catch(() => ({}));
             if (!res.ok || !data.url) {
                 ventana?.close();
-                window.alert(data.message ?? 'No se pudo preparar el mensaje de WhatsApp.');
+                window.alert(data.message ?? 'No se pudo registrar el contacto.');
                 return;
             }
+            // Construir la URL con el mensaje editado (puede diferir del generado)
+            const urlFinal = `https://wa.me/${modalPreview.preview.telefono}?text=${encodeURIComponent(mensajeEditado)}`;
             if (ventana) {
-                ventana.location.href = data.url;
+                ventana.location.href = urlFinal;
             } else {
-                window.location.href = data.url;
+                window.open(urlFinal, '_blank');
             }
+            setModalPreview(null);
             router.reload({ only: ['pendientes'] });
         } catch {
             ventana?.close();
-            window.alert('Error de red al preparar el mensaje de WhatsApp.');
+            window.alert('Error de red al registrar el contacto.');
         } finally {
-            setContactando(null);
+            setEnviandoContacto(false);
         }
     }
 
     return (
         <AppLayout breadcrumbs={breadcrumbs}>
             <Head title="Cotizaciones" />
+
+            {/* Modal de contacto por WhatsApp */}
+            {modalPreview && (
+                <ModalContactar
+                    cotizacion={modalPreview.cotizacion}
+                    preview={modalPreview.preview}
+                    onConfirmar={handleConfirmarContacto}
+                    onCerrar={() => setModalPreview(null)}
+                    confirmando={enviandoContacto}
+                />
+            )}
 
             <div className="flex flex-1 flex-col gap-8 p-6 max-w-7xl mx-auto w-full">
 

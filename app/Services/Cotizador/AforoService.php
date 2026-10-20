@@ -57,19 +57,24 @@ class AforoService
      */
     public function determinarUnidadCobro(
         BultoData $bulto,
-        array $tarifasPorUnidad  // ['M3' => float, 'KG' => float, 'PALLET' => float|null]
+        array $tarifasPorUnidad  // ['M3' => float, 'KG' => float, 'PALLET' => float|null, 'BULTO' => float|null]
     ): string {
         // Bulto palletizado con tarifa PALLET disponible → usar PALLET
         if ($bulto->paletizado && isset($tarifasPorUnidad['PALLET'])) {
             return 'PALLET';
         }
 
-        // Para bultos no palletizados: comparar M3 vs KG
+        // Si hay tarifa BULTO disponible → preferir BULTO (precio fijo por unidad)
+        if (isset($tarifasPorUnidad['BULTO'])) {
+            return 'BULTO';
+        }
+
+        // Para bultos no palletizados sin tarifa BULTO: comparar M3 vs KG
         $tarifaM3 = $tarifasPorUnidad['M3'] ?? 0;
         $tarifaKg = $tarifasPorUnidad['KG'] ?? 0;
 
         if ($tarifaM3 <= 0 && $tarifaKg <= 0) {
-            // Sin tarifas disponibles — el caller marca el resultado como estimado
+            // Sin tarifas disponibles — el caller debe manejar este caso
             return 'M3';
         }
 
