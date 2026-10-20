@@ -71,3 +71,37 @@ test('login bloqueado para empresa inactiva sin pendientes', function () {
 
     $this->assertGuest();
 });
+
+test('inhabilitar empresa no desactiva las cuentas', function () {
+    [$tipo, $activo, $inactivo] = seedEstadoTipoOnce();
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $cliente = makeCliente();
+    $user = User::factory()->create([
+        'rol_id' => 2,
+        'cliente_id' => $cliente->id,
+        'email' => 'user@test.com',
+        'activo' => true,
+    ]);
+
+    $this->actingAs($admin)->put("/clientes/{$cliente->id}/inactivar");
+
+    expect($cliente->refresh()->estado->codigo)->toBe('INACTIVO');
+    expect($user->refresh()->activo)->toBeTrue();
+});
+
+test('habilitar empresa reactiva las cuentas', function () {
+    [$tipo, $activo, $inactivo] = seedEstadoTipoOnce();
+    $admin = User::factory()->create(['rol_id' => 1]);
+    $cliente = makeCliente(['estado_id' => $inactivo->id]);
+    $user = User::factory()->create([
+        'rol_id' => 2,
+        'cliente_id' => $cliente->id,
+        'email' => 'user@test.com',
+        'activo' => false,
+    ]);
+
+    $this->actingAs($admin)->put("/clientes/{$cliente->id}/activar");
+
+    expect($cliente->refresh()->estado->codigo)->toBe('ACTIVO');
+    expect($user->refresh()->activo)->toBeTrue();
+});

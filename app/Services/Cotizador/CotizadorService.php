@@ -27,9 +27,11 @@ use Illuminate\Support\Facades\Log;
  *  5.  Calcular costos adicionales (AdicionalesService)
  *  6.  Resolver tiempo estimado (TiempoEntregaService)
  *  7.  Aplicar pipeline de precios (CommercialPricingPolicy)
- *  8.  Si algún tramo faltó tarifa → estado = ATENCION_PERSONALIZADA
+*  8.  Si faltaron tarifas o depósitos → esEstimado = true y se avisa en `errores`
  *
- * NUNCA calcula precios en el Controller. Nunca confía en datos del frontend.
+ *  El estado siempre es OK: nunca bloquea la cotización, el precio final lo confirma SET Logística.
+ *
+ *  NUNCA calcula precios en el Controller. Nunca confía en datos del frontend.
  */
 class CotizadorService
 {
@@ -417,32 +419,6 @@ class CotizadorService
         );
 
         return $costo;
-    }
-
-    /**
-     * Marca el resultado como ATENCION_PERSONALIZADA y registra el error.
-     * Solo se usa cuando realmente NO hay tarifa para calcular ningún precio.
-     */
-    private function atencionPersonalizada(ResultadoCotizacion $resultado, string $motivo): ResultadoCotizacion
-    {
-        $resultado->estado      = 'ATENCION_PERSONALIZADA';
-        $resultado->esEstimado  = false;
-        $resultado->errores[]   = $motivo;
-
-        // Resetear montos — no hay precio que mostrar
-        $resultado->costoPrimeraMilla  = 0;
-        $resultado->costoTroncal       = 0;
-        $resultado->costoUltimaMilla   = 0;
-        $resultado->costoPuertaPuerta  = 0;
-        $resultado->subtotalFlete      = 0;
-        $resultado->costoSeguro        = 0;
-        $resultado->costoCargaDescarga = 0;
-        $resultado->margenMonto        = 0;
-        $resultado->descuentoMonto     = 0;
-        $resultado->iva                = 0;
-        $resultado->totalFinal         = 0;
-
-        return $resultado;
     }
 
     /**

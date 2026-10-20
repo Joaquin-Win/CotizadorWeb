@@ -59,20 +59,21 @@ function makeDtoSimple(int $provOrigenId, int $provDestinoId): CotizacionRequest
     return $dto;
 }
 
-it('retorna ATENCION_PERSONALIZADA cuando no hay proveedor activo', function () {
+it('retorna precio estimado cuando no hay proveedor activo', function () {
     seedCatalogoBasico();
-    // No crear proveedor → debe fallar
+    // Sin proveedor configurado el motor igual devuelve OK con precio estimado
 
     $service = app(CotizadorService::class);
     $dto     = makeDtoSimple(1, 2);
 
     $resultado = $service->calcular($dto);
 
-    expect($resultado->estado)->toBe('ATENCION_PERSONALIZADA');
-    expect($resultado->errores)->not->toBeEmpty();
+    expect($resultado->estado)->toBe('OK');
+    expect($resultado->esEstimado)->toBeTrue();
+    expect(implode(' ', $resultado->errores))->toContain('Sin proveedor activo configurado');
 });
 
-it('retorna ATENCION_PERSONALIZADA cuando no hay tarifa TRONCAL para la ruta', function () {
+it('retorna precio estimado cuando no hay tarifa TRONCAL para la ruta', function () {
     seedCatalogoBasico();
 
     // Crear proveedor activo
@@ -87,8 +88,9 @@ it('retorna ATENCION_PERSONALIZADA cuando no hay tarifa TRONCAL para la ruta', f
 
     $resultado = $service->calcular($dto);
 
-    expect($resultado->estado)->toBe('ATENCION_PERSONALIZADA');
-    expect($resultado->errores)->toContain('Sin tarifa para: TRONCAL');
+    expect($resultado->estado)->toBe('OK');
+    expect($resultado->esEstimado)->toBeTrue();
+    expect(implode(' ', $resultado->errores))->toContain('Sin tarifa exacta para tramos');
 });
 
 it('retorna OK y calcula total cuando hay tarifa TRONCAL disponible', function () {
