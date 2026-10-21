@@ -77,13 +77,55 @@ function SelectProvincia({ id, label, value, provincias, loading, onChange, requ
     );
 }
 
-// Aviso con los depósitos de la empresa en la provincia elegida
+// Aviso con los depósitos de la empresa en la provincia elegida (Localidad, Departamento)
 function DepositosInfo({ localidades, texto, id }: { localidades: Localidad[]; texto: string; id: string }) {
     const depositos = localidades.filter((l) => l.tiene_deposito);
     if (depositos.length === 0) return null;
+    const etiqueta = (d: Localidad) =>
+        d.departamento && d.departamento.trim().toLowerCase() !== d.nombre.trim().toLowerCase()
+            ? `${d.nombre}, ${d.departamento}`
+            : d.nombre;
     return (
         <p id={id} className="cot-hint" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)' }}>
-            🏢 {texto} <strong>{depositos.map((d) => d.nombre).join(', ')}</strong>
+            🏢 {texto} <strong>{depositos.map(etiqueta).join(' · ')}</strong>
+        </p>
+    );
+}
+
+// Tiempo estimado de viaje origen → destino (Google si hay API key; si no, aproximado)
+function TiempoViaje({ origen, destino }: { origen: number | ''; destino: number | '' }) {
+    const [info, setInfo] = useState<{ texto?: string; distancia_km?: number; fuente?: string } | null>(null);
+    const [cargando, setCargando] = useState(false);
+
+    useEffect(() => {
+        if (origen === '' || destino === '') {
+            setInfo(null);
+            return;
+        }
+        const ctrl = new AbortController();
+        setCargando(true);
+        fetch(`/api/publica/tiempo-viaje?origen=${origen}&destino=${destino}`, {
+            headers: { Accept: 'application/json' },
+            signal: ctrl.signal,
+        })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((d) => setInfo(d))
+            .catch(() => undefined)
+            .finally(() => setCargando(false));
+        return () => ctrl.abort();
+    }, [origen, destino]);
+
+    if (origen === '' || destino === '') return null;
+    return (
+        <p id="tiempo-viaje" className="cot-hint" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)' }}>
+            🕒 Tiempo estimado de viaje:{' '}
+            <strong>
+                {cargando
+                    ? 'calculando…'
+                    : info?.texto
+                        ? `${info.texto}${info.distancia_km ? ` (${Math.round(info.distancia_km)} km)` : ''}${info.fuente === 'aproximado' ? ' · aproximado' : ''}`
+                        : 'a confirmar por nuestro equipo'}
+            </strong>
         </p>
     );
 }
@@ -108,6 +150,15 @@ function SelectLocalidad({ id, label, value, localidades, loading, disabled, onC
         const set = new Set<string>();
         localidades.forEach((l) => set.add(l.departamento ?? 'Otras localidades'));
         return Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
+    }, [localidades]);
+
+    // Un departamento tiene depósito si alguna de sus localidades lo tiene
+    const departamentosConDeposito = useMemo(() => {
+        const set = new Set<string>();
+        localidades.forEach((l) => {
+            if (l.tiene_deposito) set.add(l.departamento ?? 'Otras localidades');
+        });
+        return set;
     }, [localidades]);
 
     // Al cambiar de provincia (nueva lista) se reinicia el departamento; si solo hay uno, se preselecciona.
@@ -142,7 +193,7 @@ function SelectLocalidad({ id, label, value, localidades, loading, disabled, onC
                         {disabled ? 'Seleccioná primero una provincia' : loading ? 'Cargando…' : esCaba ? 'Seleccioná una zona' : 'Seleccioná un departamento'}
                     </option>
                     {departamentos.map((d) => (
-                        <option key={d} value={d}>{d}</option>
+                        <option key={d} value={d}>{d}{departamentosConDeposito.has(d) ? ' (🏭 Depósito)' : ''}</option>
                     ))}
                 </select>
             </div>
@@ -162,7 +213,7 @@ function SelectLocalidad({ id, label, value, localidades, loading, disabled, onC
                     </option>
                     {filtradas.map((l) => (
                         <option key={l.id} value={l.id}>
-                            {l.nombre}{l.tiene_deposito ? ' — 🏢 Depósito' : ''}
+                            {l.nombre}{l.tiene_deposito ? ' (🏭 Depósito)' : ''}
                         </option>
                     ))}
                 </select>
@@ -1034,6 +1085,7 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                                             : 'Depósitos de la empresa en esta provincia:'
                                     }
                                 />
+                                <TiempoViaje origen={origenLocalidadId} destino={destinoLocalidadId} />
                                 {destinoProvinciaId !== '' && !loadingLocDestino &&
                                     !localidadesDestino.some((l) => l.tiene_deposito) && (
                                         <p className="cot-error">

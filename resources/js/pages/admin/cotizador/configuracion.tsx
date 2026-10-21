@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
-import { Head, useForm, router } from '@inertiajs/react';
+import { Head, Link, useForm, router, usePage } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
 import {
@@ -65,8 +65,12 @@ interface Tarifa {
     maximo: string | number | null;
     max_m3_bulto?: string | number | null;
     max_unidades?: number | null;
+    min_unidades?: number | null;
+    min_m3_bulto?: string | number | null;
+    max_kg_bulto?: string | number | null;
     vigente_desde: string;
     vigente_hasta: string | null;
+    created_at?: string | null;
     provincia_origen?: { id: number; nombre: string };
     provincia_destino?: { id: number; nombre: string };
     localidad_destino?: { id: number; nombre: string; codigo_postal: string | null } | null;
@@ -176,7 +180,12 @@ export default function CotizadorConfiguracion({
     const [ivaPorcentaje, setIvaPorcentaje] = useState(
         configuraciones['iva_porcentaje']?.valor ?? '0'
     );
+    const errors = (usePage().props.errors ?? {}) as Record<string, string>;
     const [costos, setCostos] = useState<CostoAdicional[]>(initialCostos);
+    // Resincroniza la tabla cuando Inertia recarga las props (p. ej. tras crear un costo)
+    useEffect(() => {
+        setCostos(initialCostos);
+    }, [initialCostos]);
     const [popupActivo, setPopupActivo] = useState(
         configuraciones['popup_activo']?.valor === '1'
     );
@@ -267,6 +276,9 @@ export default function CotizadorConfiguracion({
         maximo: '',
         max_m3_bulto: '',
         max_unidades: '',
+        min_unidades: '',
+        min_m3_bulto: '',
+        max_kg_bulto: '',
         vigente_desde: new Date().toISOString().split('T')[0],
         vigente_hasta: '',
     });
@@ -357,6 +369,9 @@ export default function CotizadorConfiguracion({
             maximo: '',
             max_m3_bulto: '',
             max_unidades: '',
+            min_unidades: '',
+            min_m3_bulto: '',
+            max_kg_bulto: '',
             vigente_desde: new Date().toISOString().split('T')[0],
             vigente_hasta: '',
         });
@@ -375,6 +390,9 @@ export default function CotizadorConfiguracion({
             maximo: tarifa.maximo ? String(tarifa.maximo) : '',
             max_m3_bulto: tarifa.max_m3_bulto ? String(tarifa.max_m3_bulto) : '',
             max_unidades: tarifa.max_unidades ? String(tarifa.max_unidades) : '',
+            min_unidades: tarifa.min_unidades ? String(tarifa.min_unidades) : '',
+            min_m3_bulto: tarifa.min_m3_bulto ? String(tarifa.min_m3_bulto) : '',
+            max_kg_bulto: tarifa.max_kg_bulto ? String(tarifa.max_kg_bulto) : '',
             vigente_desde: tarifa.vigente_desde,
             vigente_hasta: tarifa.vigente_hasta ?? '',
         });
@@ -612,6 +630,14 @@ export default function CotizadorConfiguracion({
                     </div>
 
                     {/* Selector de pestañas */}
+                    <div className="flex flex-wrap items-center gap-2">
+                    <Link
+                        href="/admin/configuracion"
+                        className="inline-flex items-center gap-2 rounded-xl border bg-card px-3.5 py-2 text-xs font-semibold text-foreground hover:bg-muted transition-colors"
+                    >
+                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                        Configuración global
+                    </Link>
                     <div className="inline-flex rounded-xl bg-muted/60 p-1 border">
                         <button
                             type="button"
@@ -649,6 +675,7 @@ export default function CotizadorConfiguracion({
                             <MapPin className="h-3.5 w-3.5" />
                             Cobertura ({totalProvinciasActivas}/{provincias.length})
                         </button>
+                    </div>
                     </div>
                 </div>
 
@@ -1070,6 +1097,7 @@ export default function CotizadorConfiguracion({
                                                 <th className="py-3 px-4 text-right">Costo Unitario</th>
                                                 <th className="py-3 px-4 text-right">Tope cobro ($)</th>
                                                 <th className="py-3 px-4">Vigencia</th>
+                                                <th className="py-3 px-4">Fecha de Creación</th>
                                                 <th className="py-3 px-4 text-right">Acciones</th>
                                             </tr>
                                         </thead>
@@ -1110,8 +1138,9 @@ export default function CotizadorConfiguracion({
                                                         {t.unidad_medida?.codigo === 'BULTO'
                                                             ? [
                                                                   t.max_m3_bulto ? `hasta ${Number(t.max_m3_bulto)} m³/bulto` : null,
-                                                                  t.max_unidades ? `hasta ${t.max_unidades} un.` : null,
-                                                                  t.maximo ? `${t.maximo} kg/bulto` : null,
+                                                                  t.min_m3_bulto ? `desde ${Number(t.min_m3_bulto)} m³/bulto` : null,
+                                                                  t.min_unidades || t.max_unidades ? `${t.min_unidades ?? 1}-${t.max_unidades ?? '∞'} un.` : null,
+                                                                  t.max_kg_bulto ? `hasta ${Number(t.max_kg_bulto)} kg/bulto` : null,
                                                               ].filter(Boolean).join(' · ') || 'Sin límite'
                                                             : t.maximo ? `hasta ${t.maximo} ${t.unidad_medida?.codigo}` : 'Sin tope'}
                                                     </td>
@@ -1124,6 +1153,11 @@ export default function CotizadorConfiguracion({
                                                                 Vigente abierta
                                                             </span>
                                                         )}
+                                                    </td>
+                                                    <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
+                                                        {t.created_at
+                                                            ? new Intl.DateTimeFormat('es-AR', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(t.created_at))
+                                                            : '—'}
                                                     </td>
                                                     <td className="py-3.5 px-4 text-right">
                                                         <div className="inline-flex items-center gap-1">
@@ -1330,6 +1364,9 @@ export default function CotizadorConfiguracion({
                                                         <div className="flex items-center gap-2">
                                                             <p className="text-xs font-semibold text-foreground">
                                                                 {loc.nombre}
+                                                                {loc.tiene_deposito && (
+                                                                    <span className="ml-1.5 text-[10px] font-bold text-amber-600">(🏭 Depósito)</span>
+                                                                )}
                                                             </p>
                                                             {loc.codigo_postal && (
                                                                 <span className="text-[10px] font-mono bg-muted px-1.5 py-0.2 rounded text-muted-foreground">
@@ -1573,7 +1610,7 @@ export default function CotizadorConfiguracion({
                                                     <option value="">Seleccione...</option>
                                                     {initialProvincias.map((p) => (
                                                         <option key={p.id} value={p.id}>
-                                                            {p.nombre}{p.tiene_deposito ? ' 🏭' : ''}
+                                                            {p.nombre}{p.tiene_deposito ? ' (🏭 Depósito)' : ''}
                                                         </option>
                                                     ))}
                                                 </select>
@@ -1595,7 +1632,7 @@ export default function CotizadorConfiguracion({
                                                     <option value="">Seleccione...</option>
                                                     {initialProvincias.map((p) => (
                                                         <option key={p.id} value={p.id}>
-                                                            {p.nombre}{p.tiene_deposito ? ' 🏭' : ''}
+                                                            {p.nombre}{p.tiene_deposito ? ' (🏭 Depósito)' : ''}
                                                         </option>
                                                     ))}
                                                 </select>
@@ -1749,29 +1786,51 @@ export default function CotizadorConfiguracion({
                                     </div>
                                     {formTarifa.unidad_medida_id !== '' &&
                                     unidadesMedida.find((u) => String(u.id) === formTarifa.unidad_medida_id)?.codigo === 'BULTO' ? (
-                                        <div className="col-span-2 grid grid-cols-3 gap-3">
+                                        <div className="col-span-2 grid grid-cols-2 gap-3">
                                             <div>
-                                                <Label className="text-xs mb-1 block">Hasta m³ por bulto</Label>
+                                                <Label className="text-xs mb-1 block">Desde m³ por bulto</Label>
                                                 <Input
-                                                    type="number" step="0.001" min="0" placeholder="Ej: 2.3"
+                                                    type="number" step="0.001" min="0" placeholder="Ej: 0"
+                                                    value={formTarifa.min_m3_bulto}
+                                                    onChange={(e) => setFormTarifa({ ...formTarifa, min_m3_bulto: e.target.value })}
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs mb-1 block">Hasta m³ por bulto *</Label>
+                                                <Input
+                                                    type="number" step="0.001" min="0.001" required placeholder="Ej: 2.3"
                                                     value={formTarifa.max_m3_bulto}
                                                     onChange={(e) => setFormTarifa({ ...formTarifa, max_m3_bulto: e.target.value })}
+                                                />
+                                                {errors.max_m3_bulto && (
+                                                    <p className="text-xs text-red-500 mt-1">{errors.max_m3_bulto}</p>
+                                                )}
+                                            </div>
+                                            <div className="col-span-2">
+                                                <Label className="text-xs mb-1 block">Peso máx. por bulto (kg) *</Label>
+                                                <Input
+                                                    type="number" step="0.01" min="0.01" required placeholder="Ej: 30"
+                                                    value={formTarifa.max_kg_bulto}
+                                                    onChange={(e) => setFormTarifa({ ...formTarifa, max_kg_bulto: e.target.value })}
+                                                />
+                                                {errors.max_kg_bulto && (
+                                                    <p className="text-xs text-red-500 mt-1">{errors.max_kg_bulto}</p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <Label className="text-xs mb-1 block">Desde unidades</Label>
+                                                <Input
+                                                    type="number" step="1" min="1" placeholder="Ej: 1"
+                                                    value={formTarifa.min_unidades}
+                                                    onChange={(e) => setFormTarifa({ ...formTarifa, min_unidades: e.target.value })}
                                                 />
                                             </div>
                                             <div>
                                                 <Label className="text-xs mb-1 block">Hasta unidades</Label>
                                                 <Input
-                                                    type="number" step="1" min="1" placeholder="Ej: 3"
+                                                    type="number" step="1" min="1" placeholder="Ej: 3 (vacío = sin tope)"
                                                     value={formTarifa.max_unidades}
                                                     onChange={(e) => setFormTarifa({ ...formTarifa, max_unidades: e.target.value })}
-                                                />
-                                            </div>
-                                            <div>
-                                                <Label className="text-xs mb-1 block">Peso máx. por bulto (kg)</Label>
-                                                <Input
-                                                    type="number" step="0.01" min="0" placeholder="Vacío = sin tope"
-                                                    value={formTarifa.maximo}
-                                                    onChange={(e) => setFormTarifa({ ...formTarifa, maximo: e.target.value })}
                                                 />
                                             </div>
                                         </div>

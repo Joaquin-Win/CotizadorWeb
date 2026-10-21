@@ -60,18 +60,24 @@ class TarifaResolver
     ): Collection {
         $hoy = now()->toDateString();
 
-        return Tarifa::with('unidadMedida')
+        $base = Tarifa::with('unidadMedida')
             ->where('proveedor_id', $proveedorId)
             ->where(fn ($q) => $q
                 ->where('provincia_origen_id', $provinciaOrigenId)
                 ->orWhere('provincia_destino_id', $provinciaOrigenId))
-            ->where('localidad_destino_id', $localidadOrigenId)   // reutilización del campo
             ->where('tipo_servicio_id', $this->tipoServicioId('PRIMERA_MILLA'))
             ->whereNull('deleted_at')
             ->where('vigente_desde', '<=', $hoy)
             ->where(fn ($q) => $q->whereNull('vigente_hasta')->orWhere('vigente_hasta', '>=', $hoy))
-            ->orderBy('maximo')
-            ->get();
+            ->orderBy('maximo');
+
+        $porLocalidad = (clone $base)->where('localidad_destino_id', $localidadOrigenId)->get();
+        if ($porLocalidad->isNotEmpty()) {
+            return $porLocalidad;
+        }
+
+        // Tarifa provincial (sin localidad)
+        return $base->whereNull('localidad_destino_id')->get();
     }
 
     /**

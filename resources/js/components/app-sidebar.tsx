@@ -1,7 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    Bell,
     Building2,
     Calculator,
+    Cog,
     ClipboardList,
     LayoutGrid,
     MapPin,
@@ -11,6 +13,7 @@ import {
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { useNotificacionesNoLeidas } from '@/lib/notificaciones-store';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
 import {
@@ -37,6 +40,7 @@ export function AppSidebar() {
     const esCliente = user !== null && user.rol_id === 2 && user.cliente_id !== null;
     /** Administrador interno SET (rol_id = 1) */
     const esAdmin = user !== null && user.rol_id === 1;
+    const noLeidas = useNotificacionesNoLeidas();
 
     const plataformaItems: NavItem[] = esCliente
         ? [
@@ -78,6 +82,12 @@ export function AppSidebar() {
                             href: '/admin/cotizaciones',
                             icon: ClipboardList,
                         } satisfies NavItem,
+                        {
+                            title: 'Notificaciones',
+                            href: '/admin/notificaciones',
+                            icon: Bell,
+                            badge: noLeidas,
+                        } satisfies NavItem,
                     ]
                   : []),
           ]
@@ -109,6 +119,11 @@ export function AppSidebar() {
                   title: 'Config. Transoft',
                   href: '/admin/transoft/configuracion',
                   icon: Settings2,
+              },
+              {
+                  title: 'Configuración Global',
+                  href: '/admin/configuracion',
+                  icon: Cog,
               },
           ]
         : [];

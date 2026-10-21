@@ -406,20 +406,27 @@ class CotizadorService
 
         $candidatos = [];   // unidad => ['tarifa' => Tarifa, 'cantidad' => float, 'costo' => float]
 
-        // BULTO: importan cantidad, peso y m³ por bulto contra los límites de la tarifa.
+        // Rango de unidades de una tarifa: "desde min_unidades hasta max_unidades" (NULL = abierto; min NULL = 1).
+        $cubreUnidades = fn ($t, int $n) => $n >= (int) ($t->min_unidades ?? 1)
+            && ($t->max_unidades === null || $n <= (int) $t->max_unidades);
+
+        // BULTO: importan cantidad (rango), peso y m³ por bulto contra los límites de la tarifa.
+        // Si la carga supera los límites de una tarifa se prueba la siguiente (ordenadas de menor a mayor).
         // (Un bulto de 200 m³ NO son 200 bultos: se compara contra max_m3_bulto.)
         $tarifasBulto = $porUnidad('BULTO');
         if ($tarifasBulto->isNotEmpty() && $cantidadBultos > 0) {
             $tarifaBulto = $tarifasBulto
                 ->sortBy([
-                    fn ($a, $b) => ($a->max_m3_bulto ?? INF) <=> ($b->max_m3_bulto ?? INF),
+                    fn ($a, $b) => ((int) ($a->min_unidades ?? 1)) <=> ((int) ($b->min_unidades ?? 1)),
                     fn ($a, $b) => ($a->max_unidades ?? INF) <=> ($b->max_unidades ?? INF),
-                    fn ($a, $b) => ((float) $a->maximo ?: INF) <=> ((float) $b->maximo ?: INF),
+                    fn ($a, $b) => ($a->max_m3_bulto ?? INF) <=> ($b->max_m3_bulto ?? INF),
+                    fn ($a, $b) => ($a->max_kg_bulto ?? INF) <=> ($b->max_kg_bulto ?? INF),
                 ])
-                ->first(function ($t) use ($cantidadBultos, $maxM3PorBulto, $maxPesoPorBulto) {
-                    return ($t->max_m3_bulto === null || $maxM3PorBulto <= (float) $t->max_m3_bulto)
-                        && ($t->max_unidades === null || $cantidadBultos <= (int) $t->max_unidades)
-                        && ($t->maximo === null || (float) $t->maximo <= 0 || $maxPesoPorBulto <= (float) $t->maximo);
+                ->first(function ($t) use ($cantidadBultos, $maxM3PorBulto, $maxPesoPorBulto, $cubreUnidades) {
+                    return $cubreUnidades($t, $cantidadBultos)
+                        && ($t->min_m3_bulto === null || $maxM3PorBulto >= (float) $t->min_m3_bulto)
+                        && ($t->max_m3_bulto === null || $maxM3PorBulto <= (float) $t->max_m3_bulto)
+                        && ($t->max_kg_bulto === null || $maxPesoPorBulto <= (float) $t->max_kg_bulto);
                 });
 
             if ($tarifaBulto) {
@@ -430,8 +437,8 @@ class CotizadorService
             }
         }
 
-        // PALLET
-        $tarifasPallet = $porUnidad('PALLET');
+        // PALLET (también por rango de unidades)
+        $tarifasPallet = $porUnidad('PALLET')->filter(fn ($t) => $cubreUnidades($t, max(1, $cantidadPallets)))->values();
         if ($tarifasPallet->isNotEmpty() && $cantidadPallets > 0) {
             $t = $this->escalonResolver->seleccionarEscalon($tarifasPallet, (float) $cantidadPallets);
             if ($t) {
@@ -499,6 +506,9 @@ class CotizadorService
                 'maximo'       => $tarifa->maximo !== null ? (float) $tarifa->maximo : null,
                 'max_m3_bulto' => $tarifa->max_m3_bulto !== null ? (float) $tarifa->max_m3_bulto : null,
                 'max_unidades' => $tarifa->max_unidades,
+                'min_unidades' => $tarifa->min_unidades,
+                'min_m3_bulto' => $tarifa->min_m3_bulto !== null ? (float) $tarifa->min_m3_bulto : null,
+                'max_kg_bulto' => $tarifa->max_kg_bulto !== null ? (float) $tarifa->max_kg_bulto : null,
             ],
             'formula'          => sprintf('%s × %s = %s', $tarifa->costo_unitario, round($elegido['cantidad'], 3), number_format($costoBruto, 2, '.', '')),
             'costo_bruto'      => $costoBruto,

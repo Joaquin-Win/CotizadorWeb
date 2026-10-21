@@ -234,24 +234,49 @@ class CotizacionController extends Controller
         // TODO: mover a config/env cuando esté en producción.
         // Por ahora se envía siempre a los destinos hardcodeados.
         // ─────────────────────────────────────────────────────────────────────
-        $mailDestino     = 'winckjoaquin@gmail.com';  // destino temporal de desarrollo
-        $whatsappDestino = '+543755508324';             // destino temporal de desarrollo
-
+        // Notificación en tiempo real para admins (BD + broadcast). Aislado: nunca rompe la cotización.
+        // ─────────────────────────────────────────────────────────────────────
         try {
-            Notification::route('mail', $mailDestino)
-                ->notify(new CotizacionConfirmada(
-                    cotizacion:       $cotizacion,
-                    lead:             $lead,
-                    totalFinal:       (float) $resultado->totalFinal,
-                    estadoCotizacion: $resultado->estado,
-                ));
+            $nombreNotif = trim(($lead->nombre_cliente ?? '') . ' ' . ($lead->apellido_cliente ?? '')) ?: ($lead->empresa ?? 'Sin nombre');
+            \Illuminate\Support\Facades\Notification::send(
+                \App\Models\User::where('rol_id', 1)->get(),
+                new \App\Notifications\NuevaCotizacionAdmin($codigo, $nombreNotif, $cotizacion->id)
+            );
+            \App\Events\NewQuotationCreated::dispatch($codigo, $nombreNotif, $cotizacion->id);
         } catch (\Throwable $e) {
-            \Log::error("[guardar] Error enviando email cotizacion {$codigo}: {$e->getMessage()}");
+            \Log::error("[guardar] Error notificando a admins cotizacion {$codigo}: {$e->getMessage()}");
         }
 
-        // WhatsApp: se envía también a la notificación dummy (el canal no está activo aún)
-        // Cuando se active el canal custom, agregar 'whatsapp' en CotizacionConfirmada::via()
-        \Log::info("[guardar] WhatsApp pendiente para {$whatsappDestino} — cotizacion {$codigo}");
+        // ─────────────────────────────────────────────────────────────────────
+        // Destinos configurables en Admin → Configuración (fallback a los valores de desarrollo)
+        // Email y WhatsApp son independientes: cada uno se despacha solo si su destino está
+        // configurado y un fallo en uno nunca impide el envío del otro.
+        $mailDestino     = \App\Models\AjusteSistema::obtener('admin_email');
+        $whatsappDestino = \App\Models\AjusteSistema::obtener('admin_whatsapp');
+
+        if (filled($mailDestino)) {
+            try {
+                \App\Jobs\SendCotizacionEmailJob::dispatch(
+                    $cotizacion, $lead, (float) $resultado->totalFinal, (string) $resultado->estado, $mailDestino
+                );
+            } catch (\Throwable $e) {
+                \Log::error("[guardar] Error despachando email cotizacion {$codigo}: {$e->getMessage()}");
+            }
+        } else {
+            \Log::info("[guardar] Sin email de admin configurado: se omite el correo de la cotizacion {$codigo}");
+        }
+
+        if (filled($whatsappDestino)) {
+            try {
+                \App\Jobs\SendCotizacionWhatsAppJob::dispatch(
+                    $cotizacion, (float) $resultado->totalFinal, (string) $resultado->estado, $whatsappDestino
+                );
+            } catch (\Throwable $e) {
+                \Log::error("[guardar] Error despachando WhatsApp cotizacion {$codigo}: {$e->getMessage()}");
+            }
+        } else {
+            \Log::info("[guardar] Sin WhatsApp de admin configurado: se omite el WhatsApp de la cotizacion {$codigo}");
+        }
 
         return response()->json([
             'status'  => 'ok',

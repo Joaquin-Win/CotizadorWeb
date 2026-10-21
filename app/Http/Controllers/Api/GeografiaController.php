@@ -10,6 +10,22 @@ use Illuminate\Http\Request;
 
 class GeografiaController extends Controller
 {
+    /** Tiempo estimado de viaje entre dos localidades (Google Maps o aproximación). */
+    public function tiempoViaje(Request $request, \App\Services\Cotizador\TiempoViajeService $servicio): JsonResponse
+    {
+        $data = $request->validate([
+            'origen'  => ['required', 'integer', 'exists:localidades,id'],
+            'destino' => ['required', 'integer', 'exists:localidades,id'],
+        ]);
+
+        $r = $servicio->calcular((int) $data['origen'], (int) $data['destino']);
+
+        return response()->json($r ?? [
+            'minutos' => null, 'distancia_km' => null, 'fuente' => 'sin_datos',
+            'texto'   => 'Tiempo de viaje a confirmar',
+        ]);
+    }
+
     public function provincias(): JsonResponse
     {
         return response()->json(

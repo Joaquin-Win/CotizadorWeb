@@ -224,7 +224,10 @@ class CotizadorConfiguracionController extends Controller
             'costo_unitario'       => ['required', 'numeric', 'min:0'],
             'maximo'               => ['nullable', 'numeric', 'min:0'],
             'max_m3_bulto'         => ['nullable', 'numeric', 'min:0'],
-            'max_unidades'         => ['nullable', 'integer', 'min:1'],
+            'max_unidades'         => ['nullable', 'integer', 'min:1', 'gte:min_unidades'],
+            'min_unidades'         => ['nullable', 'integer', 'min:1'],
+            'min_m3_bulto'         => ['nullable', 'numeric', 'min:0', 'lte:max_m3_bulto'],
+            'max_kg_bulto'         => ['nullable', 'numeric', 'gt:0'],
             'vigente_desde'        => ['required', 'date'],
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);
@@ -239,6 +242,10 @@ class CotizadorConfiguracionController extends Controller
         $unidad = \App\Models\UnidadMedida::find($data['unidad_medida_id']);
         if (! $unidad || ! $unidad->activo || ! in_array($unidad->codigo, ['KG', 'M3', 'PALLET', 'BULTO'])) {
             return back()->withErrors(['unidad_medida_id' => 'La unidad de medida seleccionada no es válida. Use: KG, M3, PALLET o BULTO.'])->withInput();
+        }
+
+        if ($error = $this->validarLimitesBulto($data, $unidad->codigo)) {
+            return back()->withErrors($error)->withInput();
         }
 
         // Validar regla especial para TRONCAL: origen ≠ destino
@@ -269,7 +276,10 @@ class CotizadorConfiguracionController extends Controller
             'costo_unitario'       => ['required', 'numeric', 'min:0'],
             'maximo'               => ['nullable', 'numeric', 'min:0'],
             'max_m3_bulto'         => ['nullable', 'numeric', 'min:0'],
-            'max_unidades'         => ['nullable', 'integer', 'min:1'],
+            'max_unidades'         => ['nullable', 'integer', 'min:1', 'gte:min_unidades'],
+            'min_unidades'         => ['nullable', 'integer', 'min:1'],
+            'min_m3_bulto'         => ['nullable', 'numeric', 'min:0', 'lte:max_m3_bulto'],
+            'max_kg_bulto'         => ['nullable', 'numeric', 'gt:0'],
             'vigente_desde'        => ['required', 'date'],
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);
@@ -286,6 +296,10 @@ class CotizadorConfiguracionController extends Controller
             return back()->withErrors(['unidad_medida_id' => 'La unidad de medida no es válida. Use: KG, M3, PALLET o BULTO.'])->withInput();
         }
 
+        if ($error = $this->validarLimitesBulto($data, $unidad->codigo)) {
+            return back()->withErrors($error)->withInput();
+        }
+
         // Validar TRONCAL: origen ≠ destino
         if ($tipoServicio->codigo === 'TRONCAL' && (int) $data['provincia_origen_id'] === (int) $data['provincia_destino_id']) {
             return back()->withErrors(['provincia_destino_id' => 'En una tarifa TRONCAL, la provincia de origen y destino deben ser diferentes.'])->withInput();
@@ -295,6 +309,29 @@ class CotizadorConfiguracionController extends Controller
         $tarifa->update($data);
 
         return back()->with('success', 'Tarifa actualizada correctamente.');
+    }
+
+    /**
+     * Las tarifas BULTO deben definir límites de m³ y kg por bulto: sin ellos el motor
+     * no sabe cuándo aplicarla ni cuándo pasar a la siguiente.
+     *
+     * @return array<string,string>|null
+     */
+    private function validarLimitesBulto(array $data, string $codigoUnidad): ?array
+    {
+        if ($codigoUnidad !== 'BULTO') {
+            return null;
+        }
+
+        $errores = [];
+        if (! isset($data['max_m3_bulto']) || $data['max_m3_bulto'] === '' || (float) $data['max_m3_bulto'] <= 0) {
+            $errores['max_m3_bulto'] = 'Indicá el máximo de m³ por bulto para esta tarifa.';
+        }
+        if (! isset($data['max_kg_bulto']) || $data['max_kg_bulto'] === '' || (float) $data['max_kg_bulto'] <= 0) {
+            $errores['max_kg_bulto'] = 'Indicá el máximo de kg por bulto para esta tarifa.';
+        }
+
+        return $errores ?: null;
     }
 
     /**

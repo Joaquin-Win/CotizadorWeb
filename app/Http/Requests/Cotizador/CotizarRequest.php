@@ -40,7 +40,7 @@ class CotizarRequest extends FormRequest
 
             // Bultos
             'bultos'                  => ['required', 'array', 'min:1', 'max:50'],
-            'bultos.*.tipo_bulto_id'  => ['required', 'integer', 'exists:tipos_bulto,id'],
+            'bultos.*.tipo_bulto_id'  => ['required', 'integer', \Illuminate\Validation\Rule::exists('tipos_bulto', 'id')->where('activo', true)],
             'bultos.*.cantidad'       => ['required', 'integer', 'min:1', 'max:999'],
             'bultos.*.largo_cm'       => ['required', 'numeric', 'min:0.1', 'max:9999'],
             'bultos.*.ancho_cm'       => ['required', 'numeric', 'min:0.1', 'max:9999'],

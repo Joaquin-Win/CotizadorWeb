@@ -58,6 +58,9 @@ class HandleInertiaRequests extends Middleware
                     ] : null,
                 ] : null,
             ],
+            'notificacionesNoLeidas' => ($user && $user->esAdmin() && \Illuminate\Support\Facades\Schema::hasTable('notifications'))
+                ? $user->unreadNotifications()->count()
+                : 0,
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

@@ -81,7 +81,7 @@ class TarifasExcelService
                 $t->tipoServicio?->nombre,
                 $t->provinciaOrigen?->nombre,
                 $t->provinciaDestino?->nombre,
-                $t->localidadDestino?->nombre,
+                $t->localidadDestino?->nombre ?? 'Tarifa provincial',
                 $t->unidadMedida?->nombre,
                 (float) $t->costo_unitario,
                 $t->maximo !== null ? (float) $t->maximo : null,
@@ -406,11 +406,16 @@ class TarifasExcelService
         $localidadId = null;
         $localidadTxt = $f['localidad'] ?? null;
 
-        if ($codigo === 'TRONCAL' && $localidadTxt !== null) {
-            return 'el troncal es de provincia a provincia: dejá Localidad vacía.';
+        // "Tarifa provincial" (o vacío) = aplica a toda la provincia, sin localidad.
+        if ($localidadTxt !== null) {
+            $norm = $this->normalizar((string) $localidadTxt);
+            if (in_array($norm, ['tarifa provincial', 'provincial', 'toda la provincia', 'todas'], true)) {
+                $localidadTxt = null;
+            }
         }
-        if ($codigo === 'PRIMERA_MILLA' && $localidadTxt === null) {
-            return 'la primera milla requiere Localidad de origen.';
+
+        if ($codigo === 'TRONCAL' && $localidadTxt !== null) {
+            return 'el troncal es de provincia a provincia: dejá Localidad vacía o "Tarifa provincial".';
         }
 
         if ($localidadTxt !== null) {

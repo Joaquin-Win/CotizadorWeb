@@ -73,7 +73,7 @@ class CatalogoSeeder extends Seeder
         // BULTO agregado como tipo genérico para paquetes individuales.
         // -------------------------------------------------------
         DB::table('tipos_bulto')->insertOrIgnore([
-            ['codigo' => 'CAJA',   'nombre' => 'Caja',   'activo' => true,  'created_at' => $now, 'updated_at' => $now],
+            ['codigo' => 'CAJA',   'nombre' => 'Caja',   'activo' => false, 'created_at' => $now, 'updated_at' => $now],
             ['codigo' => 'PALLET', 'nombre' => 'Pallet', 'activo' => true,  'created_at' => $now, 'updated_at' => $now],
             ['codigo' => 'BULTO',  'nombre' => 'Bulto',  'activo' => true,  'created_at' => $now, 'updated_at' => $now],
             ['codigo' => 'GRANEL', 'nombre' => 'Granel', 'activo' => true,  'created_at' => $now, 'updated_at' => $now],

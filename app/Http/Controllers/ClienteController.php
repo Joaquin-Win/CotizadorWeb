@@ -176,10 +176,37 @@ class ClienteController extends Controller
 
     public function portalPedidos(Cliente $cliente): \Inertia\Response
     {
+        $userId = auth()->id();
+
+        // Todas las cotizaciones del cliente (o creadas por el usuario logueado), sin limitar a una.
+        $cotizaciones = \App\Models\Cotizacion::query()
+            ->where(function ($q) use ($cliente, $userId) {
+                $q->where('cliente_id', $cliente->id);
+                if ($userId && ! auth()->user()?->esAdmin()) {
+                    $q->orWhere('usuario_id', $userId);
+                }
+            })
+            ->with(['estado', 'envio.localidadDestino.provincia'])
+            ->latest()
+            ->get()
+            ->map(fn ($c) => [
+                'id'      => $c->id,
+                'codigo'  => $c->codigo,
+                'fecha'   => optional($c->created_at)->format('d/m/Y'),
+                'estado'  => ['nombre' => $c->estado?->nombre ?? 'Pendiente'],
+                'destino' => $c->envio?->localidadDestino
+                    ? $c->envio->localidadDestino->nombre
+                        . ($c->envio->localidadDestino->provincia ? ', ' . $c->envio->localidadDestino->provincia->nombre : '')
+                    : null,
+                'total'   => $c->resultadoActual()?->total_final,
+            ])
+            ->values();
+
         return Inertia::render('clientes/portal/pedidos', [
             'cliente' => $cliente,
             'esAdmin' => auth()->user()?->esAdmin() ?? false,
             'pedidos' => $cliente->pedidos()->with(['estado', 'localidadDestino.provincia'])->latest()->paginate(20),
+            'cotizaciones' => $cotizaciones,
         ]);
     }
 

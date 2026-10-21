@@ -25,6 +25,7 @@ Route::inertia('/', 'welcome')->name('home');
 // API pública para selects del cotizador
 Route::prefix('api/publica')->name('api.')->group(function () {
     Route::get('provincias',                    [GeografiaController::class, 'provincias'])->name('provincias');
+    Route::get('tiempo-viaje',                  [GeografiaController::class, 'tiempoViaje'])->name('tiempo-viaje');
     Route::get('provincias/{id}/localidades',   [GeografiaController::class, 'localidades'])->name('localidades');
     Route::get('tipos-bulto',                   [CatalogoController::class, 'tiposBulto'])->name('tipos-bulto');
     Route::get('tipos-servicio',                [CatalogoController::class, 'tiposServicio'])->name('tipos-servicio');
@@ -105,6 +106,15 @@ Route::middleware(['auth', 'verified'])->group(function () {
     });
 
     // -------------------------------------------------------
+    // API de notificaciones admin (sesión + rol ADMIN)
+    // -------------------------------------------------------
+    Route::prefix('api/admin/notifications')->name('api.admin.notifications.')->middleware('can:esAdmin')->group(function () {
+        Route::get('/',            [\App\Http\Controllers\Admin\NotificacionesController::class, 'index'])->name('index');
+        Route::post('read-all',    [\App\Http\Controllers\Admin\NotificacionesController::class, 'readAll'])->name('read-all');
+        Route::post('{id}/read',   [\App\Http\Controllers\Admin\NotificacionesController::class, 'read'])->name('read');
+    });
+
+    // -------------------------------------------------------
     // Panel Admin SET (solo rol ADMIN)
     // -------------------------------------------------------
     Route::prefix('admin')->name('admin.')->middleware('can:esAdmin')->group(function () {
@@ -114,6 +124,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('cotizaciones/{cotizacion}/confirmar', [CotizacionesAdminController::class, 'confirmar'])->name('cotizaciones.confirmar');
         Route::post('cotizaciones/{cotizacion}/whatsapp',         [CotizacionesAdminController::class, 'contactarWhatsapp'])->name('cotizaciones.whatsapp');
         Route::get('cotizaciones/{cotizacion}/whatsapp/preview',   [CotizacionesAdminController::class, 'previewWhatsapp'])->name('cotizaciones.whatsapp.preview');
+
+        // Configuración global (mail, SMTP, WhatsApp, API Key de mapas)
+        Route::get('configuracion', [\App\Http\Controllers\Admin\AjustesSistemaController::class, 'index'])->name('configuracion');
+        Route::put('configuracion', [\App\Http\Controllers\Admin\AjustesSistemaController::class, 'update'])->name('configuracion.update');
+        Route::post('configuracion/probar/{servicio}', [\App\Http\Controllers\Admin\AjustesPruebaController::class, 'probar'])
+            ->whereIn('servicio', ['smtp', 'whatsapp', 'maps', 'contacto'])
+            ->name('configuracion.probar');
+
+        // Notificaciones (vista)
+        Route::get('notificaciones', [\App\Http\Controllers\Admin\NotificacionesController::class, 'vista'])->name('notificaciones');
 
         // Usuarios internos SET
         Route::resource('usuarios', UsuarioController::class)->except(['show']);

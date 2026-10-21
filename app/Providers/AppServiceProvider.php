@@ -31,6 +31,17 @@ class AppServiceProvider extends ServiceProvider
         $this->configureDefaults();
         $this->defineGates();
         $this->configureAuth();
+        $this->aplicarAjustesDelSistema();
+    }
+
+    /** Mail / WhatsApp / mapas desde la BD (panel admin) con fallback al .env. */
+    protected function aplicarAjustesDelSistema(): void
+    {
+        try {
+            \App\Models\AjusteSistema::aplicarAConfig();
+        } catch (\Throwable) {
+            // BD no disponible (p. ej. durante migraciones): se usa el .env
+        }
     }
 
     /**
