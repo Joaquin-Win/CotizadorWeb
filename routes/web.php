@@ -33,10 +33,14 @@ Route::prefix('api/publica')->name('api.')->group(function () {
 
 // Cotizador público (no requiere login)
 Route::prefix('cotizador')->name('cotizador.')->group(function () {
-    Route::get('/',                                  [CotizacionController::class, 'index'])->name('index');
-    Route::post('calcular',                          [CotizacionController::class, 'calcular'])->name('calcular');
-    Route::post('guardar',                           [CotizacionController::class, 'guardar'])->name('guardar');
-    Route::get('{codigo}',                           [CotizacionController::class, 'resultado'])->name('resultado');
+    Route::get('/',       [CotizacionController::class, 'index'])->name('index');
+    Route::post('calcular', [CotizacionController::class, 'calcular'])
+        ->name('calcular')
+        ->middleware('throttle:30,1'); // MED-05: max 30 cálculos/min por IP
+    Route::post('guardar',  [CotizacionController::class, 'guardar'])
+        ->name('guardar')
+        ->middleware('throttle:10,1'); // MED-06: max 10 guardados/min por IP (crea en BD + email + WA)
+    Route::get('{codigo}',  [CotizacionController::class, 'resultado'])->name('resultado');
 });
 
 // Invitaciones (token público para aceptar invitación de acceso)

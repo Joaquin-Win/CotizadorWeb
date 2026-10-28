@@ -53,7 +53,7 @@ class InvitacionController extends Controller
         abort_if(
             User::where('email', $email)->exists()
                 || Invitacion::where('client_id', $cliente->id)->where('email', $email)->whereNull('accepted_at')->exists(),
-            422, 'Ese email ya tiene acceso o una invitación pendiente.'
+            422, 'No se puede enviar la invitación a ese correo electrónico.'
         );
 
         $invitacion = Invitacion::create([
@@ -96,6 +96,7 @@ class InvitacionController extends Controller
 
     /**
      * Cambia la clave del usuario logueado. Solo si pertenece a la empresa.
+     * Requiere la contraseña actual para prevenir toma de control por sesión robada.
      */
     public function cambiarClave(Request $request, Cliente $cliente): RedirectResponse
     {
@@ -104,7 +105,10 @@ class InvitacionController extends Controller
         abort_if(! $user || ($user->cliente_id !== null && $user->cliente_id !== $cliente->id), 403);
 
         $validated = $request->validate([
-            'password' => ['required', 'string', 'min:8', 'confirmed'],
+            'current_password' => ['required', 'string', 'current_password'],
+            'password'         => ['required', 'string', 'min:8', 'confirmed'],
+        ], [
+            'current_password.current_password' => 'La contraseña actual es incorrecta.',
         ]);
 
         $user->update(['password' => Hash::make($validated['password'])]);

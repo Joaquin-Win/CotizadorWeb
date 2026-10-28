@@ -79,14 +79,18 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
-        Password::defaults(fn (): ?Password => app()->isProduction()
+        // Política de contraseñas:
+        // - En producción: fuerte (12 chars, mixedCase, letras, números, símbolos, no comprometida).
+        // - En desarrollo: mínima (8 chars, no comprometida) para evitar cuentas con contraseñas
+        //   triviales en entornos expuestos accidentalmente (ej. ngrok).
+        Password::defaults(fn (): Password => app()->isProduction()
             ? Password::min(12)
                 ->mixedCase()
                 ->letters()
                 ->numbers()
                 ->symbols()
                 ->uncompromised()
-            : null,
+            : Password::min(8)->uncompromised(),
         );
     }
 }

@@ -30,7 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
-            
+            \App\Http\Middleware\SecurityHeaders::class, // MED-02: cabeceras de seguridad HTTP
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
