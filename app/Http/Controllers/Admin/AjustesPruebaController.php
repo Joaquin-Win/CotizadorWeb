@@ -7,6 +7,7 @@ use App\Models\AjusteSistema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -28,7 +29,11 @@ class AjustesPruebaController extends Controller
                 default    => response()->json(['ok' => false, 'mensaje' => 'Servicio desconocido.'], 404),
             };
         } catch (Throwable $e) {
-            return response()->json(['ok' => false, 'mensaje' => 'Error: ' . $e->getMessage()]);
+            Log::error('[AjustesPrueba] Error al probar servicio', [
+                'servicio' => $servicio,
+                'error'    => $e->getMessage(),
+            ]);
+            return response()->json(['ok' => false, 'mensaje' => 'Error al probar el servicio. Revisá los logs del servidor para más detalles.']);
         }
     }
 
@@ -164,7 +169,11 @@ class AjustesPruebaController extends Controller
             try {
                 $res = $this->{$metodo}($r)->getData(true);
             } catch (Throwable $e) {
-                $res = ['ok' => false, 'mensaje' => $e->getMessage()];
+                Log::error('[AjustesPrueba] Error en probarContacto', [
+                    'metodo' => $metodo,
+                    'error'  => $e->getMessage(),
+                ]);
+                $res = ['ok' => false, 'mensaje' => "Error al probar {$nombre}. Revisá los logs del servidor."];
             }
             $ok &= (bool) $res['ok'];
             $partes[] = "{$nombre}: {$res['mensaje']}";

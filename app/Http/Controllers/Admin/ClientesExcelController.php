@@ -53,8 +53,9 @@ class ClientesExcelController extends Controller
             $resultado = $excel->importar($request->file('archivo')->getRealPath(), auth()->id());
         } catch (\Throwable $e) {
             Log::error('[ClientesExcelController] Error al importar clientes', [
-                'error'   => $e->getMessage(),
-                'trace'   => $e->getTraceAsString(),
+                'error' => $e->getMessage(),
+                // Stack trace omitido: puede contener rutas y datos sensibles.
+                // Consultar logs detallados solo en desarrollo con APP_DEBUG=true.
             ]);
 
             $resultado = [
