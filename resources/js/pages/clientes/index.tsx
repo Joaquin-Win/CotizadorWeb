@@ -166,7 +166,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div className="grid gap-2">
                                         <Label htmlFor="cuit">CUIT *</Label>
                                         <Input
@@ -213,7 +213,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div className="grid gap-2">
                                         <Label htmlFor="telefono">Teléfono</Label>
                                         <Input
@@ -247,7 +247,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                                             <p className="text-destructive text-xs">{errors.email_acceso}</p>
                                         )}
                                     </div>
-                                    <div className="mt-3 grid grid-cols-2 gap-4">
+                                    <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div className="grid gap-2">
                                             <Label htmlFor="password">Contraseña *</Label>
                                             <Input
@@ -299,9 +299,9 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                 </div>
 
                 {/* Tabla manual */}
-                <div className="rounded-xl border overflow-hidden">
+                <div className="overflow-x-auto rounded-xl border">
                     {/* Encabezado */}
-                    <div className="bg-muted/50 grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <div className="bg-muted/50 grid min-w-[760px] grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         <span>Razón social</span>
                         <span>CUIT</span>
                         <span>Tipo</span>
@@ -320,7 +320,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                         filtered.map((cliente, i) => (
                             <div
                                 key={cliente.id}
-                                className={`grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 items-center text-sm ${
+                                className={`grid min-w-[760px] grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 items-center text-sm ${
                                     i % 2 === 0 ? '' : 'bg-muted/20'
                                 } hover:bg-muted/40 transition-colors`}
                             >

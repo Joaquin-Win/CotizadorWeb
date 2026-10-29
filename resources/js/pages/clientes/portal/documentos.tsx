@@ -199,7 +199,7 @@ export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }
                                     </p>
                                 </div>
                             ) : (
-                                <table className="w-full text-left text-xs">
+                                <div className="overflow-x-auto"><table className="w-full min-w-[560px] text-left text-xs">
                                     <thead>
                                         <tr className="text-slate-400">
                                             <th className="py-2 font-medium">Tipo</th>
@@ -287,7 +287,7 @@ export default function PortalDocumentos({ cliente, esAdmin, documentos, tipos }
                                             </tr>
                                         ))}
                                     </tbody>
-                                </table>
+                                </table></div>
                             )}
                         </div>
                     </main>

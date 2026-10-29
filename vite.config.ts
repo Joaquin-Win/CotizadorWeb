@@ -30,6 +30,8 @@ export default defineConfig({
     ]),
     server: {
         host: true,
+        // host:true publica http://[::]:5173 en public/hot y el navegador no puede abrirlo en Windows
+        origin: 'http://localhost:5173',
         cors: true,
         watch: {
             ignored: [

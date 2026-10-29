@@ -166,7 +166,7 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div className="grid gap-2">
                                         <Label htmlFor="cuit">CUIT *</Label>
                                         <Input
@@ -213,7 +213,7 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
                                     />
                                 </div>
 
-                                <div className="grid grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                     <div className="grid gap-2">
                                         <Label htmlFor="telefono">Teléfono</Label>
                                         <Input
@@ -247,7 +247,7 @@ export default function UsuariosIndex({ clientes, tipos }: Props) {
                                             <p className="text-destructive text-xs">{errors.email_acceso}</p>
                                         )}
                                     </div>
-                                    <div className="mt-3 grid grid-cols-2 gap-4">
+                                    <div className="mt-3 grid grid-cols-1 gap-4 sm:grid-cols-2">
                                         <div className="grid gap-2">
                                             <Label htmlFor="u-password">Contraseña *</Label>
                                             <Input

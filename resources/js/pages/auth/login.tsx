@@ -81,7 +81,7 @@ export default function Login({ status, canResetPassword }: Props) {
                     <div className="w-full rounded-2xl bg-white p-5 shadow-2xl sm:p-8 lg:w-[400px] lg:shrink-0 lg:rounded-r-none">
                     <div className="flex items-center justify-between">
                         <img src="/images/logo-set.png" alt="SET Logística" className="h-10 w-auto sm:h-14" />
-                        <a href="https://prueba.setlogistica.com/" className="text-xs font-semibold text-slate-500 hover:text-[#0A3D91]">
+                        <a href="https://setlogistica.com/" className="text-xs font-semibold text-slate-500 hover:text-[#0A3D91]">
                             ← Volver a SetLogistica
                         </a>
                     </div>

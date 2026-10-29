@@ -1473,7 +1473,7 @@ export default function CotizadorConfiguracion({
                                         }
                                     />
                                 </div>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div>
                                         <Label className="text-xs mb-1 block">Monto</Label>
                                         <Input
@@ -1548,7 +1548,7 @@ export default function CotizadorConfiguracion({
                             <form onSubmit={handleGuardarTarifa} className="flex flex-col gap-4 mt-4 text-xs">
 
                                 {/* ── Tipo de Servicio + Unidad ── */}
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div>
                                         <Label className="text-xs mb-1 block">Tipo de Servicio</Label>
                                         <select
@@ -1596,7 +1596,7 @@ export default function CotizadorConfiguracion({
                                 {codigoTipoServicioModal === 'TRONCAL' && (
                                     <div className="rounded-lg border border-primary/20 bg-primary/5 p-3 flex flex-col gap-3">
                                         <p className="text-[11px] font-semibold text-primary">Ruta entre depósitos</p>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                             <div>
                                                 <Label className="text-xs mb-1 block">Depósito / Provincia Origen</Label>
                                                 <select
@@ -1769,7 +1769,7 @@ export default function CotizadorConfiguracion({
                                 )}
 
                                 {/* ── Costo y Escalón ── */}
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div>
                                         <Label className="text-xs mb-1 block">Costo Unitario ($)</Label>
                                         <Input
@@ -1786,7 +1786,7 @@ export default function CotizadorConfiguracion({
                                     </div>
                                     {formTarifa.unidad_medida_id !== '' &&
                                     unidadesMedida.find((u) => String(u.id) === formTarifa.unidad_medida_id)?.codigo === 'BULTO' ? (
-                                        <div className="col-span-2 grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-1 gap-3 sm:col-span-2 sm:grid-cols-2">
                                             <div>
                                                 <Label className="text-xs mb-1 block">Desde m³ por bulto</Label>
                                                 <Input
@@ -1806,7 +1806,7 @@ export default function CotizadorConfiguracion({
                                                     <p className="text-xs text-red-500 mt-1">{errors.max_m3_bulto}</p>
                                                 )}
                                             </div>
-                                            <div className="col-span-2">
+                                            <div className="sm:col-span-2">
                                                 <Label className="text-xs mb-1 block">Peso máx. por bulto (kg) *</Label>
                                                 <Input
                                                     type="number" step="0.01" min="0.01" required placeholder="Ej: 30"
@@ -1847,7 +1847,7 @@ export default function CotizadorConfiguracion({
                                 </div>
 
                                 {/* ── Vigencia ── */}
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                                     <div>
                                         <Label className="text-xs mb-1 block">Vigente Desde</Label>
                                         <Input
