@@ -26,6 +26,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string      $email
  * @property string|null $telefono
  * @property bool        $activo
+ * @property string      $tipo_descuento   'porcentaje' | 'fijo' | 'ninguno'
+ * @property string      $valor_descuento
  * @property \Illuminate\Support\Carbon|null $email_verified_at
  * @property \Illuminate\Support\Carbon|null $ultimo_acceso
  * @property \Illuminate\Support\Carbon|null $created_at
@@ -55,6 +57,8 @@ class User extends Authenticatable
         'password',
         'telefono',
         'activo',
+        'tipo_descuento',
+        'valor_descuento',
         'ultimo_acceso',
         'created_by',
         'updated_by',
@@ -78,6 +82,7 @@ class User extends Authenticatable
             'password'          => 'hashed',
             'activo'            => 'boolean',
             'ultimo_acceso'     => 'datetime',
+            'valor_descuento'   => 'decimal:2',
         ];
     }
 

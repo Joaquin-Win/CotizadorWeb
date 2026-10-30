@@ -24,7 +24,6 @@ class AjustesPruebaController extends Controller
             return match ($servicio) {
                 'smtp'     => $this->probarSmtp($request),
                 'whatsapp' => $this->probarWhatsapp($request),
-                'maps'     => $this->probarMaps($request),
                 'contacto' => $this->probarContacto($request),
                 default    => response()->json(['ok' => false, 'mensaje' => 'Servicio desconocido.'], 404),
             };
@@ -118,33 +117,6 @@ class AjustesPruebaController extends Controller
         return response()->json([
             'ok' => false,
             'mensaje' => 'WhatsApp rechazó la solicitud: ' . (data_get($resp->json(), 'error.message') ?? $resp->status()),
-        ]);
-    }
-
-    private function probarMaps(Request $r): JsonResponse
-    {
-        $key = $this->valor($r, 'maps_api_key');
-        if (! $key) {
-            return response()->json(['ok' => false, 'mensaje' => 'Falta la API Key de Google Maps.']);
-        }
-
-        $resp = Http::timeout(8)->get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-            'origins'      => '-34.6037,-58.3816',
-            'destinations' => '-31.4201,-64.1888',
-            'mode'         => 'driving',
-            'key'          => $key,
-        ]);
-        $json = $resp->json() ?? [];
-
-        if (($json['status'] ?? '') === 'OK' && data_get($json, 'rows.0.elements.0.status') === 'OK') {
-            $texto = data_get($json, 'rows.0.elements.0.duration.text');
-
-            return response()->json(['ok' => true, 'mensaje' => "API Key válida. Prueba Buenos Aires → Córdoba: {$texto}."]);
-        }
-
-        return response()->json([
-            'ok' => false,
-            'mensaje' => 'Google respondió: ' . ($json['error_message'] ?? $json['status'] ?? 'sin respuesta') . '.',
         ]);
     }
 

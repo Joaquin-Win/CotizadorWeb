@@ -228,6 +228,7 @@ class CotizadorConfiguracionController extends Controller
             'min_unidades'         => ['nullable', 'integer', 'min:1'],
             'min_m3_bulto'         => ['nullable', 'numeric', 'min:0', 'lte:max_m3_bulto'],
             'max_kg_bulto'         => ['nullable', 'numeric', 'gt:0'],
+            'tiempo_estimado'      => ['nullable', 'integer', 'min:0', 'max:99999'],   // horas
             'vigente_desde'        => ['required', 'date'],
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);
@@ -280,6 +281,7 @@ class CotizadorConfiguracionController extends Controller
             'min_unidades'         => ['nullable', 'integer', 'min:1'],
             'min_m3_bulto'         => ['nullable', 'numeric', 'min:0', 'lte:max_m3_bulto'],
             'max_kg_bulto'         => ['nullable', 'numeric', 'gt:0'],
+            'tiempo_estimado'      => ['nullable', 'integer', 'min:0', 'max:99999'],   // horas
             'vigente_desde'        => ['required', 'date'],
             'vigente_hasta'        => ['nullable', 'date', 'after_or_equal:vigente_desde'],
         ]);

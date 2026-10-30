@@ -20,14 +20,18 @@ class AjusteSistema extends Model
     protected $casts = ['cifrado' => 'boolean'];
 
     /** Claves que se guardan cifradas. */
-    public const SECRETOS = ['smtp_password', 'whatsapp_token', 'maps_api_key'];
+    public const SECRETOS = ['smtp_password', 'whatsapp_token'];
 
     /** Claves permitidas. */
     public const CLAVES = [
-        'admin_email', 'admin_whatsapp',
-        'smtp_host', 'smtp_port', 'smtp_username', 'smtp_password',
-        'whatsapp_token', 'whatsapp_phone_id',
-        'maps_api_key',
+        'admin_email',
+        'admin_whatsapp',
+        'smtp_host',
+        'smtp_port',
+        'smtp_username',
+        'smtp_password',
+        'whatsapp_token',
+        'whatsapp_phone_id',
     ];
 
     private static ?array $cache = null;
@@ -38,7 +42,7 @@ class AjusteSistema extends Model
             return self::$cache;
         }
 
-        if (! Schema::hasTable('ajustes_sistema')) {
+        if (!Schema::hasTable('ajustes_sistema')) {
             return self::$cache = [];
         }
 
@@ -70,7 +74,7 @@ class AjusteSistema extends Model
         $cifrar = in_array($clave, self::SECRETOS, true);
 
         static::updateOrCreate(['clave' => $clave], [
-            'valor'   => ($cifrar && $valor !== null && $valor !== '') ? Crypt::encryptString($valor) : $valor,
+            'valor' => ($cifrar && $valor !== null && $valor !== '') ? Crypt::encryptString($valor) : $valor,
             'cifrado' => $cifrar,
         ]);
 
@@ -79,7 +83,7 @@ class AjusteSistema extends Model
 
     /**
      * Vuelca los ajustes de la BD sobre la configuración de Laravel
-     * (mailer, WhatsApp, mapas). Lo que no esté cargado cae al .env.
+     * (mailer, WhatsApp). Lo que no esté cargado cae al .env.
      */
     public static function aplicarAConfig(): void
     {
@@ -88,27 +92,26 @@ class AjusteSistema extends Model
             return;
         }
 
-        $v = fn (string $k) => ($a[$k] ?? '') !== '' ? $a[$k] : null;
+        $v = fn(string $k) => ($a[$k] ?? '') !== '' ? $a[$k] : null;
 
         if ($v('smtp_host')) {
             config([
-                'mail.default'                 => 'smtp',
-                'mail.mailers.smtp.host'       => $v('smtp_host'),
-                'mail.mailers.smtp.port'       => (int) ($v('smtp_port') ?? config('mail.mailers.smtp.port', 587)),
-                'mail.mailers.smtp.username'   => $v('smtp_username'),
-                'mail.mailers.smtp.password'   => $v('smtp_password'),
+                'mail.default' => 'smtp',
+                'mail.mailers.smtp.host' => $v('smtp_host'),
+                'mail.mailers.smtp.port' => (int) ($v('smtp_port') ?? config('mail.mailers.smtp.port', 587)),
+                'mail.mailers.smtp.username' => $v('smtp_username'),
+                'mail.mailers.smtp.password' => $v('smtp_password'),
             ]);
-            if ($v('smtp_username') && ! config('mail.from.address')) {
+            if ($v('smtp_username') && !config('mail.from.address')) {
                 config(['mail.from.address' => $v('smtp_username')]);
             }
         }
 
         config([
-            'whatsapp.admin_numero'  => $v('admin_whatsapp') ?? config('whatsapp.admin_numero'),
-            'whatsapp.token'         => $v('whatsapp_token') ?? config('whatsapp.token'),
-            'whatsapp.phone_id'      => $v('whatsapp_phone_id') ?? config('whatsapp.phone_id'),
-            'services.google_maps.key' => $v('maps_api_key') ?? config('services.google_maps.key'),
-            'cotizador.admin_email'  => $v('admin_email') ?? config('cotizador.admin_email'),
+            'whatsapp.admin_numero' => $v('admin_whatsapp') ?? config('whatsapp.admin_numero'),
+            'whatsapp.token' => $v('whatsapp_token') ?? config('whatsapp.token'),
+            'whatsapp.phone_id' => $v('whatsapp_phone_id') ?? config('whatsapp.phone_id'),
+            'cotizador.admin_email' => $v('admin_email') ?? config('cotizador.admin_email'),
         ]);
     }
 }

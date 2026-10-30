@@ -7,6 +7,7 @@ import {
     FileSpreadsheet,
     Users,
     Search,
+    Trash2,
     Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -284,6 +285,12 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [], importacio
                                         </span>
                                     </div>
                                     <div className="text-center">
+                                        {usuario.rol_id === 1 ? (
+                                            // Un administrador no puede desactivarse: solo se muestra el estado.
+                                            <span className="inline-flex h-7 w-[110px] items-center justify-center rounded-full bg-emerald-100 px-2.5 text-xs font-medium text-emerald-800">
+                                                Activo
+                                            </span>
+                                        ) : (
                                         <Select
                                             value={usuario.activo ? 'activo' : 'inactivo'}
                                             onValueChange={(v) =>
@@ -304,6 +311,7 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [], importacio
                                                 <SelectItem value="inactivo">Inactivo</SelectItem>
                                             </SelectContent>
                                         </Select>
+                                        )}
                                     </div>
                                     <div className="flex justify-end gap-1">
                                         <Button variant="ghost" size="icon" asChild title="Editar usuario">
@@ -311,6 +319,21 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [], importacio
                                                 <Eye className="h-4 w-4" />
                                             </Link>
                                         </Button>
+                                        {usuario.rol_id !== 1 && (
+                                            <Button
+                                                variant="ghost"
+                                                size="icon"
+                                                title="Eliminar cuenta"
+                                                className="text-destructive hover:bg-destructive/10"
+                                                onClick={() => {
+                                                    if (confirm(`¿Eliminar la cuenta de ${usuario.name}? Esta acción no se puede deshacer.`)) {
+                                                        router.delete(`/admin/usuarios/${usuario.id}`, { preserveScroll: true });
+                                                    }
+                                                }}
+                                            >
+                                                <Trash2 className="h-4 w-4" />
+                                            </Button>
+                                        )}
                                     </div>
                                 </div>
                             ))

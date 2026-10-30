@@ -37,9 +37,27 @@ class ResultadoCotizacion
     public float   $margenPorcentaje  = 0.0;
     public float   $margenMonto       = 0.0;
 
+    // Seguro (desglose)
+    public float   $valorDeclarado    = 0.0;
+    public float   $seguroPorcentaje  = 0.0;
+    public bool    $seguroIncluidoEnAcuerdo = false;
+
     // Descuento
+    // descuentoMonto = descuento total (acuerdo/tipo cliente + descuento propio del cliente)
     public float   $descuentoPorcentaje = 0.0;
     public float   $descuentoMonto    = 0.0;
+
+    // Descuento asignado al cliente (usuario) por el admin
+    public string  $descuentoClienteTipo  = 'ninguno';   // 'porcentaje' | 'fijo' | 'ninguno'
+    public float   $descuentoClienteValor = 0.0;
+    public float   $descuentoClienteMonto = 0.0;
+    public float   $subtotalAntesDescuento = 0.0;
+    public float   $totalConDescuento      = 0.0;
+
+    // Tiempo estimado manual: suma de horas de las tarifas aplicadas y días = ceil(horas / 24)
+    public ?int    $tiempoEstimadoHoras = null;
+    public ?int    $tiempoEstimadoDias  = null;
+    public ?string $tiempoEstimado      = null;   // texto listo para mostrar: "6 días"
 
     // Impuestos y total
     public float   $iva               = 0.0;

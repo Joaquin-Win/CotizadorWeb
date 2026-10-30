@@ -68,6 +68,7 @@ interface Tarifa {
     min_unidades?: number | null;
     min_m3_bulto?: string | number | null;
     max_kg_bulto?: string | number | null;
+    tiempo_estimado?: number | string | null; // horas
     vigente_desde: string;
     vigente_hasta: string | null;
     created_at?: string | null;
@@ -279,6 +280,7 @@ export default function CotizadorConfiguracion({
         min_unidades: '',
         min_m3_bulto: '',
         max_kg_bulto: '',
+        tiempo_estimado: '',
         vigente_desde: new Date().toISOString().split('T')[0],
         vigente_hasta: '',
     });
@@ -372,6 +374,7 @@ export default function CotizadorConfiguracion({
             min_unidades: '',
             min_m3_bulto: '',
             max_kg_bulto: '',
+            tiempo_estimado: '',
             vigente_desde: new Date().toISOString().split('T')[0],
             vigente_hasta: '',
         });
@@ -393,6 +396,7 @@ export default function CotizadorConfiguracion({
             min_unidades: tarifa.min_unidades ? String(tarifa.min_unidades) : '',
             min_m3_bulto: tarifa.min_m3_bulto ? String(tarifa.min_m3_bulto) : '',
             max_kg_bulto: tarifa.max_kg_bulto ? String(tarifa.max_kg_bulto) : '',
+            tiempo_estimado: tarifa.tiempo_estimado != null ? String(tarifa.tiempo_estimado) : '',
             vigente_desde: tarifa.vigente_desde,
             vigente_hasta: tarifa.vigente_hasta ?? '',
         });
@@ -1097,6 +1101,7 @@ export default function CotizadorConfiguracion({
                                                 <th className="py-3 px-4 text-right">Costo Unitario</th>
                                                 <th className="py-3 px-4 text-right">Tope cobro ($)</th>
                                                 <th className="py-3 px-4">Vigencia</th>
+                                                <th className="py-3 px-4">Tiempo estimado</th>
                                                 <th className="py-3 px-4">Fecha de Creación</th>
                                                 <th className="py-3 px-4 text-right">Acciones</th>
                                             </tr>
@@ -1153,6 +1158,11 @@ export default function CotizadorConfiguracion({
                                                                 Vigente abierta
                                                             </span>
                                                         )}
+                                                    </td>
+                                                    <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
+                                                        {t.tiempo_estimado != null && Number(t.tiempo_estimado) > 0
+                                                            ? `${t.tiempo_estimado} h (${Math.ceil(Number(t.tiempo_estimado) / 24)} ${Math.ceil(Number(t.tiempo_estimado) / 24) === 1 ? 'día' : 'días'})`
+                                                            : '—'}
                                                     </td>
                                                     <td className="py-3.5 px-4 text-muted-foreground whitespace-nowrap">
                                                         {t.created_at
@@ -1869,6 +1879,26 @@ export default function CotizadorConfiguracion({
                                             }
                                         />
                                     </div>
+                                </div>
+
+                                {/* ── Tiempo estimado (manual) ── */}
+                                <div>
+                                    <Label className="text-xs mb-1 block">Tiempo estimado (horas, opcional)</Label>
+                                    <Input
+                                        type="number"
+                                        step="1"
+                                        min="0"
+                                        placeholder="Ej: 24 (1 día), 48 (2 días)"
+                                        value={formTarifa.tiempo_estimado}
+                                        onChange={(e) => setFormTarifa({ ...formTarifa, tiempo_estimado: e.target.value })}
+                                    />
+                                    {errors.tiempo_estimado && (
+                                        <p className="text-xs text-red-500 mt-1">{errors.tiempo_estimado}</p>
+                                    )}
+                                    <p className="text-[11px] text-muted-foreground mt-1">
+                                        Número entero de horas. El cotizador suma las horas de las tarifas aplicadas y
+                                        muestra los días redondeados hacia arriba.
+                                    </p>
                                 </div>
 
                                 <div className="flex items-center justify-end gap-2 pt-4 border-t">

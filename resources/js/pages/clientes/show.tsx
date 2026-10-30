@@ -1,5 +1,5 @@
-import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, Building2, Eye, FileText, Package } from 'lucide-react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
+import { ArrowLeft, Building2, Eye, FileText, Package, Percent } from 'lucide-react';
 import { useState } from 'react';
 import Heading from '@/components/heading';
 import AppLayout from '@/layouts/app-layout';
@@ -34,6 +34,13 @@ type Props = {
         contactos?: { nombre: string; email: string | null; telefono: string | null }[];
         cotizaciones_count?: number;
         pedidos_count?: number;
+        usuarios?: {
+            id: number;
+            name: string;
+            email: string;
+            tipo_descuento: 'porcentaje' | 'fijo' | 'ninguno';
+            valor_descuento: string | number | null;
+        }[];
     };
     cotizaciones: { id: number; codigo: string; estado: { nombre: string } }[];
     pedidos: { id: number; numero_pedido: string; estado: { nombre: string } }[];
@@ -53,6 +60,48 @@ function initials(nombre: string) {
 export default function ClienteShow({ cliente, cotizaciones, pedidos, tipos, estados }: Props) {
     const nombre = cliente.nombre_fantasia || cliente.razon_social;
     const [editando, setEditando] = useState(false);
+
+    // ── Estado modal descuento ──────────────────────────────────────────────
+    const [descAbierto, setDescAbierto] = useState(false);
+    const [descUsuarioId, setDescUsuarioId] = useState<number | null>(
+        cliente.usuarios?.[0]?.id ?? null,
+    );
+    const [descTipo, setDescTipo] = useState<'ninguno' | 'porcentaje' | 'fijo'>(
+        (cliente.usuarios?.[0]?.tipo_descuento as 'ninguno' | 'porcentaje' | 'fijo') ?? 'ninguno',
+    );
+    const [descValor, setDescValor] = useState(
+        String(Number(cliente.usuarios?.[0]?.valor_descuento ?? 0)),
+    );
+    const [descGuardando, setDescGuardando] = useState(false);
+
+    function seleccionarUsuarioDesc(id: number) {
+        const u = cliente.usuarios?.find((u) => u.id === id);
+        if (!u) return;
+        setDescUsuarioId(id);
+        setDescTipo((u.tipo_descuento as 'ninguno' | 'porcentaje' | 'fijo') ?? 'ninguno');
+        setDescValor(String(Number(u.valor_descuento ?? 0)));
+    }
+
+    function guardarDescuento() {
+        if (!descUsuarioId) return;
+        setDescGuardando(true);
+        router.put(
+            `/admin/usuarios/${descUsuarioId}/descuento`,
+            {
+                tipo_descuento: descTipo,
+                valor_descuento: descTipo === 'ninguno' ? 0 : Number(descValor),
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setDescGuardando(false);
+                    setDescAbierto(false);
+                },
+            },
+        );
+    }
+    // ───────────────────────────────────────────────────────────────────────
+
     const form = useForm({
         razon_social: cliente.razon_social,
         nombre_fantasia: cliente.nombre_fantasia ?? '',
@@ -94,6 +143,17 @@ export default function ClienteShow({ cliente, cotizaciones, pedidos, tipos, est
                             <Eye /> Ver portal del cliente
                         </Link>
                     </Button>
+                    {(cliente.usuarios?.length ?? 0) > 0 && (
+                        <Button
+                            size="sm"
+                            variant="outline"
+                            className="w-fit gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50"
+                            onClick={() => setDescAbierto(true)}
+                        >
+                            <Percent className="h-3.5 w-3.5" />
+                            Descuento
+                        </Button>
+                    )}
                 </div>
 
                 <Heading
@@ -248,6 +308,100 @@ export default function ClienteShow({ cliente, cotizaciones, pedidos, tipos, est
                     </div>
                 </div>
             </div>
+
+            {/* ── Modal: Descuento del cliente ───────────────────────────────────── */}
+            <Dialog open={descAbierto} onOpenChange={(o) => { if (!o) setDescAbierto(false); }}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Percent className="h-4 w-4 text-amber-500" />
+                            Descuento — {nombre}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Asigná un descuento comercial que se aplicará automáticamente al cotizar.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-4 py-2">
+                        {/* Selector de usuario si hay más de uno */}
+                        {(cliente.usuarios?.length ?? 0) > 1 && (
+                            <div className="grid gap-2">
+                                <Label>Usuario</Label>
+                                <select
+                                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                    value={descUsuarioId ?? ''}
+                                    onChange={(e) => seleccionarUsuarioDesc(Number(e.target.value))}
+                                >
+                                    {cliente.usuarios?.map((u) => (
+                                        <option key={u.id} value={u.id}>
+                                            {u.name} — {u.email}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                        )}
+
+                        <div className="grid gap-2">
+                            <Label htmlFor="show-desc-tipo">Tipo de descuento</Label>
+                            <select
+                                id="show-desc-tipo"
+                                className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                value={descTipo}
+                                onChange={(e) => {
+                                    const v = e.target.value as 'ninguno' | 'porcentaje' | 'fijo';
+                                    setDescTipo(v);
+                                    if (v === 'ninguno') setDescValor('0');
+                                }}
+                            >
+                                <option value="ninguno">Sin descuento</option>
+                                <option value="porcentaje">Porcentaje (%)</option>
+                                <option value="fijo">Monto fijo ($)</option>
+                            </select>
+                        </div>
+
+                        {descTipo !== 'ninguno' && (
+                            <div className="grid gap-2">
+                                <Label htmlFor="show-desc-valor">
+                                    {descTipo === 'porcentaje' ? 'Porcentaje (%)' : 'Monto fijo ($)'}
+                                </Label>
+                                <Input
+                                    id="show-desc-valor"
+                                    type="number"
+                                    min="0"
+                                    max={descTipo === 'porcentaje' ? 100 : undefined}
+                                    step="any"
+                                    value={descValor}
+                                    onChange={(e) => setDescValor(e.target.value)}
+                                    placeholder={descTipo === 'porcentaje' ? 'Ej: 10' : 'Ej: 5000'}
+                                />
+                                {descTipo === 'porcentaje' && (
+                                    <p className="text-muted-foreground text-xs">Máximo 100%</p>
+                                )}
+                            </div>
+                        )}
+
+                        {descTipo !== 'ninguno' && Number(descValor) > 0 && (
+                            <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 border border-amber-200">
+                                Descuento activo:{' '}
+                                <strong>
+                                    {descTipo === 'porcentaje'
+                                        ? `${descValor}%`
+                                        : `$${Number(descValor).toLocaleString('es-AR')}`}
+                                </strong>
+                            </div>
+                        )}
+                    </div>
+
+                    <DialogFooter className="gap-2">
+                        <Button variant="secondary" onClick={() => setDescAbierto(false)}>
+                            Cancelar
+                        </Button>
+                        <Button onClick={guardarDescuento} disabled={descGuardando}>
+                            {descGuardando ? 'Guardando…' : 'Guardar descuento'}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </AppLayout>
     );
 }

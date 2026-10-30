@@ -1,5 +1,5 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { Users, Save, ArrowLeft, KeyRound, Percent } from 'lucide-react';
+import { Users, Save, ArrowLeft, KeyRound, Percent, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -44,6 +44,8 @@ interface Usuario {
     rol_id: number;
     cliente_id: number | null;
     activo: boolean;
+    tipo_descuento?: 'porcentaje' | 'fijo' | 'ninguno';
+    valor_descuento?: string | number | null;
     cliente: Cliente | null;
 }
 
@@ -53,7 +55,9 @@ interface Props {
 }
 
 export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
-    const [activeTab, setActiveTab] = useState<'datos' | 'contrasena' | 'margenes'>('datos');
+    const [activeTab, setActiveTab] = useState<'datos' | 'contrasena' | 'margenes' | 'descuento'>('datos');
+    // Los administradores no pueden eliminarse ni desactivarse (ni tienen descuento comercial).
+    const esAdminUsuario = usuario.rol_id === 1;
     const [margenesLocales, setMargenesLocales] = useState<Margen[]>(margenes);
     const [margenSaving, setMargenSaving] = useState(false);
     const [margenSuccess, setMargenSuccess] = useState(false);
@@ -62,6 +66,8 @@ export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
     const { data, setData, put, processing, errors, reset } = useForm({
         name: usuario.name,
         email: usuario.email,
+        tipo_descuento: (usuario.tipo_descuento ?? 'ninguno') as 'porcentaje' | 'fijo' | 'ninguno',
+        valor_descuento: String(Number(usuario.valor_descuento ?? 0)),
         password: '',
         password_confirmation: '',
     });
@@ -150,6 +156,20 @@ export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
                         <KeyRound className="inline h-3.5 w-3.5 mr-1" />
                         Contraseña
                     </button>
+                    {!esAdminUsuario && (
+                        <button
+                            id="tab-descuento"
+                            onClick={() => setActiveTab('descuento')}
+                            className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
+                                activeTab === 'descuento'
+                                    ? 'border-primary text-primary'
+                                    : 'border-transparent text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <Percent className="inline h-3.5 w-3.5 mr-1" />
+                            Descuento
+                        </button>
+                    )}
                     {margenesLocales.length > 0 && (
                         <button
                             id="tab-margenes"
@@ -212,6 +232,109 @@ export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
                             </Button>
                         </div>
                     </form>
+                )}
+
+                {/* ─── TAB: Descuento ─── */}
+                {activeTab === 'descuento' && (
+                    <form onSubmit={submitDatos} className="space-y-5">
+                        <div className="rounded-xl border p-5 space-y-4">
+                            <p className="text-muted-foreground text-sm">
+                                Descuento comercial que se aplica automáticamente cuando este usuario cotiza
+                                estando autenticado (sobre el subtotal, antes de impuestos).
+                            </p>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="grid gap-2">
+                                    <Label htmlFor="tipo_descuento">Tipo de descuento</Label>
+                                    <select
+                                        id="tipo_descuento"
+                                        className="border-input bg-background h-9 rounded-md border px-3 text-sm"
+                                        value={data.tipo_descuento}
+                                        onChange={(e) => {
+                                            const v = e.target.value as 'porcentaje' | 'fijo' | 'ninguno';
+                                            setData((prev) => ({
+                                                ...prev,
+                                                tipo_descuento: v,
+                                                valor_descuento: v === 'ninguno' ? '0' : prev.valor_descuento,
+                                            }));
+                                        }}
+                                    >
+                                        <option value="ninguno">Sin descuento</option>
+                                        <option value="porcentaje">Porcentaje (%)</option>
+                                        <option value="fijo">Monto fijo ($)</option>
+                                    </select>
+                                    {errors.tipo_descuento && (
+                                        <p className="text-destructive text-xs">{errors.tipo_descuento}</p>
+                                    )}
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="valor_descuento">
+                                        Valor {data.tipo_descuento === 'porcentaje' ? '(%)' : data.tipo_descuento === 'fijo' ? '($)' : ''}
+                                    </Label>
+                                    <Input
+                                        id="valor_descuento"
+                                        type="number"
+                                        step="0.01"
+                                        min="0"
+                                        max={data.tipo_descuento === 'porcentaje' ? 100 : undefined}
+                                        disabled={data.tipo_descuento === 'ninguno'}
+                                        value={data.valor_descuento}
+                                        onChange={(e) => setData('valor_descuento', e.target.value)}
+                                        placeholder={data.tipo_descuento === 'porcentaje' ? 'Ej: 10' : 'Ej: 5000'}
+                                    />
+                                    {errors.valor_descuento && (
+                                        <p className="text-destructive text-xs">{errors.valor_descuento}</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                        <div className="flex justify-end">
+                            <Button type="submit" disabled={processing} className="gap-2">
+                                <Save className="h-4 w-4" />
+                                {processing ? 'Guardando...' : 'Guardar descuento'}
+                            </Button>
+                        </div>
+                    </form>
+                )}
+
+                {/* ─── Estado / eliminación (nunca para administradores) ─── */}
+                {!esAdminUsuario && (
+                    <div className="rounded-xl border border-destructive/30 p-5 space-y-4">
+                        <div className="flex items-center justify-between gap-4">
+                            <div>
+                                <p className="text-sm font-medium">Estado de la cuenta</p>
+                                <p className="text-muted-foreground text-xs">
+                                    {usuario.activo ? 'La cuenta está activa.' : 'La cuenta está inactiva y no puede ingresar.'}
+                                </p>
+                            </div>
+                            <label className="inline-flex items-center gap-2 text-sm">
+                                <input
+                                    id="toggle-activo"
+                                    type="checkbox"
+                                    checked={usuario.activo}
+                                    onChange={(e) =>
+                                        router.put(`/admin/usuarios/${usuario.id}/estado`, { activo: e.target.checked }, { preserveScroll: true })
+                                    }
+                                />
+                                Activo
+                            </label>
+                        </div>
+                        <div className="flex justify-end">
+                            <Button
+                                id="btn-eliminar-cuenta"
+                                type="button"
+                                variant="destructive"
+                                className="gap-2"
+                                onClick={() => {
+                                    if (confirm(`¿Eliminar la cuenta de ${usuario.name}? Esta acción no se puede deshacer.`)) {
+                                        router.delete(`/admin/usuarios/${usuario.id}`);
+                                    }
+                                }}
+                            >
+                                <Trash2 className="h-4 w-4" />
+                                Eliminar cuenta
+                            </Button>
+                        </div>
+                    </div>
                 )}
 
                 {/* ─── TAB: Contraseña ─── */}

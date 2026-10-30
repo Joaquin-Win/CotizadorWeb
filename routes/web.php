@@ -25,7 +25,6 @@ Route::inertia('/', 'welcome')->name('home');
 // API pública para selects del cotizador
 Route::prefix('api/publica')->name('api.')->group(function () {
     Route::get('provincias',                    [GeografiaController::class, 'provincias'])->name('provincias');
-    Route::get('tiempo-viaje',                  [GeografiaController::class, 'tiempoViaje'])->name('tiempo-viaje');
     Route::get('provincias/{id}/localidades',   [GeografiaController::class, 'localidades'])->name('localidades');
     Route::get('tipos-bulto',                   [CatalogoController::class, 'tiposBulto'])->name('tipos-bulto');
     Route::get('tipos-servicio',                [CatalogoController::class, 'tiposServicio'])->name('tipos-servicio');
@@ -133,7 +132,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('configuracion', [\App\Http\Controllers\Admin\AjustesSistemaController::class, 'index'])->name('configuracion');
         Route::put('configuracion', [\App\Http\Controllers\Admin\AjustesSistemaController::class, 'update'])->name('configuracion.update');
         Route::post('configuracion/probar/{servicio}', [\App\Http\Controllers\Admin\AjustesPruebaController::class, 'probar'])
-            ->whereIn('servicio', ['smtp', 'whatsapp', 'maps', 'contacto'])
+            ->whereIn('servicio', ['smtp', 'whatsapp', 'contacto'])
             ->name('configuracion.probar');
 
         // Notificaciones (vista)
@@ -144,6 +143,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('usuarios/{usuario}/margenes', [UsuarioController::class, 'updateMargenes'])->name('admin.usuarios.margenes');
         Route::post('usuarios/{usuario}/toggle-activo', [UsuarioController::class, 'toggleActivo'])->name('admin.usuarios.toggle');
         Route::put('usuarios/{usuario}/estado', [UsuarioController::class, 'setEstado'])->name('admin.usuarios.estado');
+        Route::put('usuarios/{usuario}/descuento', [UsuarioController::class, 'updateDescuento'])->name('admin.usuarios.descuento');
 
         // Tarifas
         Route::resource('tarifas', TarifaController::class);

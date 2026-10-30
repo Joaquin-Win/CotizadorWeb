@@ -47,6 +47,7 @@ class CotizarRequest extends FormRequest
             'bultos.*.alto_cm'        => ['required', 'numeric', 'min:0.1', 'max:9999'],
             'bultos.*.peso_kg'        => ['required', 'numeric', 'min:0.01', 'max:99999'],
             'bultos.*.palletizado'    => ['boolean'],
+            'bultos.*.valor_declarado' => ['nullable', 'numeric', 'min:0', 'max:999999999'],
 
             // Opcionales
             'valor_declarado'         => ['nullable', 'numeric', 'min:0', 'max:999999999'],
@@ -110,13 +111,18 @@ class CotizarRequest extends FormRequest
             );
         }, $validated['bultos']);
 
+        // Valor declarado total: el top-level si viene; si no, la suma del valor declarado
+        // informado en cada bulto (el formulario lo captura por bulto).
+        // Sin esto el seguro quedaba siempre en $0.
+        $valorDeclarado = isset($validated['valor_declarado'])
+            ? (float) $validated['valor_declarado']
+            : (float) array_sum(array_map(fn ($b) => (float) ($b['valor_declarado'] ?? 0), $validated['bultos']));
+
         $dto = new CotizacionRequestData();
         $dto->origen             = $origen;
         $dto->destino            = $destino;
         $dto->bultos             = $bultos;
-        $dto->valorDeclarado     = isset($validated['valor_declarado'])
-                                    ? (float) $validated['valor_declarado']
-                                    : null;
+        $dto->valorDeclarado     = $valorDeclarado > 0 ? $valorDeclarado : null;
         $dto->solicitaCarga      = (bool) ($validated['solicita_carga']    ?? false);
         $dto->solicitaDescarga   = (bool) ($validated['solicita_descarga'] ?? false);
         $dto->clienteId          = $clienteId;

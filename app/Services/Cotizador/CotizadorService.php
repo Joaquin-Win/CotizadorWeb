@@ -53,6 +53,9 @@ class CotizadorService
     /** Desglose por tramo del cálculo en curso (se reinicia en cada calcular()). */
     private array $desgloseTramos = [];
 
+    /** Horas de tiempo estimado (cargadas en la tarifa aplicada) por tramo del cálculo en curso. */
+    private array $tiemposTarifa = [];
+
     /**
      * Calcula la cotización completa.
      *
@@ -63,6 +66,7 @@ class CotizadorService
     {
         $resultado = new ResultadoCotizacion();
         $this->desgloseTramos = [];
+        $this->tiemposTarifa  = [];
         $resultado->versionAlgoritmo = ConfiguracionCotizador::texto(
             'algoritmo_version',
             config('cotizador.algorithm_version', 'v2.0.0')
@@ -313,6 +317,22 @@ class CotizadorService
             }
 
             // 7. Aplicar pipeline de precios (seguro, margen, descuento, IVA, total)
+            // Tiempo estimado manual: SUMA de las horas cargadas en las tarifas aplicadas
+            // (primera milla + troncal + última milla, o puerta a puerta). Días = ceil(horas / 24).
+            // Ej.: 122 h → 5 días y 2 h → 6 días.
+            if ($this->tiemposTarifa !== []) {
+                $horas = (int) array_sum($this->tiemposTarifa);
+                $dias  = (int) ceil($horas / 24);
+
+                $resultado->tiempoEstimadoHoras = $horas;
+                $resultado->tiempoEstimadoDias  = $dias;
+                $resultado->tiempoEstimado      = $dias . ($dias === 1 ? ' día' : ' días');
+
+                // El total por días queda alineado con el valor manual (persistencia / portal).
+                $resultado->tiempoMin = $dias > 0 ? $dias : null;
+                $resultado->tiempoMax = $dias > 0 ? $dias : null;
+            }
+
             $tipoClienteId = $data->tipoClienteId ?? $this->tipoClientePublicoId();
             $resultado = $this->pricingPolicy->aplicar($resultado, [
                 'tipo_cliente_id'    => $tipoClienteId,
@@ -320,6 +340,8 @@ class CotizadorService
                 'valor_declarado'    => $data->valorDeclarado ?? null,
                 'seguro_incluido'    => $seguroIncluido,
                 'descuento_porcentaje' => $descuentoPorcentaje,
+                'descuento_cliente_tipo'  => $data->descuentoTipo,
+                'descuento_cliente_valor' => $data->descuentoValor,
                 'iva_porcentaje'     => ConfiguracionCotizador::numero('iva_porcentaje', 0),
             ]);
 
@@ -334,9 +356,14 @@ class CotizadorService
                     'subtotal_tramos'     => round($costoPrimeraMilla + $costoTroncal + $costoUltimaMilla + $costoPuertaPuerta, 2),
                     'carga_descarga'      => $resultado->costoCargaDescarga,
                     'seguro'              => $resultado->costoSeguro,
+                    'valor_declarado'     => $resultado->valorDeclarado,
+                    'seguro_porcentaje'   => $resultado->seguroPorcentaje,
                     'margen_porcentaje'   => $resultado->margenPorcentaje,
                     'margen_monto'        => $resultado->margenMonto,
                     'descuento_porcentaje'=> $resultado->descuentoPorcentaje,
+                    'descuento_cliente_tipo'  => $resultado->descuentoClienteTipo,
+                    'descuento_cliente_valor' => $resultado->descuentoClienteValor,
+                    'descuento_cliente_monto' => $resultado->descuentoClienteMonto,
                     'descuento_monto'     => $resultado->descuentoMonto,
                     'iva'                 => $resultado->iva,
                     'total_final'         => $resultado->totalFinal,
@@ -496,6 +523,9 @@ class CotizadorService
         );
 
         $tarifa = $elegido['tarifa'];
+        if ($tarifa->tiempo_estimado !== null && (int) $tarifa->tiempo_estimado > 0) {
+            $this->tiemposTarifa[$tipoTramo] = (int) $tarifa->tiempo_estimado;   // horas
+        }
         $this->desgloseTramos[$tipoTramo] = [
             'tramo'            => $tipoTramo,
             'unidad_cobro'     => $unidadCobro,

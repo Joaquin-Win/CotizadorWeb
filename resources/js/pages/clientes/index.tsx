@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
-import { Building2, Eye, Plus, Search, UserX } from 'lucide-react';
+import { Building2, Eye, Percent, Plus, Search, UserX } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
@@ -58,6 +58,13 @@ interface Cliente {
     cotizaciones_count: number;
     pedidos_count: number;
     created_at: string;
+    usuarios: {
+        id: number;
+        name: string;
+        email: string;
+        tipo_descuento: 'porcentaje' | 'fijo' | 'ninguno';
+        valor_descuento: string | number | null;
+    }[];
 }
 
 interface Props {
@@ -79,6 +86,57 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
     const [search, setSearch] = useState('');
     const [open, setOpen] = useState(false);
     const [inhabilitar, setInhabilitar] = useState<Cliente | null>(null);
+    const [descuentoCliente, setDescuentoCliente] = useState<Cliente | null>(null);
+
+    // Estado local del formulario de descuento (por usuario seleccionado)
+    const [descUsuarioId, setDescUsuarioId] = useState<number | null>(null);
+    const [descTipo, setDescTipo] = useState<'ninguno' | 'porcentaje' | 'fijo'>('ninguno');
+    const [descValor, setDescValor] = useState('');
+    const [descGuardando, setDescGuardando] = useState(false);
+
+    function abrirDescuento(cliente: Cliente) {
+        setDescuentoCliente(cliente);
+        const u = cliente.usuarios?.[0] ?? null;
+        setDescUsuarioId(u?.id ?? null);
+        setDescTipo((u?.tipo_descuento as 'ninguno' | 'porcentaje' | 'fijo') ?? 'ninguno');
+        setDescValor(u ? String(Number(u.valor_descuento ?? 0)) : '');
+    }
+
+    function cerrarDescuento() {
+        setDescuentoCliente(null);
+        setDescUsuarioId(null);
+        setDescTipo('ninguno');
+        setDescValor('');
+    }
+
+    function seleccionarUsuarioDesc(id: number) {
+        const cliente = descuentoCliente;
+        if (!cliente) return;
+        const u = cliente.usuarios.find((u) => u.id === id);
+        if (!u) return;
+        setDescUsuarioId(id);
+        setDescTipo((u.tipo_descuento as 'ninguno' | 'porcentaje' | 'fijo') ?? 'ninguno');
+        setDescValor(String(Number(u.valor_descuento ?? 0)));
+    }
+
+    function guardarDescuento() {
+        if (!descUsuarioId) return;
+        setDescGuardando(true);
+        router.put(
+            `/admin/usuarios/${descUsuarioId}/descuento`,
+            {
+                tipo_descuento: descTipo,
+                valor_descuento: descTipo === 'ninguno' ? 0 : Number(descValor),
+            },
+            {
+                preserveScroll: true,
+                onFinish: () => {
+                    setDescGuardando(false);
+                    cerrarDescuento();
+                },
+            },
+        );
+    }
 
     const { data, setData, post, processing, errors, reset } = useForm({
         razon_social: '',
@@ -301,7 +359,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                 {/* Tabla manual */}
                 <div className="rounded-xl border overflow-hidden">
                     {/* Encabezado */}
-                    <div className="bg-muted/50 grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                    <div className="bg-muted/50 grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_110px] gap-4 px-4 py-3 text-xs font-medium text-muted-foreground uppercase tracking-wide">
                         <span>Razón social</span>
                         <span>CUIT</span>
                         <span>Tipo</span>
@@ -320,7 +378,7 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                         filtered.map((cliente, i) => (
                             <div
                                 key={cliente.id}
-                                className={`grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_90px] gap-4 px-4 py-3 items-center text-sm ${
+                                className={`grid grid-cols-[2fr_1fr_1fr_1fr_80px_80px_110px] gap-4 px-4 py-3 items-center text-sm ${
                                     i % 2 === 0 ? '' : 'bg-muted/20'
                                 } hover:bg-muted/40 transition-colors`}
                             >
@@ -344,6 +402,51 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                                 <div className="text-center">{cliente.cotizaciones_count}</div>
                                 <div className="text-center">{cliente.pedidos_count}</div>
                                 <div className="flex justify-end gap-1">
+                                    <Tooltip>
+                                        <TooltipTrigger asChild>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                onClick={() => abrirDescuento(cliente)}
+                                                className={`h-7 gap-1 px-2 text-xs font-medium ${
+                                                    (() => {
+                                                        const u = cliente.usuarios?.[0];
+                                                        return u && u.tipo_descuento !== 'ninguno' && Number(u.valor_descuento) > 0
+                                                            ? 'text-amber-600 hover:text-amber-700'
+                                                            : 'text-muted-foreground hover:text-foreground';
+                                                    })()
+                                                }`}
+                                            >
+                                                <Percent className="h-3.5 w-3.5 shrink-0" />
+                                                {(() => {
+                                                    const u = cliente.usuarios?.[0];
+                                                    if (!u || u.tipo_descuento === 'ninguno' || Number(u.valor_descuento) <= 0) {
+                                                        return <span className="text-muted-foreground">—</span>;
+                                                    }
+                                                    if (u.tipo_descuento === 'porcentaje') {
+                                                        return <span>{Number(u.valor_descuento)}%</span>;
+                                                    }
+                                                    return (
+                                                        <span>
+                                                            ${Number(u.valor_descuento).toLocaleString('es-AR')}
+                                                        </span>
+                                                    );
+                                                })()}
+                                            </Button>
+                                        </TooltipTrigger>
+                                        <TooltipContent>
+                                            {(() => {
+                                                const u = cliente.usuarios?.[0];
+                                                if (!u || u.tipo_descuento === 'ninguno' || Number(u.valor_descuento) <= 0) {
+                                                    return 'Sin descuento — click para asignar';
+                                                }
+                                                if (u.tipo_descuento === 'porcentaje') {
+                                                    return `Descuento: ${Number(u.valor_descuento)}% — click para editar`;
+                                                }
+                                                return `Descuento fijo: $${Number(u.valor_descuento).toLocaleString('es-AR')} — click para editar`;
+                                            })()}
+                                        </TooltipContent>
+                                    </Tooltip>
                                     <Button variant="ghost" size="icon" asChild title="Ver detalle">
                                         <Link href={`/clientes/${cliente.id}`}>
                                             <Eye className="h-4 w-4" />
@@ -388,6 +491,107 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                         >
                             Sí, inhabilitar
                         </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+
+            {/* ── Modal: Gestionar descuento del cliente ─────────────────────────── */}
+            <Dialog open={descuentoCliente !== null} onOpenChange={(o) => !o && cerrarDescuento()}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Percent className="h-4 w-4 text-amber-500" />
+                            Descuento — {descuentoCliente?.razon_social}
+                        </DialogTitle>
+                        <DialogDescription>
+                            Asigná un descuento comercial que se aplicará automáticamente cuando este
+                            cliente realice una cotización.
+                        </DialogDescription>
+                    </DialogHeader>
+
+                    {descuentoCliente && (descuentoCliente.usuarios?.length ?? 0) === 0 ? (
+                        <p className="text-muted-foreground py-4 text-center text-sm">
+                            Este cliente no tiene usuarios de acceso creados aún.
+                        </p>
+                    ) : (
+                        <div className="space-y-4 py-2">
+                            {/* Selector de usuario si el cliente tiene más de uno */}
+                            {(descuentoCliente?.usuarios?.length ?? 0) > 1 && (
+                                <div className="grid gap-2">
+                                    <Label>Usuario</Label>
+                                    <select
+                                        className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                        value={descUsuarioId ?? ''}
+                                        onChange={(e) => seleccionarUsuarioDesc(Number(e.target.value))}
+                                    >
+                                        {descuentoCliente?.usuarios.map((u) => (
+                                            <option key={u.id} value={u.id}>
+                                                {u.name} — {u.email}
+                                            </option>
+                                        ))}
+                                    </select>
+                                </div>
+                            )}
+
+                            <div className="grid gap-2">
+                                <Label htmlFor="desc-tipo">Tipo de descuento</Label>
+                                <select
+                                    id="desc-tipo"
+                                    className="rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                                    value={descTipo}
+                                    onChange={(e) => {
+                                        const v = e.target.value as 'ninguno' | 'porcentaje' | 'fijo';
+                                        setDescTipo(v);
+                                        if (v === 'ninguno') setDescValor('0');
+                                    }}
+                                >
+                                    <option value="ninguno">Sin descuento</option>
+                                    <option value="porcentaje">Porcentaje (%)</option>
+                                    <option value="fijo">Monto fijo ($)</option>
+                                </select>
+                            </div>
+
+                            {descTipo !== 'ninguno' && (
+                                <div className="grid gap-2">
+                                    <Label htmlFor="desc-valor">
+                                        {descTipo === 'porcentaje' ? 'Porcentaje (%)' : 'Monto fijo ($)'}
+                                    </Label>
+                                    <Input
+                                        id="desc-valor"
+                                        type="number"
+                                        min="0"
+                                        max={descTipo === 'porcentaje' ? 100 : undefined}
+                                        step="any"
+                                        value={descValor}
+                                        onChange={(e) => setDescValor(e.target.value)}
+                                        placeholder={descTipo === 'porcentaje' ? 'Ej: 10' : 'Ej: 5000'}
+                                    />
+                                    {descTipo === 'porcentaje' && (
+                                        <p className="text-muted-foreground text-xs">Máximo 100%</p>
+                                    )}
+                                </div>
+                            )}
+
+                            {descTipo !== 'ninguno' && Number(descValor) > 0 && (
+                                <div className="rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-800 border border-amber-200">
+                                    Descuento activo:{' '}
+                                    <strong>
+                                        {descTipo === 'porcentaje'
+                                            ? `${descValor}%`
+                                            : `$${Number(descValor).toLocaleString('es-AR')}`}
+                                    </strong>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    <DialogFooter className="gap-2">
+                        <Button variant="secondary" onClick={cerrarDescuento}>Cancelar</Button>
+                        {(descuentoCliente?.usuarios?.length ?? 0) > 0 && (
+                            <Button onClick={guardarDescuento} disabled={descGuardando}>
+                                {descGuardando ? 'Guardando…' : 'Guardar descuento'}
+                            </Button>
+                        )}
                     </DialogFooter>
                 </DialogContent>
             </Dialog>
