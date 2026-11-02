@@ -22,6 +22,7 @@ const BULTO_VACIO: BultoFormData = {
     alto_cm: '',
     peso_kg: '',
     cantidad: '',
+    valor_declarado: '',
 };
 
 const CSRF_TOKEN = (): string =>
@@ -77,55 +78,13 @@ function SelectProvincia({ id, label, value, provincias, loading, onChange, requ
     );
 }
 
-// Aviso con los depósitos de la empresa en la provincia elegida (Localidad, Departamento)
+// Aviso con los depósitos de la empresa en la provincia elegida (Localidad)
 function DepositosInfo({ localidades, texto, id }: { localidades: Localidad[]; texto: string; id: string }) {
     const depositos = localidades.filter((l) => l.tiene_deposito);
     if (depositos.length === 0) return null;
-    const etiqueta = (d: Localidad) =>
-        d.departamento && d.departamento.trim().toLowerCase() !== d.nombre.trim().toLowerCase()
-            ? `${d.nombre}, ${d.departamento}`
-            : d.nombre;
     return (
         <p id={id} className="cot-hint" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)' }}>
-            🏢 {texto} <strong>{depositos.map(etiqueta).join(' · ')}</strong>
-        </p>
-    );
-}
-
-// Tiempo estimado de viaje origen → destino (Google si hay API key; si no, aproximado)
-function TiempoViaje({ origen, destino }: { origen: number | ''; destino: number | '' }) {
-    const [info, setInfo] = useState<{ texto?: string; distancia_km?: number; fuente?: string } | null>(null);
-    const [cargando, setCargando] = useState(false);
-
-    useEffect(() => {
-        if (origen === '' || destino === '') {
-            setInfo(null);
-            return;
-        }
-        const ctrl = new AbortController();
-        setCargando(true);
-        fetch(`/api/publica/tiempo-viaje?origen=${origen}&destino=${destino}`, {
-            headers: { Accept: 'application/json' },
-            signal: ctrl.signal,
-        })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((d) => setInfo(d))
-            .catch(() => undefined)
-            .finally(() => setCargando(false));
-        return () => ctrl.abort();
-    }, [origen, destino]);
-
-    if (origen === '' || destino === '') return null;
-    return (
-        <p id="tiempo-viaje" className="cot-hint" style={{ fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)' }}>
-            🕒 Tiempo estimado de viaje:{' '}
-            <strong>
-                {cargando
-                    ? 'calculando…'
-                    : info?.texto
-                        ? `${info.texto}${info.distancia_km ? ` (${Math.round(info.distancia_km)} km)` : ''}${info.fuente === 'aproximado' ? ' · aproximado' : ''}`
-                        : 'a confirmar por nuestro equipo'}
-            </strong>
+            🏢 {texto} <strong>{depositos.map((d) => d.nombre).join(' · ')}</strong>
         </p>
     );
 }
@@ -141,84 +100,30 @@ interface SelectLocalidadProps {
     required?: boolean;
 }
 
-// Selección en cascada: Provincia (padre) → Departamento (CABA 1, CABA 2…) → Localidad.
-// Evita mostrar de golpe todas las localidades de la provincia.
+// Selección en cascada: Provincia (padre) → Localidad.
 function SelectLocalidad({ id, label, value, localidades, loading, disabled, onChange, required }: SelectLocalidadProps) {
-    const [departamento, setDepartamento] = useState<string>('');
-
-    const departamentos = useMemo(() => {
-        const set = new Set<string>();
-        localidades.forEach((l) => set.add(l.departamento ?? 'Otras localidades'));
-        return Array.from(set).sort((a, b) => a.localeCompare(b, 'es', { numeric: true }));
-    }, [localidades]);
-
-    // Un departamento tiene depósito si alguna de sus localidades lo tiene
-    const departamentosConDeposito = useMemo(() => {
-        const set = new Set<string>();
-        localidades.forEach((l) => {
-            if (l.tiene_deposito) set.add(l.departamento ?? 'Otras localidades');
-        });
-        return set;
-    }, [localidades]);
-
-    // Al cambiar de provincia (nueva lista) se reinicia el departamento; si solo hay uno, se preselecciona.
-    useEffect(() => {
-        setDepartamento(departamentos.length === 1 ? departamentos[0] : '');
-    }, [departamentos]);
-
-    const filtradas = useMemo(
-        () => localidades.filter((l) => (l.departamento ?? 'Otras localidades') === departamento),
-        [localidades, departamento],
-    );
-
-    const esCaba = departamentos.some((d) => d.startsWith('CABA '));
-
     return (
-        <>
-            <div className="cot-field">
-                <label htmlFor={`${id}-departamento`} className="cot-label">
-                    {esCaba ? 'Zona' : 'Departamento'} {required && <span className="cot-required">*</span>}
-                </label>
-                <select
-                    id={`${id}-departamento`}
-                    className="cot-select"
-                    value={departamento}
-                    disabled={disabled || loading || departamentos.length === 0}
-                    onChange={(e) => {
-                        setDepartamento(e.target.value);
-                        onChange('');
-                    }}
-                >
-                    <option value="">
-                        {disabled ? 'Seleccioná primero una provincia' : loading ? 'Cargando…' : esCaba ? 'Seleccioná una zona' : 'Seleccioná un departamento'}
+        <div className="cot-field">
+            <label htmlFor={id} className="cot-label">
+                {label} {required && <span className="cot-required">*</span>}
+            </label>
+            <select
+                id={id}
+                className="cot-select"
+                value={value}
+                disabled={disabled || loading}
+                onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
+            >
+                <option value="">
+                    {disabled ? 'Seleccioná primero una provincia' : loading ? 'Cargando…' : 'Seleccioná una localidad'}
+                </option>
+                {localidades.map((l) => (
+                    <option key={l.id} value={l.id}>
+                        {l.nombre}{l.tiene_deposito ? ' (🏭 Depósito)' : ''}
                     </option>
-                    {departamentos.map((d) => (
-                        <option key={d} value={d}>{d}{departamentosConDeposito.has(d) ? ' (🏭 Depósito)' : ''}</option>
-                    ))}
-                </select>
-            </div>
-            <div className="cot-field">
-                <label htmlFor={id} className="cot-label">
-                    {label} {required && <span className="cot-required">*</span>}
-                </label>
-                <select
-                    id={id}
-                    className="cot-select"
-                    value={value}
-                    disabled={disabled || loading || departamento === ''}
-                    onChange={(e) => onChange(e.target.value === '' ? '' : Number(e.target.value))}
-                >
-                    <option value="">
-                        {departamento === '' ? 'Elegí primero el departamento' : 'Seleccioná una localidad'}
-                    </option>
-                    {filtradas.map((l) => (
-                        <option key={l.id} value={l.id}>
-                            {l.nombre}{l.tiene_deposito ? ' (🏭 Depósito)' : ''}
-                        </option>
-                    ))}
-                </select>
-            </div>
-        </>
+                ))}
+            </select>
+        </div>
     );
 }
 
@@ -381,12 +286,27 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
                         </div>
                     )}
 
-                    {/* Descuento */}
-                    {resultado.descuento_monto > 0 && (
+                    {/* Descuento del cliente (asignado por el admin) */}
+                    {resultado.descuento_cliente_monto > 0 && resultado.descuento_cliente_tipo !== 'ninguno' && (
+                        <div className="cot-seccion">
+                            <div className="cot-fila cot-fila--descuento">
+                                <span>
+                                    Descuento aplicado:{' '}
+                                    {resultado.descuento_cliente_tipo === 'porcentaje'
+                                        ? `-${resultado.descuento_cliente_valor}%`
+                                        : `-${formatARS(resultado.descuento_cliente_valor)}`}
+                                </span>
+                                <span>- {formatARS(resultado.descuento_cliente_monto)}</span>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Descuento (acuerdo comercial / tipo de cliente) */}
+                    {resultado.descuento_porcentaje > 0 && resultado.descuento_monto > 0 && (
                         <div className="cot-seccion">
                             <div className="cot-fila cot-fila--descuento">
                                 <span>Descuento ({resultado.descuento_porcentaje}%)</span>
-                                <span>- {formatARS(resultado.descuento_monto)}</span>
+                                <span>- {formatARS(resultado.descuento_monto - (resultado.descuento_cliente_monto ?? 0))}</span>
                             </div>
                         </div>
                     )}
@@ -409,8 +329,21 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
                         </span>
                     </div>
 
-                    {/* Tiempo de entrega — total + desglose por tramo */}
-                    {(resultado.tiempo_min != null || resultado.tiempo_max != null ||
+                    {/* Tiempo estimado: suma de horas de las tarifas aplicadas, en días (redondeo hacia arriba) */}
+                    {resultado.tiempo_estimado_dias != null && resultado.tiempo_estimado_dias > 0 && (
+                        <div className="cot-seccion">
+                            <div className="cot-fila" id="tiempo-estimado-tarifa">
+                                <span>⏱ Tiempo estimado:</span>
+                                <strong>
+                                    {resultado.tiempo_estimado_dias} {resultado.tiempo_estimado_dias === 1 ? 'día' : 'días'}
+                                </strong>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Tiempo de entrega — total + desglose por tramo (solo si las tarifas no definen horas) */}
+                    {!resultado.tiempo_estimado_dias &&
+                      (resultado.tiempo_min != null || resultado.tiempo_max != null ||
                       resultado.tiempo_troncal_min != null) && (
                         <div className="cot-seccion">
                             <h4 className="cot-seccion__titulo">⏱ Tiempo estimado de entrega</h4>
@@ -689,7 +622,10 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
             alto_cm: Number(b.alto_cm),
             peso_kg: Number(b.peso_kg),
             cantidad: Number(b.cantidad),
+            valor_declarado: b.valor_declarado !== undefined && b.valor_declarado !== '' ? Number(b.valor_declarado) : null,
         })),
+        // Valor declarado total (suma de los bultos): base del cálculo del seguro
+        valor_declarado: bultos.reduce((acc, b) => acc + (Number(b.valor_declarado) || 0), 0),
         solicita_carga: solicitaCarga,
         solicita_descarga: solicitaDescarga,
         origen_cotizacion_id: 1,
@@ -1085,7 +1021,6 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                                             : 'Depósitos de la empresa en esta provincia:'
                                     }
                                 />
-                                <TiempoViaje origen={origenLocalidadId} destino={destinoLocalidadId} />
                                 {destinoProvinciaId !== '' && !loadingLocDestino &&
                                     !localidadesDestino.some((l) => l.tiene_deposito) && (
                                         <p className="cot-error">

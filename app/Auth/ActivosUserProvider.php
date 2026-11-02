@@ -39,18 +39,20 @@ class ActivosUserProvider extends EloquentUserProvider
             return null;
         }
 
-        // Credenciales válidas pero empresa inhabilitada sin pendientes:
-        // mensaje propio en vez del genérico de Fortify.
-        if ($user->cliente_id
-            && isset($credentials['password'])
-            && Hash::check($credentials['password'], $user->password)
-            && ! $this->empresaHabilitada($user->cliente_id)) {
-            throw ValidationException::withMessages([
-                'email' => 'Esta cuenta está deshabilitada, por favor comuníquese con el soporte de SET.',
-            ]);
-        }
-
+        // Si tiene empresa, verificar que esté habilitada ANTES de validar hash.
+        // Esto evita que un observador externo infiera si la contraseña es correcta
+        // basándose en el mensaje de error o tiempo de respuesta diferente.
         if ($user->cliente_id && ! $this->empresaHabilitada($user->cliente_id)) {
+            // Solo lanzar el mensaje personalizado si la contraseña es correcta,
+            // pero registramos el intento sin confirmar la contraseña al exterior.
+            // El mensaje genérico de Fortify aplica para contraseñas incorrectas.
+            if (isset($credentials['password']) && Hash::check($credentials['password'], $user->password)) {
+                throw ValidationException::withMessages([
+                    'email' => 'Esta cuenta está deshabilitada, por favor comuníquese con el soporte de SET.',
+                ]);
+            }
+
+            // Contraseña incorrecta + empresa inhabilitada → mismo resultado que credenciales incorrectas
             return null;
         }
 

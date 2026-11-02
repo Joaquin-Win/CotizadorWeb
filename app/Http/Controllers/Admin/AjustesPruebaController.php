@@ -7,6 +7,7 @@ use App\Models\AjusteSistema;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Throwable;
 
@@ -23,12 +24,15 @@ class AjustesPruebaController extends Controller
             return match ($servicio) {
                 'smtp'     => $this->probarSmtp($request),
                 'whatsapp' => $this->probarWhatsapp($request),
-                'maps'     => $this->probarMaps($request),
                 'contacto' => $this->probarContacto($request),
                 default    => response()->json(['ok' => false, 'mensaje' => 'Servicio desconocido.'], 404),
             };
         } catch (Throwable $e) {
-            return response()->json(['ok' => false, 'mensaje' => 'Error: ' . $e->getMessage()]);
+            Log::error('[AjustesPrueba] Error al probar servicio', [
+                'servicio' => $servicio,
+                'error'    => $e->getMessage(),
+            ]);
+            return response()->json(['ok' => false, 'mensaje' => 'Error al probar el servicio. Revisá los logs del servidor para más detalles.']);
         }
     }
 
@@ -116,33 +120,6 @@ class AjustesPruebaController extends Controller
         ]);
     }
 
-    private function probarMaps(Request $r): JsonResponse
-    {
-        $key = $this->valor($r, 'maps_api_key');
-        if (! $key) {
-            return response()->json(['ok' => false, 'mensaje' => 'Falta la API Key de Google Maps.']);
-        }
-
-        $resp = Http::timeout(8)->get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-            'origins'      => '-34.6037,-58.3816',
-            'destinations' => '-31.4201,-64.1888',
-            'mode'         => 'driving',
-            'key'          => $key,
-        ]);
-        $json = $resp->json() ?? [];
-
-        if (($json['status'] ?? '') === 'OK' && data_get($json, 'rows.0.elements.0.status') === 'OK') {
-            $texto = data_get($json, 'rows.0.elements.0.duration.text');
-
-            return response()->json(['ok' => true, 'mensaje' => "API Key válida. Prueba Buenos Aires → Córdoba: {$texto}."]);
-        }
-
-        return response()->json([
-            'ok' => false,
-            'mensaje' => 'Google respondió: ' . ($json['error_message'] ?? $json['status'] ?? 'sin respuesta') . '.',
-        ]);
-    }
-
     /** Dispara correo + WhatsApp al admin con los datos actuales del formulario. */
     private function probarContacto(Request $r): JsonResponse
     {
@@ -164,7 +141,11 @@ class AjustesPruebaController extends Controller
             try {
                 $res = $this->{$metodo}($r)->getData(true);
             } catch (Throwable $e) {
-                $res = ['ok' => false, 'mensaje' => $e->getMessage()];
+                Log::error('[AjustesPrueba] Error en probarContacto', [
+                    'metodo' => $metodo,
+                    'error'  => $e->getMessage(),
+                ]);
+                $res = ['ok' => false, 'mensaje' => "Error al probar {$nombre}. Revisá los logs del servidor."];
             }
             $ok &= (bool) $res['ok'];
             $partes[] = "{$nombre}: {$res['mensaje']}";

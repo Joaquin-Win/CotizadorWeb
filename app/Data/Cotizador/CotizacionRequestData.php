@@ -21,4 +21,8 @@ class CotizacionRequestData
     public ?int         $usuarioId          = null;
     public int          $origenCotizacionId = 1;
     public int          $tipoClienteId      = 1;
+
+    /** Descuento propio del usuario autenticado (tipo: porcentaje|fijo|ninguno). */
+    public string       $descuentoTipo      = 'ninguno';
+    public float        $descuentoValor     = 0.0;
 }

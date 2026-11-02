@@ -25,7 +25,6 @@ Route::inertia('/', 'welcome')->name('home');
 // API pública para selects del cotizador
 Route::prefix('api/publica')->name('api.')->group(function () {
     Route::get('provincias',                    [GeografiaController::class, 'provincias'])->name('provincias');
-    Route::get('tiempo-viaje',                  [GeografiaController::class, 'tiempoViaje'])->name('tiempo-viaje');
     Route::get('provincias/{id}/localidades',   [GeografiaController::class, 'localidades'])->name('localidades');
     Route::get('tipos-bulto',                   [CatalogoController::class, 'tiposBulto'])->name('tipos-bulto');
     Route::get('tipos-servicio',                [CatalogoController::class, 'tiposServicio'])->name('tipos-servicio');
@@ -33,10 +32,14 @@ Route::prefix('api/publica')->name('api.')->group(function () {
 
 // Cotizador público (no requiere login)
 Route::prefix('cotizador')->name('cotizador.')->group(function () {
-    Route::get('/',                                  [CotizacionController::class, 'index'])->name('index');
-    Route::post('calcular',                          [CotizacionController::class, 'calcular'])->name('calcular');
-    Route::post('guardar',                           [CotizacionController::class, 'guardar'])->name('guardar');
-    Route::get('{codigo}',                           [CotizacionController::class, 'resultado'])->name('resultado');
+    Route::get('/',       [CotizacionController::class, 'index'])->name('index');
+    Route::post('calcular', [CotizacionController::class, 'calcular'])
+        ->name('calcular')
+        ->middleware('throttle:30,1'); // MED-05: max 30 cálculos/min por IP
+    Route::post('guardar',  [CotizacionController::class, 'guardar'])
+        ->name('guardar')
+        ->middleware('throttle:10,1'); // MED-06: max 10 guardados/min por IP (crea en BD + email + WA)
+    Route::get('{codigo}',  [CotizacionController::class, 'resultado'])->name('resultado');
 });
 
 // Invitaciones (token público para aceptar invitación de acceso)
@@ -129,7 +132,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('configuracion', [\App\Http\Controllers\Admin\AjustesSistemaController::class, 'index'])->name('configuracion');
         Route::put('configuracion', [\App\Http\Controllers\Admin\AjustesSistemaController::class, 'update'])->name('configuracion.update');
         Route::post('configuracion/probar/{servicio}', [\App\Http\Controllers\Admin\AjustesPruebaController::class, 'probar'])
-            ->whereIn('servicio', ['smtp', 'whatsapp', 'maps', 'contacto'])
+            ->whereIn('servicio', ['smtp', 'whatsapp', 'contacto'])
             ->name('configuracion.probar');
 
         // Notificaciones (vista)
@@ -140,6 +143,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('usuarios/{usuario}/margenes', [UsuarioController::class, 'updateMargenes'])->name('admin.usuarios.margenes');
         Route::post('usuarios/{usuario}/toggle-activo', [UsuarioController::class, 'toggleActivo'])->name('admin.usuarios.toggle');
         Route::put('usuarios/{usuario}/estado', [UsuarioController::class, 'setEstado'])->name('admin.usuarios.estado');
+        Route::put('usuarios/{usuario}/descuento', [UsuarioController::class, 'updateDescuento'])->name('admin.usuarios.descuento');
 
         // Tarifas
         Route::resource('tarifas', TarifaController::class);

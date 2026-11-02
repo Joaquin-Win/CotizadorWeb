@@ -33,7 +33,10 @@ return [
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),
-            'serve' => true,
+            // serve: false — Los archivos privados (documentos de clientes)
+            // NUNCA se sirven por la ruta automática storage/{path} sin auth.
+            // Usar DocumentoController::descargar() que verifica sesión y propiedad.
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

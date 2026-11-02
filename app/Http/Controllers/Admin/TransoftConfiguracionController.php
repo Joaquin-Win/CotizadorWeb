@@ -68,9 +68,13 @@ class TransoftConfiguracionController extends Controller
                 'mensaje' => 'Conexión exitosa. Token obtenido.',
             ]);
         } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::error('[Transoft] Error al probar conexión', [
+                'error' => $e->getMessage(),
+            ]);
+
             return response()->json([
                 'ok'      => false,
-                'mensaje' => $e->getMessage(),
+                'mensaje' => 'No se pudo conectar con Transoft. Revisá los datos de configuración.',
             ], 422);
         }
     }

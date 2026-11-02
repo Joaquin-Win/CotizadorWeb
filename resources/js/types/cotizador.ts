@@ -19,8 +19,6 @@ export interface Localidad {
     nombre: string;
     codigo_postal?: string;
     tiene_deposito?: boolean;
-    departamento_id?: string | null;
-    departamento?: string | null;
 }
 
 export interface TipoBulto {
@@ -87,6 +85,26 @@ export interface ResultadoCotizacion {
     margen_porcentaje: number;
     descuento_porcentaje: number;
     descuento_monto: number;
+    /** Descuento propio del cliente asignado por el admin. */
+    descuento_cliente_tipo: 'porcentaje' | 'fijo' | 'ninguno';
+    descuento_cliente_valor: number;
+    descuento_cliente_monto: number;
+    /** Descuento total aplicado (acuerdo + cliente). */
+    monto_descontado: number;
+    subtotal_antes_descuento: number;
+    total_con_descuento: number;
+    /** Texto listo para mostrar (ej: "6 días"). */
+    tiempo_estimado: string | null;
+    /** Suma de horas de las tarifas aplicadas. */
+    tiempo_estimado_horas: number | null;
+    /** ceil(horas / 24). */
+    tiempo_estimado_dias: number | null;
+    seguro?: {
+        costo: number;
+        valor_declarado: number;
+        porcentaje: number;
+        incluido_en_acuerdo: boolean;
+    };
     iva: number;
     total_final: number;
     tiempo_min: number | null;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/layouts/app-layout';
 import type { BreadcrumbItem } from '@/types';
-import { Mail, MessageCircle, Server, KeyRound, MapPinned, Save, CheckCircle2, ArrowLeft, Loader2, PlugZap, XCircle } from 'lucide-react';
+import { Mail, MessageCircle, Server, Save, CheckCircle2, ArrowLeft, Loader2, PlugZap, XCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -19,7 +19,6 @@ interface Props {
     secretosCargados: {
         smtp_password: boolean;
         whatsapp_token: boolean;
-        maps_api_key: boolean;
     };
 }
 
@@ -96,7 +95,6 @@ export default function Configuracion({ ajustes, secretosCargados }: Props) {
         smtp_password: '',
         whatsapp_token: '',
         whatsapp_phone_id: ajustes.whatsapp_phone_id ?? '',
-        maps_api_key: '',
     });
 
     const campo = (
@@ -126,7 +124,7 @@ export default function Configuracion({ ajustes, secretosCargados }: Props) {
     );
 
     /** Envía los valores actuales del formulario (aunque no estén guardados) al endpoint de prueba. */
-    const probarServicio = (servicio: 'smtp' | 'whatsapp' | 'maps' | 'contacto') => async (): Promise<ResultadoPrueba> => {
+    const probarServicio = (servicio: 'smtp' | 'whatsapp' | 'contacto') => async (): Promise<ResultadoPrueba> => {
         const hayEmail = form.data.admin_email.trim() !== '';
         const hayWa = form.data.admin_whatsapp.trim() !== '';
         if (servicio === 'smtp' && !hayEmail) {
@@ -162,7 +160,7 @@ export default function Configuracion({ ajustes, secretosCargados }: Props) {
         form.put('/admin/configuracion', {
             preserveScroll: true,
             onSuccess: () => {
-                form.setData((d) => ({ ...d, smtp_password: '', whatsapp_token: '', maps_api_key: '' }));
+                form.setData((d) => ({ ...d, smtp_password: '', whatsapp_token: '' }));
                 setGuardado(true);
                 setTimeout(() => setGuardado(false), 3000);
             },
@@ -206,13 +204,6 @@ export default function Configuracion({ ajustes, secretosCargados }: Props) {
                 <Seccion icono={<MessageCircle className="h-5 w-5" />} titulo="API de WhatsApp" descripcion="Credenciales de WhatsApp Business API." onProbar={probarServicio('whatsapp')}>
                     {campo('whatsapp_token', 'Token', { type: 'password', secreto: true, cargado: secretosCargados.whatsapp_token })}
                     {campo('whatsapp_phone_id', 'Phone ID')}
-                </Seccion>
-
-                <Seccion icono={<MapPinned className="h-5 w-5" />} titulo="Tiempo de viaje" descripcion="API Key de Google Maps (Distance Matrix). Sin clave se usa una estimación aproximada por distancia." onProbar={probarServicio('maps')}>
-                    {campo('maps_api_key', 'Google Maps API Key', { type: 'password', secreto: true, cargado: secretosCargados.maps_api_key })}
-                    <div className="flex items-end text-[11px] text-muted-foreground gap-1">
-                        <KeyRound className="h-3.5 w-3.5 shrink-0" /> Se guarda cifrada y nunca se muestra de nuevo.
-                    </div>
                 </Seccion>
 
                 <div className="flex items-center justify-end gap-3">

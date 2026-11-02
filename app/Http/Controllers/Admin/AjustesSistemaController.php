@@ -29,7 +29,6 @@ class AjustesSistemaController extends Controller
             'secretosCargados' => [
                 'smtp_password'  => filled($a['smtp_password'] ?? null),
                 'whatsapp_token' => filled($a['whatsapp_token'] ?? null),
-                'maps_api_key'   => filled($a['maps_api_key'] ?? null),
             ],
         ]);
     }
@@ -45,7 +44,6 @@ class AjustesSistemaController extends Controller
             'smtp_password'     => ['nullable', 'string', 'max:255'],
             'whatsapp_token'    => ['nullable', 'string', 'max:500'],
             'whatsapp_phone_id' => ['nullable', 'string', 'max:60'],
-            'maps_api_key'      => ['nullable', 'string', 'max:255'],
         ], [
             'admin_email.email'        => 'El correo del administrador no es válido.',
             'admin_whatsapp.regex'     => 'El WhatsApp solo puede contener números, +, espacios y guiones.',

@@ -1,11 +1,20 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" style="color-scheme: light;">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light">
 
-    {{-- Solo modo claro: fondo fijo, sin detección de modo oscuro --}}
+    {{-- Tema claro siempre: se ignora la preferencia del sistema y cualquier valor guardado --}}
+    <script>
+        (function () {
+            document.documentElement.classList.remove('dark');
+            document.documentElement.style.colorScheme = 'light';
+        })();
+    </script>
+
+    {{-- Inline style to set the HTML background color based on our theme in app.css --}}
     <style>
         html {
             background-color: oklch(1 0 0);

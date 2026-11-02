@@ -24,7 +24,7 @@ class CatalogoSeeder extends Seeder
         // -------------------------------------------------------
         DB::table('tipos_cliente')->insertOrIgnore([
             [
-                'id' => 1, 'codigo' => 'PUBLICO', 'nombre' => 'Público', 'nivel' => 0,
+                'id' => 1, 'codigo' => 'PUBLICO', 'nombre' => 'Proveedores', 'nivel' => 0,
                 'requiere_usuario' => false, 'permite_acuerdo_comercial' => false,
                 'descuento_base_porcentaje' => 0, 'activo' => true,
                 'created_at' => $now, 'updated_at' => $now,
@@ -38,7 +38,7 @@ class CatalogoSeeder extends Seeder
             [
                 'id' => 3, 'codigo' => 'B2B_PREMIUM', 'nombre' => 'B2B Premium', 'nivel' => 2,
                 'requiere_usuario' => true, 'permite_acuerdo_comercial' => true,
-                'descuento_base_porcentaje' => 5, 'activo' => true,
+                'descuento_base_porcentaje' => 5, 'activo' => false,   // B2B Premium: retirado de las opciones
                 'created_at' => $now, 'updated_at' => $now,
             ],
         ]);

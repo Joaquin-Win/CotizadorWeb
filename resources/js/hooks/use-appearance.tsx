@@ -75,12 +75,11 @@ export function initializeTheme(): void {
         return;
     }
 
-    if (!localStorage.getItem('appearance')) {
-        localStorage.setItem('appearance', 'light');
-        setCookie('appearance', 'light');
-    }
+    // Tema claro siempre: se pisa cualquier valor guardado (dark/system).
+    localStorage.setItem('appearance', 'light');
+    setCookie('appearance', 'light');
 
-    currentAppearance = getStoredAppearance();
+    currentAppearance = 'light';
     applyTheme(currentAppearance);
 
     // Set up system theme change listener

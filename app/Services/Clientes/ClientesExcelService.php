@@ -38,7 +38,7 @@ class ClientesExcelService
     ];
 
     /** Tipos de cliente que se pueden importar. */
-    private const TIPOS_IMPORTABLES = ['PUBLICO', 'B2B', 'B2B_PREMIUM'];
+    private const TIPOS_IMPORTABLES = ['PUBLICO', 'B2B'];
 
     /** Estados de cliente que se pueden importar. */
     private const ESTADOS_IMPORTABLES = ['ACTIVO', 'INACTIVO', 'SUSPENDIDO', 'MOROSO', 'PROSPECTO'];
