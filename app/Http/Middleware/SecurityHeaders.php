@@ -4,6 +4,7 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Vite;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -41,17 +42,20 @@ class SecurityHeaders
             'camera=(), microphone=(), geolocation=(self), payment=()'
         );
 
+        // En desarrollo los assets vienen del servidor de Vite (otro origen); public/hot no existe en produccion.
+        $vite = Vite::isRunningHot() ? ' '.trim(file_get_contents(Vite::hotFile())) : '';
+
         // CSP base: compatible con Inertia.js + React.
         // TODO produccion: implementar nonce y eliminar unsafe-inline.
         $response->headers->set(
             'Content-Security-Policy',
             implode('; ', [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-                "font-src 'self' https://fonts.gstatic.com data:",
-                "img-src 'self' data: blob: https:",
-                "connect-src 'self' wss: ws: https:",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval'{$vite}",
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com{$vite}",
+                "font-src 'self' https://fonts.gstatic.com data:{$vite}",
+                "img-src 'self' data: blob: https:{$vite}",
+                "connect-src 'self' wss: ws: https:{$vite}",
                 "frame-ancestors 'self'",
                 "form-action 'self'",
                 "base-uri 'self'",
