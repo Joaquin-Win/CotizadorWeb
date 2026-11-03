@@ -286,27 +286,12 @@ function ResultadoPanel({ resultado, origenNombre, destinoNombre, codigo }: Resu
                         </div>
                     )}
 
-                    {/* Descuento del cliente (asignado por el admin) */}
-                    {resultado.descuento_cliente_monto > 0 && resultado.descuento_cliente_tipo !== 'ninguno' && (
-                        <div className="cot-seccion">
-                            <div className="cot-fila cot-fila--descuento">
-                                <span>
-                                    Descuento aplicado:{' '}
-                                    {resultado.descuento_cliente_tipo === 'porcentaje'
-                                        ? `-${resultado.descuento_cliente_valor}%`
-                                        : `-${formatARS(resultado.descuento_cliente_valor)}`}
-                                </span>
-                                <span>- {formatARS(resultado.descuento_cliente_monto)}</span>
-                            </div>
-                        </div>
-                    )}
-
                     {/* Descuento (acuerdo comercial / tipo de cliente) */}
                     {resultado.descuento_porcentaje > 0 && resultado.descuento_monto > 0 && (
                         <div className="cot-seccion">
                             <div className="cot-fila cot-fila--descuento">
                                 <span>Descuento ({resultado.descuento_porcentaje}%)</span>
-                                <span>- {formatARS(resultado.descuento_monto - (resultado.descuento_cliente_monto ?? 0))}</span>
+                                <span>- {formatARS(resultado.descuento_monto)}</span>
                             </div>
                         </div>
                     )}

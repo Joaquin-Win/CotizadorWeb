@@ -1,8 +1,9 @@
 import { Head, useForm, router } from '@inertiajs/react';
-import { Users, Save, ArrowLeft, KeyRound, Percent, Trash2 } from 'lucide-react';
+import { Users, Save, ArrowLeft, KeyRound, Percent, Tags, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
+import TarifarioClienteModal from '@/components/tarifario-cliente-modal';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import type { BreadcrumbItem } from '@/types';
@@ -44,8 +45,6 @@ interface Usuario {
     rol_id: number;
     cliente_id: number | null;
     activo: boolean;
-    tipo_descuento?: 'porcentaje' | 'fijo' | 'ninguno';
-    valor_descuento?: string | number | null;
     cliente: Cliente | null;
 }
 
@@ -55,9 +54,10 @@ interface Props {
 }
 
 export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
-    const [activeTab, setActiveTab] = useState<'datos' | 'contrasena' | 'margenes' | 'descuento'>('datos');
-    // Los administradores no pueden eliminarse ni desactivarse (ni tienen descuento comercial).
+    const [activeTab, setActiveTab] = useState<'datos' | 'contrasena' | 'margenes' | 'tarifario'>('datos');
+    // Los administradores no pueden eliminarse ni desactivarse (ni tienen tarifario propio).
     const esAdminUsuario = usuario.rol_id === 1;
+    const [tarifarioOpen, setTarifarioOpen] = useState(false);
     const [margenesLocales, setMargenesLocales] = useState<Margen[]>(margenes);
     const [margenSaving, setMargenSaving] = useState(false);
     const [margenSuccess, setMargenSuccess] = useState(false);
@@ -66,8 +66,6 @@ export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
     const { data, setData, put, processing, errors, reset } = useForm({
         name: usuario.name,
         email: usuario.email,
-        tipo_descuento: (usuario.tipo_descuento ?? 'ninguno') as 'porcentaje' | 'fijo' | 'ninguno',
-        valor_descuento: String(Number(usuario.valor_descuento ?? 0)),
         password: '',
         password_confirmation: '',
     });
@@ -158,16 +156,16 @@ export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
                     </button>
                     {!esAdminUsuario && (
                         <button
-                            id="tab-descuento"
-                            onClick={() => setActiveTab('descuento')}
+                            id="tab-tarifario"
+                            onClick={() => setActiveTab('tarifario')}
                             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-                                activeTab === 'descuento'
+                                activeTab === 'tarifario'
                                     ? 'border-primary text-primary'
                                     : 'border-transparent text-muted-foreground hover:text-foreground'
                             }`}
                         >
-                            <Percent className="inline h-3.5 w-3.5 mr-1" />
-                            Descuento
+                            <Tags className="inline h-3.5 w-3.5 mr-1" />
+                            Tarifario
                         </button>
                     )}
                     {margenesLocales.length > 0 && (
@@ -217,6 +215,16 @@ export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
                                 )}
                             </div>
 
+                            <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+                                <div className="text-sm">
+                                    <p className="font-medium">Tarifario personalizado</p>
+                                    <p className="text-muted-foreground text-xs">Tarifas exclusivas de este cliente (prioridad sobre las generales).</p>
+                                </div>
+                                <Button id="btn-gestionar-tarifario-datos" type="button" variant="outline" className="gap-2" onClick={() => setTarifarioOpen(true)}>
+                                    <Tags className="h-4 w-4" />
+                                    Gestionar Tarifario
+                                </Button>
+                            </div>
                             {usuario.cliente && (
                                 <div className="rounded-lg bg-muted/40 p-3 text-sm">
                                     <span className="text-muted-foreground">Empresa asociada: </span>
@@ -234,67 +242,21 @@ export default function AdminUsuariosEdit({ usuario, margenes }: Props) {
                     </form>
                 )}
 
-                {/* ─── TAB: Descuento ─── */}
-                {activeTab === 'descuento' && (
-                    <form onSubmit={submitDatos} className="space-y-5">
-                        <div className="rounded-xl border p-5 space-y-4">
-                            <p className="text-muted-foreground text-sm">
-                                Descuento comercial que se aplica automáticamente cuando este usuario cotiza
-                                estando autenticado (sobre el subtotal, antes de impuestos).
-                            </p>
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="grid gap-2">
-                                    <Label htmlFor="tipo_descuento">Tipo de descuento</Label>
-                                    <select
-                                        id="tipo_descuento"
-                                        className="border-input bg-background h-9 rounded-md border px-3 text-sm"
-                                        value={data.tipo_descuento}
-                                        onChange={(e) => {
-                                            const v = e.target.value as 'porcentaje' | 'fijo' | 'ninguno';
-                                            setData((prev) => ({
-                                                ...prev,
-                                                tipo_descuento: v,
-                                                valor_descuento: v === 'ninguno' ? '0' : prev.valor_descuento,
-                                            }));
-                                        }}
-                                    >
-                                        <option value="ninguno">Sin descuento</option>
-                                        <option value="porcentaje">Porcentaje (%)</option>
-                                        <option value="fijo">Monto fijo ($)</option>
-                                    </select>
-                                    {errors.tipo_descuento && (
-                                        <p className="text-destructive text-xs">{errors.tipo_descuento}</p>
-                                    )}
-                                </div>
-                                <div className="grid gap-2">
-                                    <Label htmlFor="valor_descuento">
-                                        Valor {data.tipo_descuento === 'porcentaje' ? '(%)' : data.tipo_descuento === 'fijo' ? '($)' : ''}
-                                    </Label>
-                                    <Input
-                                        id="valor_descuento"
-                                        type="number"
-                                        step="0.01"
-                                        min="0"
-                                        max={data.tipo_descuento === 'porcentaje' ? 100 : undefined}
-                                        disabled={data.tipo_descuento === 'ninguno'}
-                                        value={data.valor_descuento}
-                                        onChange={(e) => setData('valor_descuento', e.target.value)}
-                                        placeholder={data.tipo_descuento === 'porcentaje' ? 'Ej: 10' : 'Ej: 5000'}
-                                    />
-                                    {errors.valor_descuento && (
-                                        <p className="text-destructive text-xs">{errors.valor_descuento}</p>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-                        <div className="flex justify-end">
-                            <Button type="submit" disabled={processing} className="gap-2">
-                                <Save className="h-4 w-4" />
-                                {processing ? 'Guardando...' : 'Guardar descuento'}
-                            </Button>
-                        </div>
-                    </form>
+                {/* ─── TAB: Tarifario personalizado ─── */}
+                {activeTab === 'tarifario' && (
+                    <div className="rounded-xl border p-5 space-y-4">
+                        <p className="text-muted-foreground text-sm">
+                            Tarifas exclusivas de este cliente. Cuando cotiza autenticado, sus tarifas propias tienen
+                            prioridad sobre las generales; si no tiene una tarifa para el tramo se usa la general.
+                        </p>
+                        <Button id="btn-gestionar-tarifario" type="button" className="gap-2" onClick={() => setTarifarioOpen(true)}>
+                            <Tags className="h-4 w-4" />
+                            Gestionar Tarifario
+                        </Button>
+                    </div>
                 )}
+
+                <TarifarioClienteModal usuario={{ id: usuario.id, name: usuario.name }} open={tarifarioOpen} onOpenChange={setTarifarioOpen} />
 
                 {/* ─── Estado / eliminación (nunca para administradores) ─── */}
                 {!esAdminUsuario && (

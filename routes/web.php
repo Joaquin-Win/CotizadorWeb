@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\CotizacionesAdminController;
 use App\Http\Controllers\Admin\CotizadorConfiguracionController;
 use App\Http\Controllers\Admin\MargenGananciaController;
 use App\Http\Controllers\Admin\TarifaController;
+use App\Http\Controllers\Admin\UsuarioTarifaController;
 use App\Http\Controllers\Admin\TransoftConfiguracionController;
 use App\Http\Controllers\Admin\ClientesExcelController;
 use App\Http\Controllers\Admin\UsuarioController;
@@ -111,6 +112,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     // -------------------------------------------------------
     // API de notificaciones admin (sesión + rol ADMIN)
     // -------------------------------------------------------
+    // Tarifario personalizado por cliente (JSON). {user} = id del usuario cliente.
+    Route::prefix('api/admin/users/{user}/tarifas')->name('api.admin.users.tarifas.')->middleware('can:esAdmin')->group(function () {
+        Route::get('/',                [UsuarioTarifaController::class, 'index'])->name('index');
+        Route::post('/',               [UsuarioTarifaController::class, 'store'])->name('store');
+        Route::get('exportar',         [UsuarioTarifaController::class, 'exportar'])->name('exportar');
+        Route::get('plantilla',        [UsuarioTarifaController::class, 'plantilla'])->name('plantilla');
+        Route::post('importar',        [UsuarioTarifaController::class, 'importar'])->name('importar');
+        Route::put('{tarifa}',         [UsuarioTarifaController::class, 'update'])->name('update');
+        Route::delete('{tarifa}',      [UsuarioTarifaController::class, 'destroy'])->name('destroy');
+    });
+
     Route::prefix('api/admin/notifications')->name('api.admin.notifications.')->middleware('can:esAdmin')->group(function () {
         Route::get('/',            [\App\Http\Controllers\Admin\NotificacionesController::class, 'index'])->name('index');
         Route::post('read-all',    [\App\Http\Controllers\Admin\NotificacionesController::class, 'readAll'])->name('read-all');
@@ -143,7 +155,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::put('usuarios/{usuario}/margenes', [UsuarioController::class, 'updateMargenes'])->name('admin.usuarios.margenes');
         Route::post('usuarios/{usuario}/toggle-activo', [UsuarioController::class, 'toggleActivo'])->name('admin.usuarios.toggle');
         Route::put('usuarios/{usuario}/estado', [UsuarioController::class, 'setEstado'])->name('admin.usuarios.estado');
-        Route::put('usuarios/{usuario}/descuento', [UsuarioController::class, 'updateDescuento'])->name('admin.usuarios.descuento');
 
         // Tarifas
         Route::resource('tarifas', TarifaController::class);

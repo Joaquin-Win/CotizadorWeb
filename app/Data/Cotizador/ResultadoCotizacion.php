@@ -43,14 +43,10 @@ class ResultadoCotizacion
     public bool    $seguroIncluidoEnAcuerdo = false;
 
     // Descuento
-    // descuentoMonto = descuento total (acuerdo/tipo cliente + descuento propio del cliente)
+    // descuentoMonto = descuento total (acuerdo/tipo cliente)
     public float   $descuentoPorcentaje = 0.0;
     public float   $descuentoMonto    = 0.0;
 
-    // Descuento asignado al cliente (usuario) por el admin
-    public string  $descuentoClienteTipo  = 'ninguno';   // 'porcentaje' | 'fijo' | 'ninguno'
-    public float   $descuentoClienteValor = 0.0;
-    public float   $descuentoClienteMonto = 0.0;
     public float   $subtotalAntesDescuento = 0.0;
     public float   $totalConDescuento      = 0.0;
 

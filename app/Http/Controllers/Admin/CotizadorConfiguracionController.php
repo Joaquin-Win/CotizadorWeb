@@ -58,6 +58,7 @@ class CotizadorConfiguracionController extends Controller
             'tipoServicio:id,codigo,nombre',
             'unidadMedida:id,codigo,nombre',
         ])
+            ->generales()
             ->latest('id')
             ->get();
 
@@ -268,6 +269,7 @@ class CotizadorConfiguracionController extends Controller
      */
     public function updateTarifa(Request $request, Tarifa $tarifa): RedirectResponse
     {
+        abort_if($tarifa->user_id !== null, 404); // las tarifas de cliente se gestionan desde su tarifario
         $data = $request->validate([
             'provincia_origen_id'  => ['required', 'integer', 'exists:provincias,id'],
             'provincia_destino_id' => ['required', 'integer', 'exists:provincias,id'],
@@ -341,6 +343,7 @@ class CotizadorConfiguracionController extends Controller
      */
     public function destroyTarifa(Tarifa $tarifa): RedirectResponse
     {
+        abort_if($tarifa->user_id !== null, 404);
         $tarifa->delete();
         return back()->with('success', 'Tarifa eliminada.');
     }

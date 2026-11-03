@@ -65,7 +65,6 @@ class CotizacionController extends Controller
         // Construir el DTO desde el request validado
         $dto = $request->toDto($clienteId, $usuarioId);
         $dto->tipoClienteId = $tipoClienteId;
-        $this->aplicarDescuentoUsuario($dto, $usuario);
 
         // Ejecutar el motor
         $resultado = $this->cotizadorService->calcular($dto);
@@ -98,10 +97,6 @@ class CotizacionController extends Controller
                 'margen_porcentaje'   => $resultado->margenPorcentaje,
                 'descuento_porcentaje'=> $resultado->descuentoPorcentaje,
                 'descuento_monto'     => $resultado->descuentoMonto,
-                // Descuento propio del cliente (asignado por el admin)
-                'descuento_cliente_tipo'  => $resultado->descuentoClienteTipo,
-                'descuento_cliente_valor' => $resultado->descuentoClienteValor,
-                'descuento_cliente_monto' => $resultado->descuentoClienteMonto,
                 'monto_descontado'        => $resultado->descuentoMonto,
                 'subtotal_antes_descuento'=> $resultado->subtotalAntesDescuento,
                 'total_con_descuento'     => $resultado->totalConDescuento,
@@ -146,7 +141,6 @@ class CotizacionController extends Controller
 
         $dto = $cotizarRequest->toDto($clienteId, $usuarioId);
         $dto->tipoClienteId = $tipoClienteId;
-        $this->aplicarDescuentoUsuario($dto, $usuario);
 
         // Calcular
         $resultado = $this->cotizadorService->calcular($dto);
@@ -488,19 +482,5 @@ class CotizacionController extends Controller
     private function tipoPublicoId(): int
     {
         return \App\Models\TipoCliente::where('codigo', 'PUBLICO')->value('id') ?? 1;
-    }
-
-    /**
-     * Copia al DTO el descuento asignado al usuario autenticado.
-     * Siempre se lee de la BD (nunca del request). Anónimos: sin descuento.
-     */
-    private function aplicarDescuentoUsuario(\App\Data\Cotizador\CotizacionRequestData $dto, ?\App\Models\User $usuario): void
-    {
-        if (! $usuario || ($usuario->tipo_descuento ?? 'ninguno') === 'ninguno') {
-            return;
-        }
-
-        $dto->descuentoTipo  = $usuario->tipo_descuento;
-        $dto->descuentoValor = (float) $usuario->valor_descuento;
     }
 }

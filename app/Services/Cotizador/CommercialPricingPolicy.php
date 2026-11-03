@@ -77,28 +77,14 @@ class CommercialPricingPolicy
                            + $margenMonto;
 
         // Paso 7: descuento
-        //   7a. acuerdo comercial / tipo de cliente (porcentaje)
-        //   7b. descuento propio del cliente asignado por el admin (porcentaje o monto fijo),
-        //       aplicado sobre el subtotal restante y nunca mayor a este (no deja total negativo)
+        //   acuerdo comercial / tipo de cliente (porcentaje)
         $descuentoPorcentaje = $context['descuento_porcentaje'] ?? 0;
         $descuentoAcuerdo    = $this->acuerdoService->calcularMontoDescuento(
             $subtotalConMargen,
             $descuentoPorcentaje
         );
 
-        $tipoDescCliente  = $context['descuento_cliente_tipo'] ?? 'ninguno';
-        $valorDescCliente = (float) ($context['descuento_cliente_valor'] ?? 0);
-        $restante         = max(0, $subtotalConMargen - $descuentoAcuerdo);
-        $descuentoCliente = match ($tipoDescCliente) {
-            'porcentaje' => round($restante * (min(100, max(0, $valorDescCliente)) / 100), 2),
-            'fijo'       => round(min($restante, max(0, $valorDescCliente)), 2),
-            default      => 0.0,
-        };
-        if ($descuentoCliente <= 0) {
-            $tipoDescCliente = 'ninguno';
-        }
-
-        $descuentoMonto = round($descuentoAcuerdo + $descuentoCliente, 2);
+        $descuentoMonto = round($descuentoAcuerdo, 2);
 
         // Paso 8: IVA
         $baseIva     = $subtotalConMargen - $descuentoMonto;
@@ -115,9 +101,6 @@ class CommercialPricingPolicy
         $resultado->margenId           = $margenModel?->id;
         $resultado->descuentoPorcentaje = $descuentoPorcentaje;
         $resultado->descuentoMonto     = $descuentoMonto;
-        $resultado->descuentoClienteTipo  = $tipoDescCliente;
-        $resultado->descuentoClienteValor = $tipoDescCliente === 'ninguno' ? 0.0 : $valorDescCliente;
-        $resultado->descuentoClienteMonto = $descuentoCliente;
         $resultado->subtotalAntesDescuento = round($subtotalConMargen, 2);
         $resultado->iva                = $ivaMonto;
         $resultado->totalFinal         = round(max(0, $totalFinal), 2);

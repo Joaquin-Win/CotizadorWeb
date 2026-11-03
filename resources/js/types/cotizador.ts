@@ -85,11 +85,7 @@ export interface ResultadoCotizacion {
     margen_porcentaje: number;
     descuento_porcentaje: number;
     descuento_monto: number;
-    /** Descuento propio del cliente asignado por el admin. */
-    descuento_cliente_tipo: 'porcentaje' | 'fijo' | 'ninguno';
-    descuento_cliente_valor: number;
-    descuento_cliente_monto: number;
-    /** Descuento total aplicado (acuerdo + cliente). */
+    /** Descuento total aplicado (acuerdo comercial). */
     monto_descontado: number;
     subtotal_antes_descuento: number;
     total_con_descuento: number;

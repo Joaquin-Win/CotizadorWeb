@@ -18,7 +18,7 @@ class ClienteController extends Controller
     public function index(): \Inertia\Response
     {
         $clientes = Cliente::with(['tipoCliente', 'estado',
-                'usuarios' => fn ($q) => $q->select('id', 'cliente_id', 'name', 'email', 'tipo_descuento', 'valor_descuento'),
+                'usuarios' => fn ($q) => $q->select('id', 'cliente_id', 'name', 'email'),
             ])
             ->whereHas('estado', fn ($q) => $q->where('codigo', 'ACTIVO'))
             ->withCount(['cotizaciones', 'pedidos'])
@@ -95,7 +95,7 @@ class ClienteController extends Controller
         $cliente->load([
             'tipoCliente', 'estado', 'localidad.provincia',
             'contactos', 'acuerdos', 'integraciones.tipoIntegracion',
-            'usuarios' => fn ($q) => $q->select('id', 'cliente_id', 'name', 'email', 'tipo_descuento', 'valor_descuento'),
+            'usuarios' => fn ($q) => $q->select('id', 'cliente_id', 'name', 'email'),
         ]);
         $cliente->loadCount(['cotizaciones', 'pedidos']);
 

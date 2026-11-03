@@ -9,6 +9,7 @@ use App\Data\Cotizador\ResultadoCotizacion;
 use App\Models\ConfiguracionCotizador;
 use App\Models\Localidad;
 use App\Models\Proveedor;
+use App\Models\Tarifa;
 use App\Models\TipoServicio;
 use Illuminate\Support\Facades\Log;
 
@@ -117,7 +118,8 @@ class CotizadorService
                     $data->origen->provinciaId,
                     $data->destino->provinciaId,
                     $data->destino->localidadId ?? null,
-                    $proveedor->id
+                    $proveedor->id,
+                    $data->usuarioId
                 );
                 if ($tarifasPP->isNotEmpty()) {
                     $usarPuertaPuerta = true;
@@ -146,7 +148,8 @@ class CotizadorService
                     $data->origen->provinciaId,
                     $data->destino->provinciaId,
                     $data->destino->localidadId ?? null,
-                    $proveedor->id
+                    $proveedor->id,
+                    $data->usuarioId
                 );
 
                 $costoPuertaPuerta = $this->calcularCostoTramo(
@@ -169,7 +172,8 @@ class CotizadorService
                             $tarifas = $this->tarifaResolver->troncal(
                                 $data->origen->provinciaId,
                                 $data->destino->provinciaId,
-                                $proveedor->id
+                                $proveedor->id,
+                                $data->usuarioId
                             );
                             $costo = $this->calcularCostoTramo(
                                 $tarifas, $volumenTotalM3, $pesoTotalKg, $data->bultos,
@@ -191,7 +195,8 @@ class CotizadorService
                             $tarifas = $this->tarifaResolver->primeraMilla(
                                 $data->origen->provinciaId,
                                 $data->origen->localidadId,
-                                $proveedor->id
+                                $proveedor->id,
+                                $data->usuarioId
                             );
                             $costo = $this->calcularCostoTramo(
                                 $tarifas, $volumenTotalM3, $pesoTotalKg, $data->bultos,
@@ -210,7 +215,8 @@ class CotizadorService
                             $tarifas = $this->tarifaResolver->ultimaMilla(
                                 $data->destino->provinciaId,
                                 $data->destino->localidadId ?? null,
-                                $proveedor->id
+                                $proveedor->id,
+                                $data->usuarioId
                             );
                             $costo = $this->calcularCostoTramo(
                                 $tarifas, $volumenTotalM3, $pesoTotalKg, $data->bultos,
@@ -322,7 +328,8 @@ class CotizadorService
             // Ej.: 122 h → 5 días y 2 h → 6 días.
             if ($this->tiemposTarifa !== []) {
                 $horas = (int) array_sum($this->tiemposTarifa);
-                $dias  = (int) ceil($horas / 24);
+                // Cada tramo se redondea a días enteros (mín. 1 día por tramo con tiempo) y luego se suman.
+                $dias  = (int) array_sum(array_map(fn ($h) => (int) ceil($h / 24), $this->tiemposTarifa));
 
                 $resultado->tiempoEstimadoHoras = $horas;
                 $resultado->tiempoEstimadoDias  = $dias;
@@ -340,8 +347,6 @@ class CotizadorService
                 'valor_declarado'    => $data->valorDeclarado ?? null,
                 'seguro_incluido'    => $seguroIncluido,
                 'descuento_porcentaje' => $descuentoPorcentaje,
-                'descuento_cliente_tipo'  => $data->descuentoTipo,
-                'descuento_cliente_valor' => $data->descuentoValor,
                 'iva_porcentaje'     => ConfiguracionCotizador::numero('iva_porcentaje', 0),
             ]);
 
@@ -361,9 +366,6 @@ class CotizadorService
                     'margen_porcentaje'   => $resultado->margenPorcentaje,
                     'margen_monto'        => $resultado->margenMonto,
                     'descuento_porcentaje'=> $resultado->descuentoPorcentaje,
-                    'descuento_cliente_tipo'  => $resultado->descuentoClienteTipo,
-                    'descuento_cliente_valor' => $resultado->descuentoClienteValor,
-                    'descuento_cliente_monto' => $resultado->descuentoClienteMonto,
                     'descuento_monto'     => $resultado->descuentoMonto,
                     'iva'                 => $resultado->iva,
                     'total_final'         => $resultado->totalFinal,
@@ -523,10 +525,33 @@ class CotizadorService
         );
 
         $tarifa = $elegido['tarifa'];
-        if ($tarifa->tiempo_estimado !== null && (int) $tarifa->tiempo_estimado > 0) {
-            $this->tiemposTarifa[$tipoTramo] = (int) $tarifa->tiempo_estimado;   // horas
+        // Tiempo estimado (horas) del tramo. Se suma el de cada tramo, venga de una tarifa
+        // personalizada o general. Si la tarifa aplicada no trae tiempo se busca, en orden:
+        //   1. otro escalón de las tarifas del mismo tramo con tiempo cargado,
+        //   2. (tarifa personalizada) la tarifa general equivalente del mismo servicio y ruta.
+        $horasTramo = (int) ($tarifa->tiempo_estimado ?? 0);
+        if ($horasTramo <= 0) {
+            $horasTramo = (int) ($tarifas->first(fn ($t) => (int) ($t->tiempo_estimado ?? 0) > 0)?->tiempo_estimado ?? 0);
         }
-        $this->desgloseTramos[$tipoTramo] = [
+        if ($horasTramo <= 0 && $tarifa->user_id !== null) {
+            $generales = Tarifa::generales()
+                ->where('tipo_servicio_id', $tarifa->tipo_servicio_id)
+                ->where('proveedor_id', $tarifa->proveedor_id)
+                ->where('provincia_origen_id', $tarifa->provincia_origen_id)
+                ->where('provincia_destino_id', $tarifa->provincia_destino_id)
+                ->vigente()
+                ->where('tiempo_estimado', '>', 0)
+                ->orderByDesc('id')
+                ->get(['localidad_destino_id', 'tiempo_estimado']);
+            $horasTramo = (int) (
+                $generales->firstWhere('localidad_destino_id', $tarifa->localidad_destino_id)?->tiempo_estimado
+                ?? $generales->first()?->tiempo_estimado
+                ?? 0
+            );
+        }
+        if ($horasTramo > 0) {
+            $this->tiemposTarifa[$tipoTramo] = $horasTramo;
+        }        $this->desgloseTramos[$tipoTramo] = [
             'tramo'            => $tipoTramo,
             'unidad_cobro'     => $unidadCobro,
             'tarifa_id'        => $tarifa->id,

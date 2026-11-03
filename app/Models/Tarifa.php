@@ -14,7 +14,7 @@ class Tarifa extends Model
     use SoftDeletes;
 
     protected $fillable = [
-        'proveedor_id', 'provincia_origen_id', 'provincia_destino_id',
+        'proveedor_id', 'user_id', 'provincia_origen_id', 'provincia_destino_id',
         'localidad_destino_id', 'tipo_servicio_id', 'unidad_medida_id',
         'costo_unitario', 'maximo', 'max_m3_bulto', 'max_unidades',
         'min_unidades', 'min_m3_bulto', 'max_kg_bulto', 'tiempo_estimado',
@@ -45,9 +45,24 @@ class Tarifa extends Model
     public function tipoServicio()       { return $this->belongsTo(TipoServicio::class); }
     public function unidadMedida()       { return $this->belongsTo(UnidadMedida::class); }
 
+    /** Cliente dueño de la tarifa (NULL = tarifa general). */
+    public function user()               { return $this->belongsTo(User::class, 'user_id'); }
+
     // -----------------------------------------------
     // Scopes
     // -----------------------------------------------
+    /** Solo tarifas generales (user_id NULL). */
+    public function scopeGenerales($query)
+    {
+        return $query->whereNull($query->getModel()->getTable() . '.user_id');
+    }
+
+    /** Solo tarifas exclusivas de un cliente. */
+    public function scopeDeUsuario($query, int $userId)
+    {
+        return $query->where($query->getModel()->getTable() . '.user_id', $userId);
+    }
+
     /** Tarifas vigentes a una fecha dada (default: hoy) */
     public function scopeVigente($query, ?\DateTimeInterface $fecha = null)
     {

@@ -19,7 +19,7 @@ use OpenSpout\Writer\XLSX\Writer;
  *
  * Formato (una fila por escalón de tarifa):
  *   Servicio | Provincia origen | Provincia destino | Localidad |
- *   Unidad | Costo | Máximo | Máx. m3 por bulto | Máx. unidades | Vigente desde | Vigente hasta
+ *   Unidad | Costo | Máximo | Máx. m3 por bulto | Máx. unidades | Vigente desde | Vigente hasta | Tiempo estimado (horas)
  *
  * Convenciones (las mismas que usa el motor de cotización):
  *  - TRONCAL:        provincia origen → provincia destino, sin localidad.
@@ -32,6 +32,7 @@ class TarifasExcelService
     public const ENCABEZADOS = [
         'Servicio', 'Provincia origen', 'Provincia destino', 'Localidad',
         'Unidad', 'Costo', 'Máximo', 'Máx. m3 por bulto', 'Máx. unidades', 'Vigente desde', 'Vigente hasta',
+        'Tiempo estimado (horas)',
     ];
 
     /** Servicios que se pueden cargar por Excel. */
@@ -51,20 +52,25 @@ class TarifasExcelService
         'max unidades' => 'max_unidades', 'maximo unidades' => 'max_unidades',
         'vigente desde' => 'desde', 'desde' => 'desde',
         'vigente hasta' => 'hasta',
+        'tiempo estimado (horas)' => 'tiempo', 'tiempo estimado horas' => 'tiempo', 'tiempo estimado' => 'tiempo', 'tiempo horas' => 'tiempo', 'tiempo' => 'tiempo',
     ];
 
     // =====================================================================
     // EXPORTAR
     // =====================================================================
 
-    /** Genera un XLSX con todas las tarifas cargadas. */
-    public function exportar(string $rutaDestino): void
+    /**
+     * Genera un XLSX con las tarifas cargadas.
+     * Sin $clienteUserId: solo las generales (user_id NULL). Con $clienteUserId: solo las de ese cliente.
+     */
+    public function exportar(string $rutaDestino, ?int $clienteUserId = null): void
     {
         $tarifas = Tarifa::with([
             'provinciaOrigen:id,nombre', 'provinciaDestino:id,nombre',
             'localidadDestino:id,nombre,codigo_postal',
             'tipoServicio:id,codigo,nombre', 'unidadMedida:id,codigo,nombre',
         ])
+            ->when($clienteUserId, fn ($q) => $q->deUsuario($clienteUserId), fn ($q) => $q->generales())
             ->whereHas('tipoServicio', fn ($q) => $q->whereIn('codigo', self::SERVICIOS_IMPORTABLES))
             ->orderBy('tipo_servicio_id')->orderBy('provincia_origen_id')
             ->orderBy('provincia_destino_id')->orderBy('localidad_destino_id')
@@ -89,6 +95,7 @@ class TarifasExcelService
                 $t->max_unidades,
                 $t->vigente_desde?->format('Y-m-d'),
                 $t->vigente_hasta?->format('Y-m-d'),
+                $t->tiempo_estimado,
             ]));
         }
 
@@ -105,12 +112,12 @@ class TarifasExcelService
 
         $hoy = now()->toDateString();
         foreach ([
-            ['Primera milla', 'Santa Fe', null, 'Reconquista', 'Kilogramo', 10, 100, null, null, $hoy, null],
-            ['Primera milla', 'Santa Fe', null, 'Reconquista', 'Kilogramo', 8, null, null, null, $hoy, null],
-            ['Troncal', 'Santa Fe', 'Córdoba', null, 'Kilogramo', 25, 100, null, null, $hoy, null],
-            ['Troncal', 'Santa Fe', 'Córdoba', null, 'Kilogramo', 20, null, null, null, $hoy, null],
-            ['Última milla', null, 'Córdoba', 'Córdoba', 'Bulto', 1500, null, 2.3, 3, $hoy, null],
-            ['Última milla', null, 'Córdoba', 'Córdoba', 'Bulto', 2800, null, 6, 10, $hoy, null],
+            ['Primera milla', 'Santa Fe', null, 'Reconquista', 'Kilogramo', 10, 100, null, null, $hoy, null, 24],
+            ['Primera milla', 'Santa Fe', null, 'Reconquista', 'Kilogramo', 8, null, null, null, $hoy, null, 24],
+            ['Troncal', 'Santa Fe', 'Córdoba', null, 'Kilogramo', 25, 100, null, null, $hoy, null, 24],
+            ['Troncal', 'Santa Fe', 'Córdoba', null, 'Kilogramo', 20, null, null, null, $hoy, null, 24],
+            ['Última milla', null, 'Córdoba', 'Córdoba', 'Bulto', 1500, null, 2.3, 3, $hoy, null, 24],
+            ['Última milla', null, 'Córdoba', 'Córdoba', 'Bulto', 2800, null, 6, 10, $hoy, null, 24],
         ] as $fila) {
             $writer->addRow(Row::fromValues($fila));
         }
@@ -127,6 +134,7 @@ class TarifasExcelService
             'Máximo (Bulto): peso máximo por bulto en kg (opcional).',
             'Bulto: "Máx. m3 por bulto" y "Máx. unidades" definen hasta qué tamaño y cantidad aplica la tarifa; si la carga los supera se usa la siguiente tarifa.',
             'Vigente desde vacío = hoy. Vigente hasta vacío = sin vencimiento.',
+            'Tiempo estimado (horas): entero (24 = 1 día). Se suma entre tramos para estimar la entrega. Vacío = no se modifica el tiempo ya cargado.',
             'Si ya existe una tarifa igual (mismo servicio, ruta, localidad, unidad y límites) se actualiza; si no, se crea.',
         ] as $linea) {
             $writer->addRow(Row::fromValues([$linea]));
@@ -161,9 +169,12 @@ class TarifasExcelService
      * Importa tarifas desde un XLSX. Es "todo o nada": si alguna fila tiene
      * errores no se guarda nada y se devuelven los errores.
      *
+     * Sin $clienteUserId opera solo sobre tarifas generales (user_id NULL); con $clienteUserId,
+     * crea/actualiza únicamente tarifas de ese cliente.
+     *
      * @return array{creadas:int, actualizadas:int, errores:array<int,string>}
      */
-    public function importar(string $rutaArchivo, ?int $usuarioId): array
+    public function importar(string $rutaArchivo, ?int $usuarioId, ?int $clienteUserId = null): array
     {
         $filas = $this->leerFilas($rutaArchivo);
 
@@ -197,7 +208,7 @@ class TarifasExcelService
         $creadas = 0;
         $actualizadas = 0;
 
-        DB::transaction(function () use ($registros, $proveedorId, $usuarioId, &$creadas, &$actualizadas) {
+        DB::transaction(function () use ($registros, $proveedorId, $usuarioId, $clienteUserId, &$creadas, &$actualizadas) {
             $vistas = [];
 
             foreach ($registros as $reg) {
@@ -213,7 +224,7 @@ class TarifasExcelService
                     'max_unidades'         => $reg['max_unidades'],
                 ];
 
-                $query = Tarifa::query();
+                $query = $clienteUserId ? Tarifa::deUsuario($clienteUserId) : Tarifa::generales();
                 foreach ($clave as $campo => $valor) {
                     $valor === null ? $query->whereNull($campo) : $query->where($campo, $valor);
                 }
@@ -224,12 +235,16 @@ class TarifasExcelService
                     'vigente_desde'  => $reg['vigente_desde'],
                     'vigente_hasta'  => $reg['vigente_hasta'],
                 ];
+                // Solo se pisa el tiempo si el Excel lo trae (celda vacía = conservar el cargado).
+                if ($reg['tiempo_estimado'] !== null) {
+                    $valores['tiempo_estimado'] = $reg['tiempo_estimado'];
+                }
 
                 if ($existente) {
                     $existente->update($valores + ['updated_by' => $usuarioId]);
                     $actualizadas++;
                 } else {
-                    Tarifa::create($clave + $valores + ['created_by' => $usuarioId]);
+                    Tarifa::create($clave + $valores + ['user_id' => $clienteUserId, 'created_by' => $usuarioId]);
                     $creadas++;
                 }
             }
@@ -373,6 +388,16 @@ class TarifasExcelService
             $maxUnidades = (int) $n;
         }
 
+        // Tiempo estimado (horas)
+        $tiempo = null;
+        if (($f['tiempo'] ?? null) !== null) {
+            $n = $this->numero($f['tiempo']);
+            if ($n === null || $n < 0 || floor($n) != $n || $n > 99999) {
+                return '"Tiempo estimado (horas)" debe ser un entero mayor o igual a 0 ("' . $this->mostrar($f['tiempo']) . '").';
+            }
+            $tiempo = (int) $n;
+        }
+
         // Provincias
         $origenTxt  = $f['origen'] ?? null;
         $destinoTxt = $f['destino'] ?? null;
@@ -452,6 +477,7 @@ class TarifasExcelService
             'maximo'               => $maximo !== null ? round($maximo, 2) : null,
             'max_m3_bulto'         => $maxM3 !== null ? round($maxM3, 3) : null,
             'max_unidades'         => $maxUnidades,
+            'tiempo_estimado'      => $tiempo,
             'vigente_desde'        => $desde,
             'vigente_hasta'        => $hasta,
         ];

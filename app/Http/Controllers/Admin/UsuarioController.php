@@ -84,9 +84,6 @@ class UsuarioController extends Controller
         $rules = [
             'name'  => ['required', 'string', 'max:255'],
             'email' => ['required', 'email', 'max:255', "unique:usuarios,email,{$id},id"],
-            // Descuento por cliente (opcional en el payload: la pestaña de contraseña no lo envía)
-            'tipo_descuento'  => ['sometimes', 'in:porcentaje,fijo,ninguno'],
-            'valor_descuento' => ['sometimes', 'nullable', 'numeric', 'min:0', 'max:9999999999'],
         ];
 
         // Solo validar contraseña si se envió
@@ -97,20 +94,9 @@ class UsuarioController extends Controller
 
         $data = $request->validate($rules);
 
-        if (($data['tipo_descuento'] ?? null) === 'porcentaje' && (float) ($data['valor_descuento'] ?? 0) > 100) {
-            return back()->withErrors(['valor_descuento' => 'El porcentaje no puede superar 100.'])->withInput();
-        }
-
         DB::transaction(function () use ($usuario, $data, $request) {
             $usuario->name  = $data['name'];
             $usuario->email = $data['email'];
-
-            if (isset($data['tipo_descuento'])) {
-                $usuario->tipo_descuento  = $data['tipo_descuento'];
-                $usuario->valor_descuento = $data['tipo_descuento'] === 'ninguno'
-                    ? 0
-                    : (float) ($data['valor_descuento'] ?? 0);
-            }
 
             if ($request->filled('password')) {
                 $usuario->password = Hash::make($data['password']);
@@ -121,34 +107,6 @@ class UsuarioController extends Controller
         });
 
         return back()->with('success', 'Usuario actualizado correctamente.');
-    }
-
-    /**
-     * Actualiza solo el descuento comercial del usuario (llamado desde lista de clientes).
-     */
-    public function updateDescuento(Request $request, string $id): RedirectResponse
-    {
-        $usuario = User::findOrFail($id);
-
-        $this->abortSiAdmin($usuario);
-
-        $data = $request->validate([
-            'tipo_descuento'  => ['required', 'in:porcentaje,fijo,ninguno'],
-            'valor_descuento' => ['nullable', 'numeric', 'min:0', 'max:9999999999'],
-        ]);
-
-        if ($data['tipo_descuento'] === 'porcentaje' && (float) ($data['valor_descuento'] ?? 0) > 100) {
-            return back()->withErrors(['valor_descuento' => 'El porcentaje no puede superar 100.']);
-        }
-
-        $usuario->tipo_descuento  = $data['tipo_descuento'];
-        $usuario->valor_descuento = $data['tipo_descuento'] === 'ninguno'
-            ? 0
-            : (float) ($data['valor_descuento'] ?? 0);
-        $usuario->updated_by = auth()->id();
-        $usuario->save();
-
-        return back()->with('success', 'Descuento actualizado.');
     }
 
     /**

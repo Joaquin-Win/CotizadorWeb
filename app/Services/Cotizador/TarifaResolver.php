@@ -24,14 +24,16 @@ class TarifaResolver
      * Busca las tarifas vigentes para el tramo TRONCAL.
      * Filtra por provincia origen + provincia destino.
      */
-    public function troncal(
+    private function troncalScoped(
         int $provinciaOrigenId,
         int $provinciaDestinoId,
-        int $proveedorId
+        int $proveedorId,
+        ?int $userId
     ): Collection {
         $hoy = now()->toDateString();
 
         return Tarifa::with('unidadMedida')
+            ->when(true, fn ($q) => $this->alcance($q, $userId))
             ->where('proveedor_id', $proveedorId)
             ->where('provincia_origen_id', $provinciaOrigenId)
             ->where('provincia_destino_id', $provinciaDestinoId)
@@ -53,14 +55,16 @@ class TarifaResolver
      * localidad de ORIGEN cuando el tipo_servicio es PRIMERA_MILLA.
      * (La tabla tarifas solo tiene localidad_destino_id; se reutiliza.)
      */
-    public function primeraMilla(
+    private function primeraMillaScoped(
         int $provinciaOrigenId,
         int $localidadOrigenId,
-        int $proveedorId
+        int $proveedorId,
+        ?int $userId
     ): Collection {
         $hoy = now()->toDateString();
 
         $base = Tarifa::with('unidadMedida')
+            ->when(true, fn ($q) => $this->alcance($q, $userId))
             ->where('proveedor_id', $proveedorId)
             ->where(fn ($q) => $q
                 ->where('provincia_origen_id', $provinciaOrigenId)
@@ -86,15 +90,17 @@ class TarifaResolver
      * Prioridad 1: localidad_destino_id = $localidadDestinoId (si se informó)
      * Prioridad 2: localidad_destino_id IS NULL (tarifa a nivel provincia)
      */
-    public function ultimaMilla(
+    private function ultimaMillaScoped(
         int $provinciaDestinoId,
         ?int $localidadDestinoId,
-        int $proveedorId
+        int $proveedorId,
+        ?int $userId
     ): Collection {
         $hoy = now()->toDateString();
         $tipoId = $this->tipoServicioId('ULTIMA_MILLA');
 
         $base = Tarifa::with('unidadMedida')
+            ->when(true, fn ($q) => $this->alcance($q, $userId))
             ->where('proveedor_id', $proveedorId)
             ->where('provincia_destino_id', $provinciaDestinoId)
             ->where('tipo_servicio_id', $tipoId)
@@ -122,16 +128,18 @@ class TarifaResolver
      * Busca tarifas vigentes para PUERTA_PUERTA.
      * Usa la localidad de destino directamente.
      */
-    public function puertaPuerta(
+    private function puertaPuertaScoped(
         int $provinciaOrigenId,
         int $provinciaDestinoId,
         ?int $localidadDestinoId,
-        int $proveedorId
+        int $proveedorId,
+        ?int $userId
     ): Collection {
         $hoy    = now()->toDateString();
         $tipoId = $this->tipoServicioId('PUERTA_PUERTA');
 
         $query = Tarifa::with('unidadMedida')
+            ->when(true, fn ($q) => $this->alcance($q, $userId))
             ->where('proveedor_id', $proveedorId)
             ->where('provincia_origen_id', $provinciaOrigenId)
             ->where('provincia_destino_id', $provinciaDestinoId)
@@ -151,8 +159,61 @@ class TarifaResolver
     }
 
     // -----------------------------------------------
+    // API pública: prioriza tarifas personalizadas del cliente
+    // -----------------------------------------------
+    // Si $userId viene informado y el cliente tiene tarifas propias para el tramo,
+    // se usan SOLAS (no se mezclan escalones). Si no, se usa la tarifa general (user_id NULL).
+
+    public function troncal(int $provinciaOrigenId, int $provinciaDestinoId, int $proveedorId, ?int $userId = null): Collection
+    {
+        return $this->conPrioridad($userId, fn (?int $u) => $this->troncalScoped(
+            $provinciaOrigenId, $provinciaDestinoId, $proveedorId, $u
+        ));
+    }
+
+    public function primeraMilla(int $provinciaOrigenId, int $localidadOrigenId, int $proveedorId, ?int $userId = null): Collection
+    {
+        return $this->conPrioridad($userId, fn (?int $u) => $this->primeraMillaScoped(
+            $provinciaOrigenId, $localidadOrigenId, $proveedorId, $u
+        ));
+    }
+
+    public function ultimaMilla(int $provinciaDestinoId, ?int $localidadDestinoId, int $proveedorId, ?int $userId = null): Collection
+    {
+        return $this->conPrioridad($userId, fn (?int $u) => $this->ultimaMillaScoped(
+            $provinciaDestinoId, $localidadDestinoId, $proveedorId, $u
+        ));
+    }
+
+    public function puertaPuerta(int $provinciaOrigenId, int $provinciaDestinoId, ?int $localidadDestinoId, int $proveedorId, ?int $userId = null): Collection
+    {
+        return $this->conPrioridad($userId, fn (?int $u) => $this->puertaPuertaScoped(
+            $provinciaOrigenId, $provinciaDestinoId, $localidadDestinoId, $proveedorId, $u
+        ));
+    }
+
+    // -----------------------------------------------
     // Helpers internos
     // -----------------------------------------------
+
+    /** Ejecuta la búsqueda para el cliente y, si no hay resultados, para las generales. */
+    private function conPrioridad(?int $userId, \Closure $buscar): Collection
+    {
+        if ($userId) {
+            $propias = $buscar($userId);
+            if ($propias->isNotEmpty()) {
+                return $propias;
+            }
+        }
+
+        return $buscar(null);
+    }
+
+    /** Limita la query a las tarifas del cliente ($userId) o a las generales (null). */
+    private function alcance($query, ?int $userId): void
+    {
+        $userId ? $query->where('user_id', $userId) : $query->whereNull('user_id');
+    }
 
     /**
      * Cache en memoria del ID de tipo de servicio por código.
