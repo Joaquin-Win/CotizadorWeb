@@ -41,6 +41,18 @@ class CatalogoSeeder extends Seeder
                 'descuento_base_porcentaje' => 5, 'activo' => false,   // B2B Premium: retirado de las opciones
                 'created_at' => $now, 'updated_at' => $now,
             ],
+            [
+                'id' => 4, 'codigo' => 'B2C', 'nombre' => 'B2C', 'nivel' => 3,
+                'requiere_usuario' => true, 'permite_acuerdo_comercial' => true,
+                'descuento_base_porcentaje' => 0, 'activo' => true,
+                'created_at' => $now, 'updated_at' => $now,
+            ],
+            [
+                'id' => 5, 'codigo' => 'C2C', 'nombre' => 'C2C', 'nivel' => 4,
+                'requiere_usuario' => true, 'permite_acuerdo_comercial' => true,
+                'descuento_base_porcentaje' => 0, 'activo' => true,
+                'created_at' => $now, 'updated_at' => $now,
+            ],
         ]);
 
         // -------------------------------------------------------
