@@ -1,0 +1,3702 @@
+Universidad Siglo 21 
+Seminario de Práctica de Informática 
+Segunda entrega 
+SIGMAVEP 
+Sistema de Gestión del Mantenimiento Preventivo 
+de Vehículos Policiales 
+REPOSITORIO: SIGMAVEP GITHUB 
+Alumno: Mateo German Ruiz Díaz 
+Carrera: Licenciatura en Informática 
+Año: 2026 
+Legajo: VINF014809 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 2 
+ 
+Índice 
+Contenido 
+1. Introducción ............................................................................................................................. 7 
+1.1 Antecedentes...................................................................................................................... 7 
+1.2 Descripción del área problemática ..................................................................................... 7 
+1.3 Formulación de la problemática ......................................................................................... 8 
+2. Justificación .............................................................................................................................. 8 
+3. Definiciones del Proyecto ......................................................................................................... 9 
+3.1 Objetivo General del Proyecto ............................................................................................ 9 
+3.2 Objetivos Específicos del Proyecto ..................................................................................... 9 
+4. Definiciones del Sistema........................................................................................................... 9 
+4.1 Objetivo General del Sistema ............................................................................................. 9 
+4.2 Límites del Sistema ............................................................................................................. 9 
+4.3 Alcances del Sistema .......................................................................................................... 9 
+4.4 No Contempla ................................................................................................................... 10 
+5. Elicitación ............................................................................................................................... 10 
+5.1 Actividad del cliente o dominio ........................................................................................ 10 
+5.2 T.I.C. (Tecnologías de la Información y Comunicación) ..................................................... 12 
+5.3 Competencia ..................................................................................................................... 14 
+6. Relevamiento ......................................................................................................................... 14 
+6.1 Relevamiento estructural y tecnológico ........................................................................... 15 
+6.2 Relevamiento funcional .................................................................................................... 15 
+Organigrama ....................................................................................................................... 15 
+Funciones de las áreas involucradas .................................................................................... 16 
+Procesos de negocio ............................................................................................................ 17 
+Gráfica de procesos de negocios ......................................................................................... 21 
+7. Diagnóstico ............................................................................................................................. 22 
+8. Propuesta de Solución ............................................................................................................ 23 
+8.1 Propuesta funcional .......................................................................................................... 23 
+8.2 Propuesta técnica ............................................................................................................. 24 
+8.3 Diagrama de Arquitectura ................................................................................................ 25 
+8.4 Requerimientos Funcionales — Matriz de Trazabilidad ...................................................... 25 
+8.5 Requerimientos No Funcionales ....................................................................................... 26 
+8.6 Requerimientos Candidatos.............................................................................................. 27 
+9. Etapa de Análisis .................................................................................................................... 28 
+9.1 Diagrama de Casos de Uso ................................................................................................ 28 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 3 
+ 
+9.2 Especificación de Casos de Uso ......................................................................................... 30 
+CU-00: Autenticarse en el Sistema ...................................................................................... 30 
+CU-01: Registrar Kilometraje .............................................................................................. 31 
+CU-02: Gestionar Alertas de Mantenimiento ...................................................................... 32 
+CU-03: Registrar Novedad .................................................................................................. 32 
+CU-04: Consultar Historial de Móvil .................................................................................... 33 
+CU-05: Administrar Móviles ................................................................................................ 33 
+CU-06: Administrar Tipos de Mantenimiento ..................................................................... 34 
+CU-07: Gestionar Usuarios .................................................................................................. 35 
+CU-08: Generar Reportes .................................................................................................... 36 
+CU-09: Consultar Estado de Flota ....................................................................................... 37 
+9.3 Diagramas de Secuencia ................................................................................................... 37 
+10. Etapa de Diseño .................................................................................................................... 48 
+10.1 Modelo Conceptual de Datos.......................................................................................... 49 
+10.2 Definición de Entidades y Atributos ................................................................................ 50 
+10.3 Relaciones y Cardinalidades............................................................................................ 53 
+10.4 Diagrama Entidad-Relación............................................................................................. 54 
+10.5 Diagrama de Clases ......................................................................................................... 54 
+10.6 Justificación de Decisiones de Diseño ............................................................................. 54 
+11. Etapa de Implementación ..................................................................................................... 55 
+11.1 Script de Creación de la Base de Datos ........................................................................... 55 
+11.2 Script de Creación de Tablas ........................................................................................... 56 
+11.3 Script de Inserción de Datos ........................................................................................... 56 
+12. Etapa de Pruebas .................................................................................................................. 56 
+12.1 Plan de Pruebas .............................................................................................................. 57 
+12.2 Detalle de las Pruebas .................................................................................................... 57 
+13. Definición de Base de Datos ................................................................................................. 61 
+13.1 Diccionario de Datos ....................................................................................................... 61 
+13.2 Análisis de Normalización ............................................................................................... 66 
+14. Presentación de Consultas SQL ............................................................................................. 68 
+14.1 Consultas Básicas ............................................................................................................ 68 
+14.2 Consultas con JOIN ......................................................................................................... 68 
+14.3 Consultas Agregadas ....................................................................................................... 68 
+14.4 Consultas de Negocio...................................................................................................... 69 
+14.5 Inserción y Borrado de Registros .................................................................................... 69 
+15. Definiciones de Comunicación .............................................................................................. 69 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 4 
+ 
+15.1 Topología de Red Institucional ....................................................................................... 69 
+15.2 Protocolos de Comunicación .......................................................................................... 71 
+15.3 Modelo OSI y TCP/IP ....................................................................................................... 71 
+15.4 Comunicación Aplicación-Base de Datos ........................................................................ 72 
+15.5 Seguridad de la Comunicación ........................................................................................ 73 
+15.6 Estándares y Normas Aplicables ..................................................................................... 73 
+16. Introducción al AP4 .............................................................................................................. 75 
+17. Presentacion del Desarrollo en Java ..................................................................................... 75 
+17.1 Tecnologias y herramientas utilizadas ............................................................................ 75 
+17.2 Arquitectura del sistema: Patron MVC ........................................................................... 76 
+17.3 Estructura de paquetes del proyecto .............................................................................. 77 
+18. Seleccion del Patron de Diseno y Justificacion ...................................................................... 78 
+18.1 Patron MVC (Modelo-Vista-Controlador) ....................................................................... 78 
+18.2 Patron Generic DAO (Data Access Object) ...................................................................... 79 
+18.3 Coherencia con la arquitectura definida ......................................................................... 79 
+19. Explicacion del Desarrollo en Java ........................................................................................ 80 
+19.1 Los cuatro pilares de la POO ........................................................................................... 80 
+19.1.1 Encapsulamiento ...................................................................................................... 80 
+19.1.2 Herencia ................................................................................................................... 81 
+19.1.3 Polimorfismo ............................................................................................................ 83 
+19.1.4 Abstraccion............................................................................................................... 84 
+19.2 Constructores e inicializacion de objetos ........................................................................ 87 
+19.2.1 Constructores sobrecargados en las entidades del modelo ....................................... 87 
+19.2.2 Uso del constructor por defecto más setters ............................................................. 89 
+19.2.3 Uso del constructor parametrizado en la capa controlador ....................................... 90 
+19.2.4 Llamada al constructor de la superclase .................................................................... 91 
+19.2.5 Inicializacion de atributos static ................................................................................ 92 
+19.3 Sintaxis Java utilizada ..................................................................................................... 93 
+19.3.1 Declaracion de paquetes e imports ........................................................................... 93 
+19.3.2 Modificadores de acceso y de clase .......................................................................... 93 
+19.3.3 Estructuras de control............................................................................................... 93 
+19.3.4 Manejo de excepciones ............................................................................................ 94 
+19.3.5 Genericos (Generics) ................................................................................................. 95 
+19.3.6 Anotacion @Override ............................................................................................... 95 
+19.3.7 Sintaxis Swing: ActionListener y expresiones lambda ................................................ 95 
+19.4 Tipos de datos utilizados ................................................................................................ 95 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 5 
+ 
+19.4.1 Tipos primitivos ........................................................................................................ 95 
+19.4.2 Clases envoltorio (Wrapper Classes) ......................................................................... 95 
+19.4.3 Tipos referencia de la API estandar ........................................................................... 95 
+19.4.4 Tipos referencia de la biblioteca Java Swing .............................................................. 96 
+19.4.5 Enumeraciones (enum) ............................................................................................. 96 
+19.4.6 Tipos propios del dominio como atributos ................................................................ 96 
+19.5 Declaracion y creacion de objetos en Java ...................................................................... 96 
+19.5.1 Sintaxis general......................................................................................................... 97 
+19.5.2 Creacion con constructores parametrizados ............................................................. 97 
+19.5.3 Creacion de colecciones con operador diamante ...................................................... 98 
+19.5.4 Creacion de objetos en la capa DAO.......................................................................... 98 
+19.5.5 Creacion de componentes Swing .............................................................................. 98 
+19.5.6 Reglas aplicadas en el prototipo................................................................................ 98 
+19.6 Menu de seleccion y estructuras de control ................................................................... 99 
+19.7 Manejo de excepciones ................................................................................................ 100 
+19.8 Algoritmos de ordenamiento y busqueda..................................................................... 102 
+19.9 Seguridad: hash SHA-256 de contrasenas ..................................................................... 103 
+19.10 Motor de alertas ......................................................................................................... 103 
+20. Persistencia y Consulta en Base de Datos MySQL ............................................................... 104 
+20.1 Conexion a MySQL (ConexionMySQL) ........................................................................... 104 
+20.2 Operaciones CRUD en los DAO ..................................................................................... 108 
+20.2.1 Insertar ................................................................................................................... 109 
+20.2.2 Actualizar ............................................................................................................... 109 
+20.2.3 Eliminar .................................................................................................................. 110 
+20.2.4 Buscar por ID .......................................................................................................... 110 
+20.2.5 Listar todos ............................................................................................................. 111 
+20.3 Manejo de excepciones en la interaccion con MySQL ................................................... 111 
+20.4 Script de creacion de la base de datos .......................................................................... 112 
+21. Clases Abstractas e Interfaces ............................................................................................ 112 
+21.1 Clase abstracta BaseEntity ............................................................................................ 113 
+21.2 Interfaz BaseDAO<T> .................................................................................................... 114 
+21.3 Clase abstracta BaseFrame ........................................................................................... 115 
+21.4 Interfaz Controller ........................................................................................................ 115 
+22. Arreglos y ArrayList ............................................................................................................ 116 
+22.1 Utilizacion de arreglos nativos (tipo[]) .......................................................................... 116 
+22.2 Utilizacion de ArrayList ................................................................................................. 116 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 6 
+ 
+22.3 Uso complementario de ambas estructuras ................................................................. 117 
+23. Uso de Archivos .................................................................................................................. 117 
+23.1 Exportacion CSV con ArchivoUtil .................................................................................. 117 
+23.2 Archivo de configuracion db.properties ........................................................................ 118 
+24. Implementacion de los Casos de Uso ................................................................................. 119 
+25. Datos de Prueba ................................................................................................................. 120 
+26. Conclusion .......................................................................................................................... 123 
+27. Referencias ......................................................................................................................... 125 
+ 
+  
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+1. Introducción 
+Con el objetivo de optimizar la gestión del mantenimiento preventivo del parque vehicular de la 
+Policía Provincial de Santa Fe, se desarrolla el proyecto SIGMAVEP (Sistema de Gestión del 
+Mantenimiento Preventivo de Vehículos Policiales), un sistema de información de escritorio que 
+permitirá el registro centralizado de kilometraje, la generación automática de alertas de servicio y 
+la consulta del historial de intervenciones de cada móvil. Se presenta el análisis, la elicitación de 
+requerimientos y la propuesta de solución para dar respuesta a las deficiencias detectadas en los 
+procesos actuales de gestión vehicular. 
+1.1 Antecedentes 
+Originalmente, la Policía Provincial de Santa Fe gestiona su parque vehicular de manera 
+completamente manual, mediante planillas de cálculo Excel y registros en papel archivados en las 
+distintas dependencias distribuidas en tres zonas operativas: la Zona 1 (Rosario), la Zona 2 (Santa 
+Fe capital) y la Zona 3 (Reconquista). No existe un sistema centralizado que permita llevar un 
+seguimiento unificado del kilometraje recorrido por cada móvil ni un mecanismo automático que 
+alerte cuando un vehículo alcanza el kilometraje establecido para un servicio de mantenimiento 
+preventivo. 
+Con el avance de las tecnologías de la información y las comunicaciones, otros organismos públicos 
+han enfrentado problemáticas similares y han logrado mejoras significativas mediante la 
+implementación de sistemas de gestión de flotas. Sin embargo, las soluciones comerciales 
+disponibles no se ajustan a las particularidades del entorno policial, especialmente en lo referente 
+a la reserva de la información y la operación sin conectividad externa. 
+Según datos periodísticos del diario Clarín (2023) y del medio Extremo Diario (2024), 
+aproximadamente el 40% de la flota policial se encuentra fuera de servicio debido a la falta de 
+mantenimiento oportuno, lo que representa una problemática crítica que afecta directamente la 
+operatividad de la fuerza. Esta desorganización provoca que los servicios se realicen de manera 
+reactiva —cuando el vehículo ya presenta una falla— en lugar de forma preventiva, incrementando 
+los costos de reparación y reduciendo la vida útil de las unidades. 
+1.2 Descripción del área problemática 
+El área problemática se circunscribe a la Central de Comunicaciones de la Policía Provincial de Santa 
+Fe, donde los operadores reciben vía radio los reportes de kilometraje y novedades de los choferes 
+de cada móvil. Las áreas afectadas incluyen la Jefatura de Policía, la Secretaría General, la Dirección 
+de Logística y Recursos —que supervisa las zonas, los talleres mecánicos y las áreas de finanzas y 
+administración—, y las Jefaturas de Zona o Destacamentos donde operan los choferes de los 
+móviles policiales. 
+Los factores involucrados son múltiples: la dispersión de la información en soportes no digitales, la 
+ausencia de mecanismos de validación automática de datos, la falta de alertas sistemáticas para el 
+mantenimiento preventivo y la imposibilidad de consultar históricos confiables. La magnitud del 
+problema es significativa: se estima que el 40% del parque automotor se encuentra fuera de 
+servicio, lo que impacta directamente en la capacidad de respuesta de la fuerza de seguridad. 
+Esta problemática se presenta con alta frecuencia, ya que el registro de kilometraje y novedades 
+es una actividad diaria que se repite para cada móvil en operación. La tendencia observada es de 
+deterioro progresivo: a medida que los vehículos envejecen sin recibir mantenimiento oportuno, 
+el porcentaje de móviles fuera de servicio tiende a incrementarse, generando un círculo vicioso 
+donde la falta de prevención aumenta los costos de reparación y reduce aún más la disponibilidad 
+PAGINA 
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+operativa. Las personas involucradas son los operadores de central, los choferes de móviles, los 
+supervisores de zona y el personal de las áreas de finanzas y administración, mientras que las 
+instituciones comprometidas son la Policía Provincial de Santa Fe y, en última instancia, la 
+ciudadanía que depende de la seguridad pública. 
+El flujo actual de información es completamente manual y presenta múltiples puntos de falla: el 
+chofer reporta por radio, el operador anota en papel, el supervisor consulta archivos físicos y el 
+área de finanzas no cuenta con datos actualizados para la planificación presupuestaria. Esta 
+fragmentación de la información impide tomar decisiones oportunas y basadas en evidencia. 
+1.3 Formulación de la problemática 
+¿De qué manera un sistema de información de escritorio, que funcione de manera local sin 
+dependencia de Internet, puede optimizar la gestión del mantenimiento preventivo del parque 
+vehicular de la Policía Provincial de Santa Fe, reduciendo el porcentaje de móviles fuera de servicio 
+y mejorando la trazabilidad de las intervenciones realizadas? 
+2. Justificación 
+La implementación de SIGMAVEP se justifica desde múltiples dimensiones que abarcan la seguridad 
+institucional, la eficiencia operativa, la transparencia en la gestión de recursos públicos y el 
+cumplimiento del marco legal vigente. 
+Desde la perspectiva de la seguridad institucional, resulta imperativo que la Policía Provincial de 
+Santa Fe cuente con un parque automotor en condiciones operativas adecuadas. La 
+indisponibilidad de vehículos afecta directamente la capacidad de respuesta ante emergencias, la 
+cobertura de recorridos preventivos y la movilidad del personal en cumplimiento de sus funciones. 
+Según Sommerville (2011), la fiabilidad de los sistemas de información en organizaciones de 
+seguridad constituye un requisito crítico que no admite compromisos. Un sistema que garantice el 
+mantenimiento oportuno de los vehículos contribuye de manera directa a la misión primordial de 
+la institución: la seguridad ciudadana. 
+Desde la dimensión de la eficiencia operativa, la norma ISO 55000 (2014) sobre gestión de activos 
+establece que las organizaciones deben implementar procesos sistemáticos para la gestión del ciclo 
+de vida de sus activos físicos, lo que incluye el mantenimiento planificado. La gestión preventiva 
+del parque vehicular reduce significativamente los costos de reparación, prolonga la vida útil de los 
+vehículos y optimiza la asignación de recursos presupuestarios. Pipino, Lee y Wang (2002) destacan 
+que la calidad de los datos es un factor determinante para la toma de decisiones organizacionales; 
+en este sentido, SIGMAVEP proporcionará datos confiables, actualizados y accesibles que 
+actualmente no existen. 
+En el plano legal, la Ley 13.498 de Administración Financiera de la Provincia de Santa Fe exige 
+transparencia y trazabilidad en la gestión de los bienes del Estado. Asimismo, la Ley 25.188 de Ética 
+en el Ejercicio de la Función Pública establece la obligación de utilizar los recursos del Estado de 
+manera eficiente y transparente. El sistema propuesto contribuirá al cumplimiento de ambos 
+marcos normativos al proporcionar un registro fiable de las intervenciones realizadas a cada móvil, 
+los costos asociados y los tiempos de inactividad. 
+La trazabilidad que brinda SIGMAVEP permitirá a las áreas de finanzas y presupuesto contar con 
+información histórica para la planificación presupuestaria anual, facilitando la estimación de costos 
+de mantenimiento por zona, por tipo de vehículo y por tipo de servicio. La transparencia en la 
+gestión de los recursos vehiculares también contribuye a fortalecer la confianza institucional, ya 
+PAGINA 
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+que cada intervención queda registrada con fecha, usuario responsable y detalle de la acción 
+realizada. 
+3. Definiciones del Proyecto 
+3.1 Objetivo General del Proyecto 
+Desarrollar un sistema de información de escritorio para la gestión del mantenimiento preventivo 
+del parque vehicular de la Policía Provincial de Santa Fe, que permita el registro centralizado de 
+kilometraje, la generación automática de alertas de servicio y la consulta de historial de 
+intervenciones, en el marco del cronograma establecido en el PUD del proyecto. 
+3.2 Objetivos Específicos del Proyecto 
+a) Estudiar el dominio del problema mediante la observación directa y el análisis de la 
+documentación existente en la Central de Comunicaciones de la Policía Provincial. 
+b) Identificar y documentar los defectos y problemas en los procesos actuales de registro de 
+kilometraje, generación de alertas y consulta de historial vehicular. 
+c) Diseñar un prototipo funcional que implemente la lógica de negocio necesaria para el cálculo 
+automático de alertas de mantenimiento preventivo. 
+d) Verificar que los reportes y consultas generados por el sistema proporcionen la información 
+necesaria para la toma de decisiones operativas y presupuestarias. 
+e) Establecer una arquitectura modular basada en el patrón MVC que permita futuras extensiones 
+del sistema sin afectar los componentes existentes. 
+4. Definiciones del Sistema 
+4.1 Objetivo General del Sistema 
+Gestiona el mantenimiento preventivo del parque vehicular de la Policía Provincial de Santa Fe 
+mediante el registro centralizado de kilometraje, la generación automática de alertas de servicio y 
+la consulta del historial de novedades e intervenciones de cada móvil. 
+4.2 Límites del Sistema 
+El sistema abarca desde el momento en que el operador de central recibe el reporte de kilometraje 
+o novedad de un móvil (ingreso de datos) hasta la generación de la alerta de mantenimiento 
+preventivo o el registro de la novedad en la base de datos (salida de información). Las actividades 
+de gestión de talleres externos, emisión de órdenes de trabajo y control de stock de repuestos se 
+encuentran fuera del alcance del prototipo y se gestionan mediante procesos manuales 
+complementarios. 
+4.3 Alcances del Sistema 
+a) Administración de móviles policiales: registro, modificación y consulta de los datos de cada 
+vehículo (patente, marca, modelo, año, dependencia, zona, kilometraje actual, estado). 
+b) Registración de kilometraje: ingreso y actualización del kilometraje reportado por los choferes 
+vía radio, con validación de consistencia respecto al valor previo registrado. 
+PAGINA 
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+c) Generación de alertas de mantenimiento preventivo: cálculo automático de la diferencia entre 
+el kilometraje actual y el límite establecido para cada tipo de servicio, con generación de alertas 
+cuando se alcanza o supera el umbral. 
+d) Registración de novedades: ingreso de eventos eventuales (fallas mecánicas, accidentes, 
+siniestros) asociados a cada móvil, con registro de fecha, hora, tipo, descripción y kilometraje. 
+e) Consultas y reportes: búsqueda y visualización del historial de alertas, novedades y kilometraje 
+de cada móvil, con posibilidad de filtrado por zona, dependencia y estado del vehículo. 
+4.4 No Contempla 
+El sistema no contempla las siguientes funcionalidades, que serán consideradas como 
+requerimientos candidatos para futuras versiones: 
+1. Gestión de talleres mecánicos externos (registro, asignación, seguimiento). 
+2. Emisión y seguimiento de órdenes de trabajo para talleres. 
+3. Control de stock e inventario de repuestos y suministros. 
+4. Integración con dispositivos GPS para seguimiento en tiempo real. 
+5. Generación de reportes financieros detallados (costos por vehículo, presupuesto anual). 
+6. Aplicación móvil para que los choferes reporten directamente desde el vehículo. 
+7. Módulo de gestión de combustible y consumo. 
+5. Elicitación 
+"Es el proceso de adquirir ("eliciting") [sonsacar] todo el conocimiento relevante necesario para 
+producir un modelo de los requerimientos de un dominio de problema" (Loucopoulos y Karakostas, 
+1995). El objetivo de esta etapa es entender el dominio del problema en particular para poder 
+comunicarnos en la elicitación de requerimientos. El conocimiento en este apartado se encuentra 
+en la bibliografía estudiada en las materias anteriores de la carrera y en otras bibliografías 
+particulares del dominio de negocio. 
+Debido al carácter normado y reglado de los procedimientos que caracterizan la gestión del parque 
+automotor de una fuerza de seguridad, es necesario abordar primero la naturaleza del negocio que 
+lleva adelante el cliente y su ecosistema. Este análisis se profundizará más adelante en el apartado 
+de relevamiento, donde se detallarán los circuitos y procesos que efectivamente se llevan a cabo. 
+Posteriormente se abordarán los sistemas y tecnologías respectivos de aplicación para lograr una 
+implementación óptima de las funcionalidades especificadas en los requerimientos. En ambas 
+oportunidades se mencionarán las particularidades propias del sector y de la normativa aplicable. 
+5.1 Actividad del cliente o dominio 
+Es necesario conocer la actividad del cliente y su significado, es por ello que en este apartado se 
+definen los conceptos básicos necesarios que deben estudiarse antes de realizar el relevamiento. 
+La Policía Provincial de Santa Fe es una institución de seguridad pública cuya misión primordial es 
+la preservación de la seguridad ciudadana en el territorio de la provincia de Santa Fe. Para cumplir 
+con esta misión, la fuerza depende en gran medida de su parque automotor, compuesto por 
+vehículos de diversa tipología (patrulleros, móviles de traslado, vehículos administrativos, 
+motocicletas) distribuidos en tres zonas operativas: Zona 1 (Rosario), Zona 2 (Santa Fe capital) y 
+Zona 3 (Reconquista). La actividad central del cliente, en lo que respecta a este proyecto, es la 
+gestión del ciclo de vida operativo de sus vehículos: desde la asignación de un móvil a una 
+PAGINA 
+1
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+dependencia, pasando por el seguimiento de su kilometraje y estado operativo, hasta la derivación 
+a servicio de mantenimiento cuando corresponde. 
+A continuación se definen los conceptos clave del dominio que resultan fundamentales para la 
+comprensión del problema y la formulación de la solución: 
+Mantenimiento preventivo: Conjunto de acciones planificadas destinadas a prevenir fallas en los 
+vehículos antes de que ocurran, basadas en los intervalos de kilometraje establecidos por el 
+fabricante o por las normativas institucionales. Se diferencia del mantenimiento correctivo, que se 
+realiza una vez producida la falla. La norma ISO 55000 (2014) establece los lineamientos para la 
+gestión de activos físicos, incluyendo la planificación del mantenimiento preventivo como práctica 
+esencial para la preservación del valor de los activos. 
+Flota vehicular institucional: Conjunto de vehículos asignados a las distintas dependencias de la 
+Policía Provincial de Santa Fe, distribuidos en tres zonas operativas. Cada móvil se identifica por un 
+número interno y una patente, y posee un estado operacional (en servicio, fuera de servicio, en 
+reparación). 
+Tercerización: La Policía Provincial delega las tareas de mantenimiento mecánico a talleres 
+externos privados, dado que no cuenta con talleres propios con capacidad suficiente para atender 
+la totalidad del parque automotor. Este proceso de tercerización se gestiona de forma manual, 
+mediante la emisión de órdenes de trabajo en formato papel. 
+Novedades eventuales: Eventos imprevistos que afectan la operatividad de un móvil, tales como 
+fallas mecánicas, accidentes de tránsito, siniestros o daños por vandalismo. Estas novedades deben 
+ser registradas con fecha, hora, descripción, tipo y kilometraje del vehículo al momento del evento. 
+Kilometraje de servicio: Es el valor de kilometraje recorrido desde el último servicio de 
+mantenimiento realizado al vehículo. La diferencia entre el kilometraje actual del móvil y el 
+kilometraje registrado al momento del último servicio permite calcular si el vehículo ha alcanzado 
+el umbral establecido para un nuevo servicio preventivo. 
+PAGINA 
+1
+1 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 1 — Ciclo de vida operativo de un móvil policial. Fuente: Elaboración propia. 
+5.2 T.I.C. (Tecnologías de la Información y Comunicación) 
+De acuerdo a los objetivos definidos, corresponde analizar los recursos tecnológicos para disponer 
+de una solución, integrada por los componentes que se detallan a continuación. La plataforma 
+tecnológica seleccionada para el desarrollo del prototipo SIGMAVEP responde a las restricciones 
+operativas del entorno policial, donde la conectividad a Internet no está disponible y la información 
+debe permanecer en un entorno local controlado. 
+PAGINA 
+1
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Lenguaje de programación: Java, versión 11 o superior, utilizando el paradigma orientado a objetos 
+y el patrón de arquitectura MVC (Modelo-Vista-Controlador) para la separación de 
+responsabilidades. 
+Interfaz de usuario: Java Swing para la construcción de pantallas de escritorio nativas, sin 
+dependencia de navegadores web. 
+Motor de base de datos: MySQL 8.0 o superior, instalado localmente en la PC del operador o en 
+un servidor dentro de la red LAN institucional. 
+Conectividad: JDBC (Java Database Connectivity) para la comunicación entre la aplicación Java y la 
+base de datos MySQL. 
+Autenticación: Sistema de login mediante usuario y contraseña con gestión de roles 
+(Administrador, Finanzas, Supervisor). 
+Red: Operación 100% local en red LAN, sin exposición a redes externas ni dependencia de servicios 
+en la nube. 
+Metodología de desarrollo: PUD (Proceso Unificado de Desarrollo) con modelado UML, siguiendo 
+un enfoque iterativo e incremental. 
+Descripción de red: la red institucional opera mediante switches centrales que conectan las PCs de 
+escritorio de las distintas dependencias. No existe conexión a Internet en las terminales operativas 
+por razones de seguridad. Las aplicaciones de uso interno se ejecutan localmente y los datos se 
+almacenan en bases de datos MySQL dentro de la LAN. 
+Figura 2 — Ecosistema tecnológico SIGMAVEP. Fuente: Elaboración propia. 
+PAGINA 
+1
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+5.3 Competencia 
+Es necesario conocer qué existe en el mercado como propuesta de solución para el caso planteado, 
+comparar y realizar una tabla que muestre las ventajas de los Software existentes y el propuesto. 
+Se han analizado tres soluciones comerciales existentes en el mercado de gestión de flotas 
+vehiculares: 
+Fleetio: Es una plataforma web de gestión de flotas que ofrece funcionalidades de mantenimiento 
+preventivo, seguimiento de kilometraje, gestión de órdenes de trabajo y control de inventario de 
+repuestos. Su principal limitación para el contexto policial es que requiere conectividad a Internet 
+y almacena los datos en servidores externos, lo que resulta incompatible con la política de reserva 
+de información de la fuerza. 
+SigueRastreo: Es una solución argentina de rastreo vehicular GPS que incluye módulos de 
+mantenimiento y reportes. Si bien opera en el mercado local, su enfoque principal es el seguimiento 
+en tiempo real mediante hardware GPS instalado en los vehículos, lo que excede el alcance del 
+prototipo y requiere inversión en dispositivos de hardware adicionales. 
+CarPro: Es un sistema de gestión de talleres mecánicos que cubre la emisión de órdenes de trabajo, 
+gestión de repuestos y facturación. Su orientación es hacia la gestión del taller y no hacia la 
+planificación del mantenimiento preventivo de una flota institucional, por lo que no satisface los 
+requerimientos del dominio policial. 
+Característica 
+Fleetio 
+SigueRastreo 
+CarPro 
+Operación sin 
+Internet 
+SIGMAVEP 
+No 
+No 
+Parcial 
+Sí 
+Alertas 
+preventivas por 
+km 
+Sí 
+No 
+No 
+Sí 
+Registro de 
+novedades 
+Sí 
+No 
+No 
+Sí 
+Datos en entorno 
+local 
+No 
+No 
+Sí 
+Sí 
+Gestión de talleres Sí 
+No 
+Sí 
+Rastreo GPS 
+No 
+No 
+Sí 
+No 
+Costo de 
+implementación 
+No 
+Alto 
+Alto 
+Medio 
+Bajo 
+Tabla 1 — Comparación de soluciones de gestión de flotas. Fuente: Elaboración propia. 
+Ninguna de las soluciones analizadas satisface simultáneamente los tres requisitos fundamentales 
+del contexto policial: operación sin Internet, datos en entorno local y enfoque en mantenimiento 
+preventivo basado en kilometraje. Esta brecha justifica el desarrollo de una solución a medida. 
+6. Relevamiento 
+El relevamiento constituye parte de la elicitación, pero en este caso se relaciona directamente con 
+el cliente. Se realizó mediante entrevistas con personal clave de la Central de Comunicaciones y la 
+observación directa de los procesos de trabajo. Cabe destacar que, debido al carácter reservado de 
+PAGINA 
+1
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+la información, los datos estadísticos precisos sobre el parque automotor no han sido 
+proporcionados en su totalidad, trabajándose con estimaciones y referencias periodísticas cuando 
+corresponde. 
+6.1 Relevamiento estructural y tecnológico 
+La Policía Provincial de Santa Fe opera en tres zonas geográficas principales, cada una con su propia 
+central de comunicaciones y dependencias subordinadas. La Zona 1 tiene sede en Rosario, la Zona 
+2 en Santa Fe capital y la Zona 3 en Reconquista. Cada zona cuenta con PCs de escritorio conectadas 
+a una red LAN interna, pero sin acceso a Internet ni a servicios en la nube. 
+En cuanto a la infraestructura tecnológica actual, las PCs disponibles son equipos de escritorio 
+estándar con sistema operativo Windows, conectados a una red LAN mediante switch central. No 
+existen servidores dedicados ni bases de datos centralizadas. La información se gestiona mediante 
+planillas de cálculo Excel y registros en papel archivados en carpetas físicas. 
+La brecha tecnológica identificada es significativa: no existe ningún sistema de información para la 
+gestión vehicular, no hay mecanismos de validación de datos ni de generación automática de 
+alertas, y la información histórica se pierde o se fragmenta entre las distintas dependencias. 
+6.2 Relevamiento funcional 
+Organigrama 
+La estructura organizacional relevante para SIGMAVEP comprende las siguientes áreas y actores: 
+la Jefatura de Policía (máxima autoridad), la Secretaría General (coordina las comunicaciones y 
+supervisa la Central de Comunicaciones), la Dirección de Logística y Recursos (gestiona los recursos 
+materiales, incluyendo los vehículos, los talleres y el presupuesto), las Jefaturas de Zona o 
+Destacamentos (supervisan los móviles asignados a su jurisdicción), y la Central de Comunicaciones 
+(recibe los reportes de kilometraje y novedades). 
+PAGINA 
+1
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 3 — Organigrama (parte pertinente) y sistemas administrados. Fuente: Elaboración propia. 
+Funciones de las áreas involucradas 
+A continuación se describen las funciones principales de cada área con incumbencia en los procesos 
+relevados: 
+Jefatura de Policía: Toma decisiones estratégicas sobre la gestión del parque vehicular. Define 
+políticas de mantenimiento y asignación de recursos presupuestarios. Requiere reportes 
+consolidados sobre el estado de la flota para la toma de decisiones a nivel institucional. 
+Secretaría General: Coordina las comunicaciones institucionales y supervisa la Central de 
+Comunicaciones, que es el área operativa donde los operadores reciben los reportes de kilometraje 
+y novedades de los choferes vía radio. 
+Dirección de Logística y Recursos: Gestiona los recursos materiales de la fuerza, incluyendo los 
+vehículos, los talleres mecánicos (internos y externos) y el presupuesto asignado al mantenimiento. 
+A través de sus sub-áreas de Finanzas y Administración, controla la asignación presupuestaria y la 
+documentación asociada a las intervenciones vehiculares. 
+Jefatura de Zona / Destacamento: Supervisa los móviles policiales asignados a su jurisdicción. Es 
+responsable de verificar el estado operativo de los vehículos y de solicitar la derivación a servicio 
+cuando corresponde. 
+Operador de Central de Comunicaciones: Actor principal del sistema. Recibe los reportes de 
+kilometraje y novedades de los choferes por radio y los registra actualmente en planillas manuales. 
+Chofer de Móvil Policial: Actor secundario. Reporta el kilometraje y las novedades eventuales por 
+radio al operador de central. No interactúa directamente con el sistema. 
+PAGINA 
+1
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Área de Finanzas / Presupuesto: Requiere información sobre costos de mantenimiento para la 
+planificación presupuestaria anual. Actualmente no cuenta con datos actualizados ni centralizados. 
+Área de Administración: Gestiona la documentación asociada a los vehículos y las intervenciones 
+realizadas. Actualmente trabaja con archivos físicos. 
+Procesos de negocio 
+A continuación se describe cada proceso de negocio relevado, con su correspondiente detalle de 
+roles, pasos, documentación asociada y representación gráfica. 
+Proceso: PN1 — Registro de Kilometraje 
+Roles: Chofer de Móvil Policial (reporta), Operador de Central de Comunicaciones (registra) 
+Pasos: 
+8. El chofer reporta por radio el kilometraje actual del móvil al operador de central. 
+9. El operador accede al sistema y selecciona el móvil correspondiente. 
+10. El operador ingresa el kilometraje reportado. 
+11. El sistema valida que el valor sea mayor o igual al kilometraje previamente registrado. 
+12. El sistema actualiza el campo km_actual del móvil. 
+13. El sistema calcula la diferencia entre el km_actual y el km del último servicio para cada tipo de 
+mantenimiento. 
+14. Si se alcanza o supera algún umbral, el sistema genera una alerta automática de mantenimiento 
+preventivo. 
+Documentación relevada: Planillas de registro manual de kilometraje (formato papel). No existe 
+documentación de entrada/salida sistematizada; los datos se transcriben manualmente desde los 
+reportes radiales. 
+Figura 4 — Diagrama de actividades PN1: Registro de Kilometraje. Fuente: Elaboración propia. 
+PAGINA 
+1
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Proceso: PN2 — Generación y Gestión de Alertas de Mantenimiento 
+Roles: Sistema (genera alertas), Operador de Central (gestiona alertas) 
+Pasos: 
+15. El sistema detecta que el km_actual de un móvil alcanza o supera el limite_km de un 
+TipoMantenimiento. 
+16. El sistema genera una alerta con estado "Pendiente", registrando la fecha de generación, el 
+móvil, el tipo de mantenimiento y el kilometraje de disparo. 
+17. El operador visualiza la alerta en el panel de notificaciones. 
+18. El operador consulta el detalle de la alerta. 
+19. El operador cambia el estado de la alerta a "Procesada" (si el móvil será derivado a servicio) o 
+"Postergada" (si es necesario postergar el servicio). 
+20. La derivación al taller externo y la generación de la orden de trabajo se realizan manualmente, 
+fuera del prototipo. 
+Documentación relevada: No existe documentación actual para este proceso. Las decisiones de 
+envío a servicio se toman de forma reactiva ante fallas, sin registro sistemático. 
+Figura 5 — Diagrama de actividades PN2: Generación de Alertas. Fuente: Elaboración propia. 
+Proceso: PN3 — Registro de Novedades 
+Roles: Chofer de Móvil Policial (reporta), Operador de Central de Comunicaciones (registra) 
+Pasos: 
+21. El chofer reporta una novedad (falla mecánica, accidente, siniestro) por radio. 
+PAGINA 
+1
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+22. El operador accede al módulo de registro de novedades. 
+23. El operador selecciona el móvil correspondiente. 
+24. El operador ingresa el tipo de novedad, la descripción y el kilometraje del móvil. 
+25. El sistema crea el registro con fecha y hora automáticas. 
+26. Si la novedad impide la circulación del vehículo, el operador cambia el estado del móvil a "Fuera 
+de Servicio". 
+Documentación relevada: Cuadernos de novedades manuales (formato papel, sin formato 
+estandarizado). Los cuadernos se archivan y frecuentemente se deterioran o pierden. 
+Figura 6 — Diagrama de actividades PN3: Registro de Novedades. Fuente: Elaboración propia. 
+Proceso: PN4 — Consulta de Historial 
+Roles: Supervisor / Administrador (consulta) 
+Pasos: 
+27. El supervisor o administrador accede al módulo de consultas y reportes. 
+28. Selecciona un criterio de búsqueda (por móvil, por zona o por dependencia). 
+29. El sistema muestra el historial de alertas, novedades y kilometraje del móvil seleccionado. 
+30. El usuario puede aplicar filtros adicionales (rango de fechas, estado del vehículo). 
+31. Puede generar reportes impresos para las áreas de finanzas o la jefatura. 
+Documentación relevada: No existe documentación sistematizada. Actualmente los supervisores 
+deben solicitar informes a múltiples áreas para obtener una visión completa del estado de un móvil, 
+consultando archivos físicos dispersos. 
+PAGINA 
+1
+9 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 2
+0 
+ 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 7 — Diagrama de actividades PN4: Consulta de Historial. Fuente: Elaboración propia. 
+Proceso: PN5 — Administración de Móviles y Tipos de Mantenimiento 
+Roles: Administrador (gestiona) 
+Pasos: 
+32. El administrador accede al módulo de administración. 
+33. Para dar de alta un móvil: ingresa los datos del vehículo (patente, marca, modelo, año, 
+dependencia, zona). 
+34. El sistema valida que no exista un móvil con la misma patente. 
+35. Para modificar un móvil: selecciona el registro y actualiza los campos necesarios. 
+36. Para desactivar un móvil: el sistema verifica que no existan alertas pendientes asociadas antes 
+de permitir la desactivación. 
+37. Para gestionar tipos de mantenimiento: el administrador define el nombre del servicio, el límite 
+de kilometraje y la descripción. 
+Documentación relevada: Planillas Excel dispersas con datos de móviles, sin formato uniforme ni 
+validación. No existe un catálogo formalizado de tipos de mantenimiento preventivo. 
+Figura 8 — Diagrama de actividades PN5: Administración de Móviles. Fuente: Elaboración propia. 
+Gráfica de procesos de negocios 
+Los procesos de negocio correspondientes al análisis, de acuerdo a lo relatado, son los que se 
+ilustran a continuación. Se presenta una vista consolidada que muestra la interrelación entre los 
+cinco procesos identificados, donde PN1 (Registro de Kilometraje) alimenta a PN2 (Generación de 
+Alertas), PN3 (Registro de Novedades) puede modificar el estado del móvil impactando en PN1 y 
+PN2, PN4 (Consulta de Historial) consume información de todos los procesos anteriores, y PN5 
+(Administración) provee la configuración base sobre la cual operan los demás procesos. 
+PAGINA 
+2
+1 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 9 — Gráfica consolidada de procesos de negocio SIGMAVEP. Fuente: Elaboración propia. 
+7. Diagnóstico 
+A partir del relevamiento realizado, se identificaron cinco problemas principales, cada uno 
+vinculado a un proceso de negocio específico: 
+PAGINA 
+2
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+P1 — Registro manual y error-prone del kilometraje (vinculado a PN1). Causas raíz: a) Ausencia de 
+un sistema centralizado que almacene el kilometraje actualizado de cada móvil. b) Dependencia de 
+planillas Excel dispersas con versiones desactualizadas. c) Falta de validación automática que 
+impida ingresar valores inconsistentes (kilometraje menor al previo). d) Pérdida de datos cuando 
+los operadores olvidan transcribir los reportes recibidos por radio. 
+P2 — Ausencia de alertas automáticas de mantenimiento preventivo (vinculado a PN2). Causas raíz: 
+a) No existe un mecanismo que compare automáticamente el kilometraje actual con los umbrales 
+de servicio definidos. b) Los tipos de mantenimiento y sus límites de kilometraje no están 
+registrados en ningún sistema. c) La decisión de enviar un móvil a servicio se toma de forma 
+reactiva, cuando el vehículo ya presenta una falla. d) No hay notificaciones visuales ni sonoras que 
+alerten al operador sobre los vehículos que requieren atención. 
+P3 — Pérdida de registros de novedades vehiculares (vinculado a PN3). Causas raíz: a) Las 
+novedades se anotan en cuadernos y no se digitalizan. b) No existe un formato estandarizado para 
+el registro de novedades. c) La información se pierde cuando los cuadernos se archivan o se 
+deterioran. d) No hay forma de consultar el historial de novedades de un móvil específico de 
+manera rápida. 
+P4 — Imposibilidad de consultar el historial completo de un móvil (vinculado a PN4). Causas raíz: 
+a) La información está fragmentada en múltiples soportes (papel, Excel, archivos físicos). b) No 
+existe un mecanismo de búsqueda unificado que concentre alertas, novedades y kilometraje. c) Los 
+supervisores deben solicitar informes a múltiples áreas para obtener una visión completa del 
+estado de un móvil. d) No hay reportes predefinidos para la toma de decisiones operativas y 
+presupuestarias. 
+P5 — Catálogo de móviles desactualizado y sin control (vinculado a PN5). Causas raíz: a) No existe 
+un registro centralizado y actualizado del parque vehicular. b) Los datos de los móviles se 
+encuentran dispersos en distintas planillas con formatos no uniformes. c) No hay control sobre las 
+bajas o cambios de estado de los móviles. d) Los tipos de mantenimiento preventivo no están 
+formalizados ni documentados. 
+8. Propuesta de Solución 
+8.1 Propuesta funcional 
+Con el objeto de superar los problemas detectados se propone un desarrollo de software a medida, 
+que se integre con la infraestructura existente en la red LAN de la Policía Provincial de Santa Fe, 
+respetando la restricción de operación local sin dependencia de Internet. 
+El sistema propuesto tiene las siguientes funcionalidades: 
+a) Relativas al registro de kilometraje (responde a P1): permitir el ingreso centralizado y validado 
+del kilometraje reportado por los choferes, con actualización automática del campo km_actual; 
+validar la consistencia del dato ingresado, impidiendo el registro de valores inferiores al kilometraje 
+previo; calcular automáticamente la diferencia respecto al último servicio realizado. 
+b) Relativas a la generación de alertas de mantenimiento preventivo (responde a P2): generar 
+automáticamente alertas cuando el kilometraje actual de un móvil alcanza o supera los umbrales 
+definidos para cada tipo de mantenimiento; posibilitar la visualización de alertas pendientes en un 
+panel de notificaciones; permitir al operador cambiar el estado de la alerta a "Procesada" o 
+"Postergada". 
+PAGINA 
+2
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+c) Relativas al registro de novedades (responde a P3): permitir la registración digital y estandarizada 
+de las novedades eventuales de cada móvil; generar el registro con fecha, hora y kilometraje 
+automáticos; posibilitar el cambio de estado del móvil a "Fuera de Servicio" cuando la novedad así 
+lo requiera. 
+d) Relativas a consultas y reportes (responde a P4): permitir la búsqueda unificada del historial 
+completo de un móvil (alertas, novedades, kilometraje) con filtros por zona, dependencia y estado; 
+generar reportes imprimibles para las áreas de finanzas y la jefatura; emitir listados de móviles por 
+estado, zona y tipo de alerta. 
+e) Relativas a la administración del sistema (responde a P5): permitir la gestión CRUD del catálogo 
+de móviles policiales; permitir la gestión CRUD de los tipos de mantenimiento preventivo; validar 
+la unicidad de registros y verificar dependencias antes de permitir bajas o desactivaciones. 
+8.2 Propuesta técnica 
+El sistema propuesto se desarrolla en Java 11 con JDK estándar, utilizando el paradigma orientado 
+a objetos y el patrón de arquitectura MVC (Modelo-Vista-Controlador) con separación estricta de 
+responsabilidades. La capa Vista se implementa con Java Swing para la construcción de pantallas 
+de escritorio nativas, sin dependencia de navegadores web; la capa Controlador aloja la lógica de 
+navegación, validaciones y reglas de negocio, incluyendo el motor de alertas; la capa Modelo 
+implementa las entidades del dominio y los objetos DAO para el acceso a datos. 
+La base de datos utiliza MySQL 8.0 con esquema relacional normalizado. La conectividad se realiza 
+mediante JDBC (Java Database Connectivity) a través de DriverManager, Connection, 
+PreparedStatement y ResultSet para la ejecución de consultas SQL parametrizadas. 
+El sistema implementa autenticación y autorización mediante login con usuario/contraseña y 
+control de acceso basado en roles (RBAC) con tres perfiles: Administrador (acceso total), Finanzas 
+(consultas y reportes) y Supervisor (consulta de historial). 
+El despliegue es una aplicación de escritorio monolítica instalada en la PC del operador de central, 
+con la base de datos en el mismo equipo o en un servidor dentro de la LAN institucional. La 
+operación es 100% local, sin necesidad de conectividad a Internet ni exposición a redes externas. 
+PAGINA 
+2
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+8.3 Diagrama de Arquitectura 
+Figura 10 — Diagrama de Arquitectura propuesta. Fuente: Elaboración propia. 
+La Figura 10 muestra el diagrama de alto nivel donde se presenta la distribución de los 
+componentes relacionados del sistema actual y se señala la implementación del nuevo desarrollo. 
+En el sistema actual, la información se gestiona de manera dispersa mediante planillas Excel y 
+registros en papel, sin mecanismos de validación ni alertas automáticas. El nuevo desarrollo 
+SIGMAVEP se distribuye en cuatro capas: Presentación (Java Swing con las pantallas del sistema), 
+Lógica de Negocio (Controladores, Motor de Alertas y Módulo de Autenticación), Acceso a Datos 
+(DAOs y JDBC Connector) e Infraestructura (MySQL y Red LAN). Las flechas de dependencia van de 
+la capa superior a la inferior, respetando el principio de separación de responsabilidades del patrón 
+MVC. 
+8.4 Requerimientos Funcionales — Matriz de Trazabilidad 
+Id 
+Req 
+Descripción corta 
+Id 
+CU 
+Validez 
+Observaciones 
+RF
+00 
+Iniciar y cerrar sesión en el 
+sistema 
+CU
+00 
+Id Caso 
+Prueba 
+CP-00 
+Sí 
+— 
+RF
+01 
+Registrar kilometraje de un móvil 
+CU
+01 
+CP-01 
+Sí 
+— 
+RF
+02 
+Generar alerta de mantenimiento 
+preventivo 
+CU
+01 
+CP-01 
+Sí 
+Comportamiento automático 
+del sistema dentro de CU-01 
+RF
+03 
+Consultar panel de alertas 
+pendientes 
+CU
+02 
+CP-02 
+Sí 
+— 
+RF
+04 
+Cambiar estado de alerta 
+(Procesada / Postergada) 
+CU
+03 
+CP-03 
+Sí 
+— 
+RF
+05 
+Registrar novedad de un móvil 
+CU
+04 
+CP-04 
+Sí 
+— 
+PAGINA 
+2
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+RF
+06 
+Consultar historial de un móvil 
+CU
+05 
+CP-05 
+Sí 
+— 
+RF
+07 
+Administrar móviles (alta, 
+modificación, baja) 
+CU
+06 
+CP-06 
+Sí 
+— 
+RF
+08 
+Administrar tipos de 
+mantenimiento (alta, modificación, 
+baja) 
+CU
+07 
+CP-07 
+Sí 
+— 
+RF
+09 
+Administrar usuarios del sistema 
+(alta, modificación, baja) 
+CU
+08 
+CP-08 
+Sí 
+— 
+RF
+10 
+Generar reportes imprimibles del 
+estado de la flota por zona y 
+dependencia 
+CU
+09 
+CP-09 
+Sí 
+— 
+Tabla 2 — Matriz de Trazabilidad de Requerimientos Funcionales. Fuente: Elaboración propia. 
+Trazabilidad: RF-00 → CU-00; RF-01 → CU-01; RF-02 → CU-01 (automático); RF-03 → CU-02; 
+RF-04 → CU-03; RF-05 → CU-04; RF-06 → CU-05; RF-07 → CU-06; RF-08 → CU-07; RF-09 → 
+CU-08; RF-10 → CU-09. 
+8.5 Requerimientos No Funcionales 
+Usabilidad: 
+RNF-01: La interfaz gráfica debe seguir el estándar de ventanas de escritorio Windows, con menús, 
+barras de herramientas y atajos de teclado familiares para el operador. 
+RNF-02: El tiempo máximo de aprendizaje del sistema por un operador no debe superar las 4 horas 
+de capacitación. 
+Confiabilidad: 
+RNF-03: El sistema debe garantizar la integridad de los datos mediante transacciones SQL que 
+aseguren la consistencia ante fallos de energía o cierres inesperados. 
+RNF-04: El sistema debe realizar copias de seguridad automáticas de la base de datos al menos una 
+vez por día. 
+Performance: 
+RNF-05: El tiempo de respuesta para cualquier operación de registro o consulta no debe superar 
+los 3 segundos en condiciones normales de operación. 
+RNF-06: El sistema debe soportar el registro simultáneo de múltiples operadores en la red LAN sin 
+degradación del rendimiento. 
+Portabilidad: 
+RNF-07: La aplicación debe ser compatible con sistemas operativos Windows 10 o superior. 
+RNF-08: La base de datos MySQL debe poder migrarse a otro servidor dentro de la LAN sin cambios 
+en la aplicación. 
+Seguridad: 
+RNF-09: El acceso al sistema requiere autenticación mediante usuario y contraseña. 
+RNF-10: El sistema debe implementar control de acceso basado en roles (RBAC) con al menos tres 
+perfiles: Administrador, Finanzas y Supervisor. 
+Implementación: 
+PAGINA 
+2
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+RNF-11: La aplicación debe poder instalarse mediante un archivo JAR ejecutable sin necesidad de 
+configuración adicional. 
+RNF-12: El esquema de la base de datos debe crearse automáticamente mediante un script SQL 
+proporcionado con la instalación. 
+Estándares: 
+RNF-13: El código fuente debe seguir las convenciones de codificación de Java (Java Code 
+Conventions). 
+RNF-14: El diseño de la base de datos debe seguir las formas normales hasta la 3FN (Tercera Forma 
+Normal). 
+Éticos: 
+RNF-15: Los datos personales de los usuarios del sistema deben ser tratados conforme a la Ley 
+25.326 de Protección de Datos Personales. 
+Legales: 
+RNF-16: El sistema debe cumplir con la Ley 13.498 de Administración Financiera de la Provincia de 
+Santa Fe en materia de registro y trazabilidad de bienes del Estado. 
+RNF-17: El sistema debe cumplir con la Ley 25.188 de Ética en el Ejercicio de la Función Pública 
+respecto del uso eficiente y transparente de los recursos públicos. 
+Interoperabilidad: 
+RNF-18: La base de datos MySQL debe permitir la exportación de datos en formatos estándar (CSV, 
+SQL dump) para su integración con futuros sistemas institucionales. 
+8.6 Requerimientos Candidatos 
+Los siguientes requerimientos no serán implementados en el prototipo actual pero se identifican 
+como candidatos para futuras versiones del sistema: 
+RC-01: Integración con dispositivos GPS para el seguimiento en tiempo real de los móviles 
+policiales. 
+RC-02: Módulo de gestión de talleres mecánicos externos, incluyendo registro, asignación de 
+servicios y seguimiento de reparaciones. 
+RC-03: Módulo de emisión y seguimiento de órdenes de trabajo para los talleres externos. 
+RC-04: Módulo de control de stock e inventario de repuestos y suministros. 
+RC-05: Generación de reportes financieros detallados con desglose de costos por vehículo, por zona 
+y por tipo de servicio. 
+RC-06: Aplicación móvil para que los choferes reporten kilometraje y novedades directamente 
+desde el vehículo, eliminando la dependencia de la radio. 
+RC-07: Módulo de gestión de combustible y consumo, con registro de cargas y cálculo de 
+rendimiento por kilómetro. 
+PAGINA 
+2
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+9. Etapa de Análisis 
+En esta sección se presenta el análisis del sistema SIGMAVEP mediante la técnica de casos de uso 
+y diagramas de secuencia UML. Los requerimientos funcionales identificados en el TP1 (RF-00 a RF
+10) se materializan en casos de uso concretos, cada uno con su especificación detallada y su 
+diagrama de secuencia correspondiente. La trazabilidad entre requerimientos, casos de uso y 
+procesos de negocio (PN1-PN5) se mantiene a lo largo de todo el análisis. 
+Los diagramas en alta resolución pueden consultarse en: 
+https://github.com/Mateulard/SIGMAVEP/tree/main/docs/diagramas 
+9.1 Diagrama de Casos de Uso 
+El diagrama de casos de uso representa la funcionalidad del sistema SIGMAVEP desde la 
+perspectiva de sus actores. Se identificaron cuatro actores primarios (Operador de Central, 
+Administrador, Supervisor y Finanzas) y un actor secundario (Sistema, que genera alertas 
+automáticas). Los diez casos de uso (CU-00 a CU-09) cubren la totalidad de los requerimientos 
+funcionales del sistema, con relaciones de «include» hacia CU-00 (Autenticación) y una relación de 
+«extend» desde CU-01 hacia "Generar Alerta Automática" (RF-02). 
+PAGINA 
+2
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 11 — Diagrama de Casos de Uso SIGMAVEP. Fuente: Elaboración propia. 
+PAGINA 
+2
+9 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 3
+0 
+ 
+ 
+Actores del sistema: 
+Actor Tipo Descripción 
+Operador de Central Primario Recibe reportes de km y novedades 
+por radio, los registra en el sistema 
+Administrador Primario Gestiona móviles, tipos de 
+mantenimiento, usuarios y configura 
+el sistema 
+Supervisor Primario Registra km, gestiona alertas, 
+consulta historial y genera reportes 
+de su zona 
+Finanzas Primario Consulta historial, genera reportes y 
+consulta estado de flota para 
+planificación presupuestaria 
+Sistema Secundario Genera alertas automáticas cuando 
+se alcanzan umbrales de kilometraje 
+Relaciones entre casos de uso: 
+Todos los casos de uso (CU-01 a CU-09) incluyen («include») al caso de uso CU-00 (Autenticarse en 
+el sistema), garantizando que la validación de credenciales y permisos se ejecuta antes de cualquier 
+operación. El caso de uso CU-01 (Registrar Kilometraje) es extendido («extend») por "Generar 
+Alerta Automática" cuando el km actual alcanza o supera el umbral de algún tipo de 
+mantenimiento. 
+9.2 Especificación de Casos de Uso 
+CU-00: Autenticarse en el Sistema 
+Campo Detalle 
+Código CU-00 
+Nombre Autenticarse en el Sistema 
+RF asociado RF-00 
+Actor primario Usuario (Operador, Administrador, Supervisor, Finanzas) 
+Descripción Permite a un usuario ingresar al sistema mediante 
+username y contraseña, verificando sus credenciales y 
+asignándole los permisos correspondientes según su rol. 
+Precondiciones El usuario debe tener una cuenta activa creada 
+previamente por un Administrador. 
+Postcondiciones Si la autenticación es exitosa, el usuario accede al sistema 
+con los permisos de su rol. Si falla, se muestra un mensaje 
+de error. 
+Flujo principal: 
+1. El usuario inicia la aplicación y se muestra la pantalla de login. 
+2. El usuario ingresa su username y contraseña. 
+3. El sistema valida las credenciales contra la base de datos. 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 3
+1 
+ 
+4. El sistema verifica que la cuenta esté activa. 
+5. El sistema carga los permisos correspondientes al rol del usuario. 
+6. El sistema redirige al menú principal según el perfil del usuario. 
+Flujos alternativos: 
+FA-1: Credenciales incorrectas (en paso 3): El sistema muestra "Usuario o contraseña incorrectos" 
+y permite reintentar. Después de 3 intentos fallidos, la cuenta se bloquea temporalmente. 
+FA-2: Cuenta inactiva (en paso 4): El sistema muestra "Su cuenta ha sido desactivada. Contacte al 
+administrador." y no permite el acceso. 
+CU-01: Registrar Kilometraje 
+Campo Detalle 
+Código CU-01 
+Nombre Registrar Kilometraje 
+RF asociado RF-01, RF-02 
+Actor primario Operador de Central / Supervisor 
+Descripción Permite registrar el kilometraje reportado por el chofer 
+de un móvil, actualizando el valor en la BD y verificando 
+automáticamente si se alcanzan los umbrales de 
+mantenimiento preventivo. 
+Precondiciones El usuario está autenticado (CU-00). El móvil debe existir 
+y estar activo. 
+Postcondiciones El km del móvil se actualiza. Se genera un registro en el 
+historial. Si corresponde, se generan alertas automáticas. 
+Flujo principal: 
+1. El operador selecciona "Registrar Kilometraje". 
+2. El sistema solicita seleccionar un móvil (por patente o número interno). 
+3. El operador selecciona el móvil y se muestran los datos actuales. 
+4. El operador ingresa el nuevo kilometraje reportado. 
+5. El sistema valida que el km nuevo sea mayor o igual al km actual. 
+6. El sistema crea un registro en registro_kilometraje con km_anterior y km_nuevo. 
+7. El sistema actualiza el campo km_actual del móvil. 
+8. El sistema calcula la diferencia entre el km actual y el km del último servicio para cada tipo de 
+mantenimiento. 
+9. Si algún cálculo alcanza o supera el límite_km, el sistema genera automáticamente una alerta 
+"Pendiente". 
+10. El sistema muestra la confirmación del registro y las alertas generadas. 
+Flujos alternativos: 
+FA-1: Kilometraje menor al registrado (en paso 5): El sistema muestra "El kilometraje ingresado es 
+inferior al registrado. Verifique el dato." y no permite el registro. 
+FA-2: Móvil no encontrado (en paso 2): El sistema muestra "No se encontró un móvil con ese 
+identificador" y solicita reingresar. 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 3
+2 
+ 
+CU-02: Gestionar Alertas de Mantenimiento 
+Campo Detalle 
+Código CU-02 
+Nombre Gestionar Alertas de Mantenimiento 
+RF asociado RF-03 
+Actor primario Operador de Central / Supervisor 
+Descripción Permite visualizar las alertas de mantenimiento 
+pendientes y cambiar su estado a "Procesada" o 
+"Postergada", registrando el usuario y la fecha de 
+procesamiento. 
+Precondiciones El usuario está autenticado (CU-00). Deben existir alertas 
+generadas por el sistema. 
+Postcondiciones El estado de la alerta se actualiza. Se registra el usuario y 
+la fecha de procesamiento. 
+Flujo principal: 
+1. El operador accede al panel de alertas de mantenimiento. 
+2. El sistema muestra la lista de alertas pendientes ordenadas por fecha. 
+3. El operador selecciona una alerta y visualiza el detalle. 
+4. El operador selecciona la acción: "Procesar" o "Postergar". 
+5. Si procesa: el sistema cambia el estado a "Procesada", registra el usuario y la fecha actual. 
+6. Si posterga: el sistema solicita un motivo, cambia el estado a "Postergada", registra el usuario, la 
+fecha y las observaciones. 
+7. El sistema actualiza la alerta y actualiza la lista. 
+CU-03: Registrar Novedad 
+Campo Detalle 
+Código CU-03 
+Nombre Registrar Novedad 
+RF asociado RF-04 
+Actor primario Operador de Central / Supervisor 
+Descripción Permite registrar una novedad eventual (falla mecánica, 
+accidente, siniestro, vandalismo) asociada a un móvil, 
+con fecha, hora y kilometraje automáticos. Si la novedad 
+impide la circulación, permite cambiar el estado del móvil 
+a "Fuera de Servicio". 
+Precondiciones El usuario está autenticado (CU-00). El móvil debe existir 
+y estar activo. 
+Postcondiciones La novedad queda registrada. Si corresponde, el estado 
+del móvil cambia a "Fuera de Servicio". 
+Flujo principal: 
+1. El operador selecciona "Registrar Novedad". 
+2. El sistema solicita seleccionar un móvil. 
+3. El operador selecciona el tipo de novedad, ingresa la descripción y el kilometraje. 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+4. 
+5. 
+El 
+El 
+sistema 
+operador 
+crea 
+el 
+indica 
+registro 
+si 
+la 
+con 
+fecha 
+novedad 
+y 
+impide 
+hora 
+la 
+automáticas. 
+circulación. 
+6. Si impide circulación: el sistema cambia el estado del móvil a "Fuera de Servicio". 
+7. El sistema muestra la confirmación del registro y el estado actualizado del móvil. 
+CU-04: Consultar Historial de Móvil 
+Precondición: El usuario está autenticado en el sistema. 
+Postcondición: Se muestra el historial completo del móvil seleccionado. 
+Flujo principal: 
+1. El usuario selecciona "Consultar Historial". 
+2. El sistema solicita seleccionar un móvil (por patente o número interno). 
+3. El usuario ingresa el criterio de búsqueda. 
+4. El sistema busca el móvil y muestra sus datos básicos. 
+5. El sistema recupera y muestra el historial consolidado: alertas, novedades, servicios realizados y 
+registros de kilometraje. 
+6. El usuario puede aplicar filtros adicionales (rango de fechas, tipo de evento). 
+7. El sistema actualiza la vista con los resultados filtrados. 
+Flujos alternativos: 
+FA-1: Móvil no encontrado (en paso 3): El sistema muestra "No se encontró un móvil con ese 
+identificador" y solicita reingresar. 
+FA-2: Sin historial (en paso 5): El sistema muestra "El móvil no tiene registros de historial" y ofrece 
+realizar otras acciones. 
+Campo 
+Detalle 
+Código 
+Nombre 
+RF asociado 
+CU-04 
+Consultar Historial de Móvil 
+RF-05 
+Actor primario 
+Administrador, Supervisor, Finanzas 
+Descripción 
+Permite consultar el historial completo de un móvil: 
+alertas, novedades, servicios realizados y registros de 
+kilometraje, con posibilidad de aplicar filtros por fecha, 
+tipo de evento y estado. No modifica datos del sistema. 
+Precondiciones 
+El usuario está autenticado (CU-00). 
+Postcondiciones 
+Se ejecuta la operación solicitada sin afectar la integridad 
+de los datos. 
+CU-05: Administrar Móviles 
+Precondición: El usuario está autenticado con rol Administrador. 
+Postcondición: Se crea, modifica o desactiva un registro de móvil. 
+PAGINA 
+3
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Flujo principal: 
+1. El administrador selecciona "Administrar Móviles". 
+2. El sistema muestra la lista de móviles registrados. 
+3. El administrador selecciona la acción: "Alta", "Modificar" o "Desactivar". 
+4. Si es Alta: el sistema solicita los datos del móvil (patente, número interno, marca, modelo, año, 
+dependencia, zona). 
+5. El sistema valida que no exista un móvil con la misma patente o número interno. 
+6. El sistema crea el registro del móvil con estado "En servicio" y km_actual = 0. 
+7. El sistema muestra la confirmación del alta. 
+Flujos alternativos: 
+FA-1: Patente duplicada (en paso 5): El sistema muestra "Ya existe un móvil con esa patente" y no 
+permite el registro. 
+FA-2: Número interno duplicado (en paso 5): El sistema muestra "Ya existe un móvil con ese número 
+interno" y no permite el registro. 
+FA-3: Desactivar móvil con alertas pendientes (en paso 3): El sistema advierte que el móvil tiene 
+alertas pendientes y solicita confirmación antes de desactivar. 
+Campo 
+Detalle 
+Código 
+Nombre 
+RF asociado 
+CU-05 
+Administrar Móviles 
+RF-06 
+Actor primario 
+Administrador 
+Descripción 
+Permite gestionar el catálogo de móviles policiales: dar 
+de alta un nuevo móvil, modificar sus datos o desactivarlo 
+del sistema. Incluye validación de unicidad de patente y 
+número interno. Al desactivar, verifica si existen alertas 
+pendientes asociadas. 
+Precondiciones 
+El usuario está autenticado (CU-00). 
+Postcondiciones 
+Se ejecuta la operación solicitada sin afectar la integridad 
+de los datos. 
+CU-06: Administrar Tipos de Mantenimiento 
+Precondición: El usuario está autenticado con rol Administrador. 
+Postcondición: Se crea, modifica o elimina un tipo de mantenimiento. 
+Flujo principal: 
+1. El administrador selecciona "Administrar Tipos de Mantenimiento". 
+2. El sistema muestra la lista de tipos de mantenimiento registrados. 
+3. El administrador selecciona la acción: "Alta", "Modificar" o "Eliminar". 
+PAGINA 
+3
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+4. Si es Alta: el sistema solicita nombre del servicio, límite de kilometraje y descripción. 
+5. El sistema valida que no exista un tipo con el mismo nombre. 
+6. El sistema crea el registro del tipo de mantenimiento. 
+7. El sistema muestra la confirmación del alta. 
+Flujos alternativos: 
+FA-1: Nombre duplicado (en paso 5): El sistema muestra "Ya existe un tipo de mantenimiento con 
+ese nombre" y no permite el registro. 
+FA-2: Eliminar tipo con servicios realizados (en paso 3): El sistema muestra "No se puede eliminar 
+el tipo porque tiene servicios realizados asociados" y bloquea la eliminación. 
+Campo 
+Detalle 
+Código 
+CU-06 
+Nombre 
+Administrar Tipos de Mantenimiento 
+RF asociado 
+RF-07 
+Actor primario 
+Administrador 
+Descripción 
+Permite gestionar el catálogo de tipos de mantenimiento 
+preventivo: crear nuevos tipos, modificar el nombre, 
+límite de kilometraje y descripción, o eliminar tipos que 
+no tengan servicios realizados ni alertas asociadas. 
+Precondiciones 
+El usuario está autenticado (CU-00). 
+Postcondiciones 
+Se ejecuta la operación solicitada sin afectar la integridad 
+de los datos. 
+CU-07: Gestionar Usuarios 
+Precondición: El usuario está autenticado con rol Administrador. 
+Postcondición: Se crea, modifica o desactiva un usuario del sistema. 
+Flujo principal: 
+1. El administrador selecciona "Gestionar Usuarios". 
+2. El sistema muestra la lista de usuarios registrados. 
+3. El administrador selecciona la acción: "Alta", "Modificar" o "Desactivar". 
+4. Si es Alta: el sistema solicita nombre, apellido, username, contraseña y rol. 
+5. El sistema valida que no exista un usuario con el mismo username. 
+6. El sistema crea el registro de usuario con la contraseña hasheada. 
+7. El sistema muestra la confirmación del alta. 
+Flujos alternativos: 
+FA-1: Username duplicado (en paso 5): El sistema muestra "Ya existe un usuario con ese nombre 
+de usuario" y no permite el registro. 
+PAGINA 
+3
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+FA-2: Desactivar usuario con registros asociados (en paso 3): El sistema advierte que el usuario 
+tiene registros de kilometraje, alertas o novedades asociados y solicita confirmación. 
+Campo 
+Detalle 
+Código 
+CU-07 
+Nombre 
+Gestionar Usuarios 
+RF asociado 
+Actor primario 
+RF-08 
+Administrador 
+Descripción 
+Permite crear, modificar y desactivar cuentas de usuario 
+del sistema, asignando roles y estableciendo credenciales 
+de acceso. Las contraseñas se almacenan hasheadas con 
+SHA-256. 
+Precondiciones 
+El usuario está autenticado (CU-00). 
+Postcondiciones 
+Se ejecuta la operación solicitada sin afectar la integridad 
+de los datos. 
+CU-08: Generar Reportes 
+Precondición: El usuario está autenticado con rol Administrador o Finanzas. 
+Postcondición: Se genera un reporte con los datos solicitados. 
+Flujo principal: 
+1. El usuario selecciona "Generar Reportes". 
+2. El sistema muestra los tipos de reporte disponibles: estado de flota, alertas por zona, servicios 
+realizados, novedades por tipo. 
+3. El usuario selecciona el tipo de reporte. 
+4. El sistema solicita los filtros correspondientes (zona, rango de fechas, estado). 
+5. El usuario aplica los filtros deseados. 
+6. El sistema genera el reporte con los datos filtrados. 
+7. El sistema muestra el reporte en pantalla y ofrece la opción de imprimir. 
+Flujos alternativos: 
+FA-1: Sin datos para los filtros seleccionados (en paso 6): El sistema muestra "No hay datos para los 
+filtros seleccionados" y ofrece modificar los criterios. 
+Campo 
+Detalle 
+Código 
+CU-08 
+Nombre 
+Generar Reportes 
+RF asociado 
+Actor primario 
+RF-09 
+Administrador, Supervisor, Finanzas 
+Descripción 
+Permite generar reportes impresos o en pantalla con 
+información consolidada: móviles por zona y estado, 
+alertas procesadas, historial de servicios, novedades por 
+PAGINA 
+3
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+período. Los reportes pueden filtrarse por zona, 
+dependencia, rango de fechas y estado. 
+Precondiciones 
+El usuario está autenticado (CU-00). 
+Postcondiciones 
+Se ejecuta la operación solicitada sin afectar la integridad 
+de los datos. 
+CU-09: Consultar Estado de Flota 
+Precondición: El usuario está autenticado en el sistema. 
+Postcondición: Se muestra un resumen del estado actual de la flota. 
+Flujo principal: 
+1. El usuario selecciona "Consultar Estado de Flota". 
+2. El sistema calcula los indicadores actuales: total de móviles, móviles en servicio, fuera de servicio, 
+en reparación, alertas pendientes, promedio de kilometraje. 
+3. El sistema muestra el panel de estado con los indicadores calculados. 
+4. El usuario puede filtrar por zona o dependencia. 
+5. El sistema actualiza el panel con los datos filtrados. 
+Flujos alternativos: 
+FA-1: Sin móviles registrados (en paso 2): El sistema muestra "No hay móviles registrados en el 
+sistema" y sugiere registrar móviles primero. 
+Campo 
+Detalle 
+Código 
+CU-09 
+Nombre 
+Consultar Estado de Flota 
+RF asociado 
+RF-10 
+Actor primario 
+Administrador, Supervisor, Finanzas 
+Descripción 
+Muestra un panel de resumen con indicadores clave: 
+total de móviles, distribución por estado, alertas 
+pendientes, promedio de kilometraje y distribución por 
+zona. Permite filtrar por zona para ver el detalle de cada 
+una. 
+Precondiciones 
+El usuario está autenticado (CU-00). 
+Postcondiciones 
+Se ejecuta la operación solicitada sin afectar la integridad 
+de los datos. 
+9.3 Diagramas de Secuencia 
+Los diagramas de secuencia muestran la interacción dinámica entre los objetos del sistema para 
+cada caso de uso, siguiendo el patrón MVC (Modelo-Vista-Controlador) con la capa de acceso a 
+datos (DAO). Se incluyen los 10 diagramas correspondientes a los casos de uso CU-00 a CU-09. 
+PAGINA 
+3
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 12 — Diagrama de Secuencia CU-00: Autenticarse en el Sistema 
+PAGINA 
+3
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 13 — Diagrama de Secuencia CU-01: Registrar Kilometraje 
+PAGINA 
+3
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 14 — Diagrama de Secuencia CU-02: Gestionar Alertas 
+PAGINA 
+4
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 15 — Diagrama de Secuencia CU-03: Registrar Novedad 
+PAGINA 
+4
+1 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 16 — Diagrama de Secuencia CU-04: Consultar Historial 
+PAGINA 
+4
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+PAGINA 
+4
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 17 — Diagrama de Secuencia CU-05: Administrar Móviles 
+PAGINA 
+4
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 18 — Diagrama de Secuencia CU-06: Administrar Tipos de Mantenimiento 
+PAGINA 
+4
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 19 — Diagrama de Secuencia CU-07: Gestionar Usuarios 
+PAGINA 
+4
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 20 — Diagrama de Secuencia CU-08: Generar Reportes 
+PAGINA 
+4
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 21 — Diagrama de Secuencia CU-09: Consultar Estado de Flota 
+10. Etapa de Diseño 
+La etapa de diseño define la estructura del sistema a nivel de datos y de clases, estableciendo las 
+entidades, atributos, relaciones y restricciones que conforman el modelo relacional de la base de 
+datos y el modelo de clases del dominio. Se aplica el proceso unificado de desarrollo (PUD) en su 
+fase de diseño, donde los requerimientos del análisis se traducen en especificaciones técnicas que 
+guiarán la implementación. 
+PAGINA 
+4
+8 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 4
+9 
+ 
+10.1 Modelo Conceptual de Datos 
+A partir de los requerimientos funcionales del TP1 (RF-00 a RF-10), los procesos de negocio (PN1
+PN5) y la propuesta de solución, se identificaron 13 entidades del sistema agrupadas en tres 
+categorías: tablas de referencia (lookup), tablas maestras y tablas transaccionales. Las tablas de 
+referencia (zona, estado_movil, tipo_mantenimiento, estado_alerta, tipo_novedad, rol) almacenan 
+valores catalográficos que garantizan la integridad referencial y facilitan la extensibilidad. Las tablas 
+maestras (dependencia, usuario) representan las entidades organizativas. La tabla central (movil) 
+es la entidad principal del sistema, y las tablas transaccionales (registro_kilometraje, 
+servicio_realizado, alerta, novedad) registran la actividad operativa diaria. 
+# Entidad Categoría Descripción Origen 
+1 zona Referencia Zonas operativas de 
+la Policía Provincial PN5, RF-06 
+2 dependencia Maestra Dependencias 
+policiales dentro de 
+cada zona 
+PN5, RF-06 
+3 estado_movil Referencia Estados operativos 
+de un móvil PN1-PN5 
+4 movil Central Vehículos policiales 
+con todos sus datos PN1-PN5, RF-06 
+5 tipo_mantenimiento Referencia Tipos de servicio 
+preventivo con límite 
+de km 
+PN2, PN5, RF-07 
+6 servicio_realizado Transaccional Registro de servicios 
+efectivamente 
+realizados 
+PN2, RF-02 
+7 estado_alerta Referencia Estados posibles de 
+una alerta PN2, RF-03 
+8 alerta Transaccional Alertas generadas al 
+alcanzar umbrales PN2, RF-03 
+9 tipo_novedad Referencia Categorías de 
+novedades 
+eventuales 
+PN3, RF-04 
+10 novedad Transaccional Registro de 
+novedades por móvil PN3, RF-04 
+11 registro_kilometraje Transaccional Historial de 
+actualizaciones de 
+km 
+PN1, RF-01 
+12 rol Referencia Perfiles de acceso del 
+sistema RF-00, RNF-10 
+13 usuario Maestra Usuarios con 
+credenciales y rol RF-00, RF-08 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 5
+0 
+ 
+10.2 Definición de Entidades y Atributos 
+A continuación se presenta la definición detallada de cada entidad con sus atributos, tipos de dato 
+y restricciones. La definición completa del diccionario de datos se encuentra en la sección 5.1 de 
+este documento. 
+Tabla: zona 
+Atributo Tipo Restricción 
+id_zona INT PK, AUTO_INCREMENT 
+nombre VARCHAR(100) NOT NULL, UNIQUE 
+sede VARCHAR(150) NOT NULL 
+ 
+Tabla: dependencia 
+Atributo Tipo Restricción 
+id_dependencia INT PK, AUTO_INCREMENT 
+nombre VARCHAR(150) NOT NULL 
+id_zona INT FK → zona 
+ 
+Tabla: estado_movil 
+Atributo Tipo Restricción 
+id_estado INT PK, AUTO_INCREMENT 
+nombre VARCHAR(50) NOT NULL, UNIQUE 
+ 
+Tabla: movil 
+Atributo Tipo Restricción 
+id_movil INT PK, AUTO_INCREMENT 
+numero_interno VARCHAR(20) NOT NULL, UNIQUE 
+patente VARCHAR(10) NOT NULL, UNIQUE 
+marca VARCHAR(50) NOT NULL 
+modelo VARCHAR(50) NOT NULL 
+anio INT NOT NULL 
+km_actual INT NOT NULL, DEFAULT 0 
+id_dependencia INT FK → dependencia 
+id_estado INT FK → estado_movil, DEFAULT 1 
+fecha_alta DATE NOT NULL 
+activo BOOLEAN NOT NULL, DEFAULT TRUE 
+ 
+Tabla: tipo_mantenimiento 
+Atributo Tipo Restricción 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 5
+1 
+ 
+id_tipo_mantenimiento INT PK, AUTO_INCREMENT 
+nombre VARCHAR(100) NOT NULL 
+limite_km INT NOT NULL 
+descripcion TEXT  
+ 
+Tabla: servicio_realizado 
+Atributo Tipo Restricción 
+id_servicio INT PK, AUTO_INCREMENT 
+id_movil INT FK → movil 
+id_tipo_mantenimiento INT FK → tipo_mantenimiento 
+km_servicio INT NOT NULL 
+fecha_servicio DATETIME NOT NULL 
+observaciones TEXT  
+id_usuario INT FK → usuario, NULL 
+ 
+Tabla: estado_alerta 
+Atributo Tipo Restricción 
+id_estado_alerta INT PK, AUTO_INCREMENT 
+nombre VARCHAR(50) NOT NULL, UNIQUE 
+ 
+Tabla: alerta 
+Atributo Tipo Restricción 
+id_alerta INT PK, AUTO_INCREMENT 
+id_movil INT FK → movil 
+id_tipo_mantenimiento INT FK → tipo_mantenimiento 
+id_estado_alerta INT FK → estado_alerta, DEFAULT 1 
+km_disparo INT NOT NULL 
+fecha_generacion DATETIME NOT NULL 
+observaciones TEXT  
+id_usuario INT FK → usuario, NULL 
+fecha_procesamiento DATETIME NULL 
+ 
+Tabla: tipo_novedad 
+Atributo Tipo Restricción 
+id_tipo_novedad INT PK, AUTO_INCREMENT 
+nombre VARCHAR(100) NOT NULL 
+descripcion TEXT  
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 5
+2 
+ 
+ 
+Tabla: novedad 
+Atributo Tipo Restricción 
+id_novedad INT PK, AUTO_INCREMENT 
+id_movil INT FK → movil 
+id_tipo_novedad INT FK → tipo_novedad 
+descripcion TEXT NOT NULL 
+km_novedad INT NOT NULL 
+fecha_hora DATETIME NOT NULL 
+id_usuario INT FK → usuario 
+ 
+Tabla: registro_kilometraje 
+Atributo Tipo Restricción 
+id_registro INT PK, AUTO_INCREMENT 
+id_movil INT FK → movil 
+km_anterior INT NOT NULL 
+km_nuevo INT NOT NULL, CHECK >= km_anterior 
+fecha_hora DATETIME NOT NULL 
+id_usuario INT FK → usuario 
+ 
+Tabla: rol 
+Atributo Tipo Restricción 
+id_rol INT PK, AUTO_INCREMENT 
+nombre VARCHAR(50) NOT NULL, UNIQUE 
+descripcion TEXT  
+ 
+Tabla: usuario 
+Atributo Tipo Restricción 
+id_usuario INT PK, AUTO_INCREMENT 
+nombre VARCHAR(100) NOT NULL 
+apellido VARCHAR(100) NOT NULL 
+username VARCHAR(50) NOT NULL, UNIQUE 
+password VARCHAR(255) NOT NULL 
+id_rol INT FK → rol 
+activo BOOLEAN NOT NULL, DEFAULT TRUE 
+fecha_creacion DATETIME NOT NULL 
+ 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 5
+3 
+ 
+10.3 Relaciones y Cardinalidades 
+Relación Cardinalidad Descripción 
+zona → dependencia 1:N Una zona contiene muchas 
+dependencias 
+dependencia → movil 1:N Una dependencia tiene muchos 
+móviles asignados 
+estado_movil → movil 1:N Un estado aplica a muchos móviles 
+movil → servicio_realizado 1:N Un móvil tiene muchos servicios 
+realizados 
+tipo_mantenimiento → 
+servicio_realizado 1:N Un tipo de mantenimiento se aplica 
+en muchos servicios 
+movil → alerta 1:N Un móvil puede tener muchas alertas 
+tipo_mantenimiento → alerta 1:N Un tipo de mantenimiento dispara 
+muchas alertas 
+estado_alerta → alerta 1:N Un estado de alerta clasifica muchas 
+alertas 
+usuario → alerta 1:N Un usuario procesa muchas alertas 
+movil → novedad 1:N Un móvil tiene muchas novedades 
+registradas 
+tipo_novedad → novedad 1:N Un tipo clasifica muchas novedades 
+usuario → novedad 1:N Un usuario registra muchas 
+novedades 
+movil → registro_kilometraje 1:N Un móvil tiene muchos registros de 
+km 
+usuario → registro_kilometraje 1:N Un usuario registra muchos 
+kilometrajes 
+rol → usuario 1:N Un rol asigna a muchos usuarios 
+usuario → servicio_realizado 1:N Un usuario registra muchos servicios 
+realizados 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+10.4 Diagrama Entidad-Relación 
+Figura 22 — Diagrama Entidad-Relación de la base de datos SIGMAVEP. Fuente: Elaboración propia. 
+10.5 Diagrama de Clases 
+Figura 23 — Diagrama de Clases del modelo de dominio SIGMAVEP. Fuente: Elaboración propia. 
+10.6 Justificación de Decisiones de Diseño 
+Servicio_realizado como tabla separada: Para calcular si un móvil requiere servicio preventivo, el 
+sistema necesita saber el km del último servicio realizado para cada tipo de mantenimiento. La 
+fórmula es: km_actual - km_ultimo_servicio >= limite_km. Sin esta tabla, no habría forma de 
+rastrear cuándo se realizó el último servicio ni generar alertas precisas. 
+PAGINA 
+5
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Tablas lookup (estado_movil, estado_alerta, tipo_novedad, rol): Garantizan la integridad 
+referencial al impedir asignar estados inexistentes, facilitan la extensibilidad (agregar un nuevo 
+estado no requiere alterar la estructura) y cumplen con la 3FN al evitar valores repetidos en las 
+tablas transaccionales. 
+Registro_kilometraje como tabla separada: El sistema requiere un historial completo de 
+actualizaciones de kilometraje para auditoría y trazabilidad. Si solo se actualizara el campo 
+km_actual, se perdería el registro de quién, cuándo y qué valor anterior tenía cada actualización, 
+imposibilitando la consulta del historial (PN4). 
+Alerta.id_usuario y alerta.fecha_procesamiento son NULL: Una alerta recién generada 
+automáticamente no ha sido procesada por ningún usuario. Estos campos se completan cuando el 
+operador cambia el estado de la alerta a "Procesada" o "Postergada". 
+Servicio_realizado con id_usuario: Se agregó el campo id_usuario a la tabla servicio_realizado para 
+mantener la trazabilidad completa del sistema. Así como en registro_kilometraje y novedad se 
+registra quién realizó la carga, en servicio_realizado es necesario saber qué usuario registró el 
+servicio de mantenimiento, lo cual es consistente con los requerimientos de auditoría y las normas 
+de gestión de activos (ISO 55000). Sin este campo, no sería posible determinar quién registró una 
+intervención específica sobre un móvil. 
+11. Etapa de Implementación 
+Los diagramas en alta resolución pueden consultarse en: 
+https://github.com/Mateulard/SIGMAVEP/tree/main/docs/diagramas 
+El código fuente completo de los scripts y capturas SQL se encuentra 
+disponible en: https://github.com/Mateulard/SIGMAVEP/tree/main/sql 
+La etapa de implementación comprende la creación de la base de datos MySQL, la definición de las 
+tablas con sus restricciones y la inserción de datos de ejemplo. Los scripts SQL se organizan en tres 
+archivos 
+secuenciales 
+que 
+deben 
+ejecutarse 
+en 
+orden: 01_create_database.sql, 
+02_create_tables.sql y 03_insert_data.sql. Todo el código fuente se encuentra disponible en el 
+repositorio de GitHub del proyecto. 
+11.1 Script de Creación de la Base de Datos 
+El script 01_create_database.sql crea la base de datos SIGMAVEP con el conjunto de caracteres 
+utf8mb4 y la collation utf8mb4_spanish2_ci, que garantiza el soporte completo de caracteres 
+españoles (acentos, ñ) y el ordenamiento correcto según las reglas del idioma español. La cláusula 
+IF NOT EXISTS permite re-ejecutar el script sin error. 
+PAGINA 
+5
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+11.2 Script de Creación de Tablas 
+El script 02_create_tables.sql crea las 13 tablas del sistema en el orden correcto, respetando las 
+dependencias de claves foráneas. Primero se crean las tablas de referencia (sin dependencias), 
+luego las tablas maestras (que dependen de las de referencia), después la tabla central (movil) y 
+finalmente las tablas transaccionales. Además, se crean 5 índices adicionales para optimizar las 
+consultas más frecuentes. 
+Restricciones implementadas: 
+Se agregó el campo id_usuario (FK → usuario, ON DELETE SET NULL) a la tabla servicio_realizado 
+para garantizar la trazabilidad de quién registró cada servicio de mantenimiento, consistente con 
+las tablas registro_kilometraje y novedad que también registran el usuario responsable. 
+Restricción 
+Tablas afectadas 
+Descripción 
+UNIQUE 
+zona.nombre, estado_movil.nombre, 
+estado_alerta.nombre, rol.nombre, 
+movil.numero_interno, 
+movil.patente, usuario.username 
+Evita duplicados 
+NOT NULL 
+Todos los campos obligatorios 
+DEFAULT 
+Garantiza integridad de datos 
+movil.km_actual=0, 
+movil.id_estado=1, 
+alerta.id_estado_alerta=1, 
+usuario.activo=TRUE 
+Valores por defecto coherentes 
+CHECK 
+registro_kilometraje: km_nuevo >= 
+km_anterior 
+Impide registrar km menor al 
+anterior 
+FK ON DELETE RESTRICT 
+Todas las FK transaccionales 
+Impide 
+referenciados 
+borrar 
+registros 
+FK ON DELETE SET NULL 
+alerta.id_usuario 
+Si se elimina un usuario, la alerta 
+pierde la referencia 
+FK ON UPDATE CASCADE 
+Todas las FK 
+Propaga 
+cambios 
+automáticamente 
+de 
+PK 
+11.3 Script de Inserción de Datos 
+El script 03_insert_data.sql carga datos de ejemplo realistas para el contexto policial: 3 zonas 
+operativas, 9 dependencias, 6 tipos de mantenimiento preventivo, 15 móviles con distintos 
+estados, 6 usuarios con roles diferenciados, 23 registros de kilometraje, 31 servicios realizados, 32 
+alertas (16 procesadas, 2 postergadas y 14 pendientes) y 11 novedades eventuales. Las contraseñas 
+de los usuarios se almacenan como hash SHA-256. 
+12. Etapa de Pruebas 
+La etapa de pruebas valida que la base de datos implementada cumple con todas las restricciones 
+definidas y que los datos reflejan correctamente las reglas de negocio del sistema. Se diseñaron 10 
+PAGINA 
+5
+6 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 5
+7 
+ 
+grupos de pruebas organizadas por tipo de validación, con un total de más de 50 casos de prueba 
+individuales. 
+12.1 Plan de Pruebas 
+Prueba Tipo Casos Objetivo 
+Prueba 1 Verificación 10 consultas Confirmar que los datos se 
+insertaron correctamente 
+Prueba 2 UNIQUE 6 casos negativos Verificar que no se 
+permitan valores 
+duplicados 
+Prueba 3 FK 7 casos negativos Verificar integridad 
+referencial al insertar 
+Prueba 4 CHECK 2 casos Verificar que km_nuevo >= 
+km_anterior 
+Prueba 5 NOT NULL 4 casos negativos Verificar campos 
+obligatorios 
+Prueba 6 DELETE RESTRICT 6 casos negativos Verificar que no se puedan 
+borrar registros 
+referenciados 
+Prueba 7 Inserción/Borrado 8 casos positivos Verificar flujo completo de 
+alta y baja 
+Prueba 8 UPDATE CASCADE 1 verificación Confirmar la restricción 
+CASCADE 
+Prueba 9 Lógica de negocio 4 consultas Validar consistencia 
+semántica de los datos 
+Prueba 10 Índices 3 verificaciones Confirmar que los índices 
+fueron creados 
+12.2 Detalle de las Pruebas 
+Prueba 2 — Restricción UNIQUE (6 casos que deben FALLAR): Se intentan insertar registros con 
+patente duplicada, número interno duplicado, username duplicado, nombre de zona duplicado, 
+nombre de estado duplicado y nombre de rol duplicado. En todos los casos, MySQL debe rechazar 
+la inserción con un error de "Duplicate entry". 
+Prueba 3 — Restricción FOREIGN KEY (7 casos que deben FALLAR): Se intentan insertar registros 
+con claves foráneas que referencian a registros inexistentes (id_dependencia=999, id_estado=999, 
+id_zona=999, id_rol=999, id_movil=999, id_tipo_novedad=999, id_usuario=999). En todos los 
+casos, MySQL debe rechazar la inserción con un error de "Cannot add or update a child row". 
+Prueba 4 — Restricción CHECK: Se verifica que no se pueda insertar un registro de kilometraje con 
+km_nuevo menor a km_anterior (debe fallar) y que sí se permita cuando km_nuevo es igual a 
+km_anterior (caso límite válido). El caso límite se inserta, verifica y luego se elimina para no 
+contaminar los datos. 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Prueba 6 — DELETE con RESTRICT (6 casos que deben FALLAR): Se intentan borrar registros que son 
+referenciados por otras tablas: una zona con dependencias, una dependencia con móviles, un 
+estado con móviles asociados, un tipo de mantenimiento con servicios realizados, un usuario que 
+registró novedades y un móvil con alertas asociadas. En todos los casos, MySQL debe bloquear la 
+eliminación. 
+Prueba 7 — Inserción y borrado exitoso: Se insertan registros en tablas sin dependencias 
+(tipo_mantenimiento, estado_alerta, tipo_novedad, zona) y luego se eliminan, verificando que la 
+BD queda en su estado original. Esto demuestra el flujo completo de alta y baja sin violar 
+restricciones. 
+Prueba 8 — Actualización con CASCADE: Se verifica que la restricción ON UPDATE CASCADE definida 
+en todas las claves foráneas propaga correctamente los cambios de clave primaria. Para esta 
+prueba, se inserta una zona de prueba (id_zona auto-generado), una dependencia asociada a esa 
+zona, y luego se modifica la clave primaria de la zona. El cambio debe reflejarse automáticamente 
+en el campo id_zona de la dependencia. Tras la verificación, se eliminan los registros de prueba 
+para restaurar el estado original. Nota: En producción, la actualización de claves primarias no es 
+una práctica recomendada; esta prueba se realiza únicamente para validar la restricción definida. 
+Prueba 9 — Lógica de negocio: Se valida que los móviles fuera de servicio tengan novedades 
+registradas, que las alertas pendientes no tengan usuario asignado, que las alertas procesadas 
+tengan usuario y fecha, y que los km de los servicios realizados sean coherentes con el km actual 
+de cada móvil. 
+Procedere a subir algunas captura al documento Word para no sobrecargar el Word con capturas 
+de pantalla pero todas las capturas del proceso se encuentran en  
+El código fuente completo de los scripts y capturas SQL se encuentra 
+disponible en: https://github.com/Mateulard/SIGMAVEP/tree/main/sql 
+PAGINA 
+5
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 24 — Creacion de la base de datos. Fuente: Elaboración propia. 
+Figura 25 — Creacion de tablas parte 1. Fuente: Elaboración propia. 
+PAGINA 
+5
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 26 — Inserts parte 1. Fuente: Elaboración propia. 
+PAGINA 
+6
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 27 — Prueba parte 1. Fuente: Elaboración propia. 
+Figura 28 — Consultas A. Fuente: Elaboración propia. 
+13. Definición de Base de Datos 
+13.1 Diccionario de Datos 
+El diccionario de datos documenta en detalle cada tabla de la base de datos SIGMAVEP, 
+especificando para cada campo su tipo de dato, longitud, si es clave primaria o foránea, si admite 
+valores nulos, si tiene restricción de unicidad, su valor por defecto y una descripción funcional. Las 
+13 tablas se presentan a continuación. 
+Tabla: zona 
+Campo 
+Tipo 
+Long. 
+PK/FK 
+Nulo 
+Único 
+Default 
+id_zona 
+INT 
+— 
+PK 
+NO 
+Descripción 
+SI 
+nombre 
+VARCHAR(100) 100 
+— 
+NO 
+SI 
+AUTO_INCREMENT 
+— 
+Identificador 
+único de la 
+zona 
+Nombre de 
+la zona (ej: 
+Zona 1 - 
+Rosario) 
+sede 
+VARCHAR(150) 
+150 
+— 
+NO 
+NO 
+— 
+Ciudad sede 
+de la zona 
+PAGINA 
+6
+1 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 6
+2 
+ 
+ 
+Tabla: dependencia 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_dependencia INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+nombre VARCHAR(150) 150 — NO NO — Nombre de 
+la 
+dependencia 
+id_zona INT — FK→zona NO NO — Zona a la que 
+pertenece 
+ 
+ 
+ 
+ 
+Tabla: estado_movil 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_estado INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+nombre VARCHAR(50) 50 — NO SI — Nombre del 
+estado 
+ 
+Tabla: movil 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_movil INT — PK NO SI AUTO_INCREMENT Identificador 
+único del 
+móvil 
+numero_interno VARCHAR(20) 20 — NO SI — Número 
+interno 
+institucional 
+patente VARCHAR(10) 10 — NO SI — Patente del 
+vehículo 
+marca VARCHAR(50) 50 — NO NO — Marca del 
+vehículo 
+modelo VARCHAR(50) 50 — NO NO — Modelo del 
+vehículo 
+anio INT — — NO NO — Año de 
+fabricación 
+km_actual INT — — NO NO 0 Kilometraje 
+actual 
+registrado 
+id_dependencia INT — FK→dep. NO NO — Dependencia 
+asignada 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 6
+3 
+ 
+id_estado INT — FK→est. NO NO 1 Estado 
+operativo 
+actual 
+fecha_alta DATE — — NO NO — Fecha de 
+registro en el 
+sistema 
+activo BOOLEAN — — NO NO TRUE Indica si está 
+activo 
+ 
+Tabla: tipo_mantenimiento 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_tipo_mantenimiento INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+nombre VARCHAR(100) 100 — NO NO — Nombre del 
+servicio 
+preventivo 
+limite_km INT — — NO NO — Intervalo de 
+km para el 
+servicio 
+descripcion TEXT — — SI NO — Descripción 
+detallada 
+ 
+Tabla: servicio_realizado 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_servicio INT — PK NO SI AUTO_INCREMEN
+T Identificador 
+único 
+id_movil INT — FK→movi
+l NO NO — Móvil al que se 
+realizó el 
+servicio 
+id_tipo_mantenimient
+o INT — FK→t.m. NO NO — Tipo de 
+mantenimient
+o realizado 
+km_servicio INT — — NO NO — Km del móvil al 
+momento del 
+servicio 
+fecha_servicio DATETIM
+E — — NO NO — Fecha y hora 
+del servicio 
+observaciones TEXT — — SI NO — Observaciones 
+del servicio 
+id_usuario INT — FK→usu. SI NO — Usuario que 
+registró el 
+servicio 
+ 
+Tabla: estado_alerta 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 6
+4 
+ 
+id_estado_alerta INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+nombre VARCHAR(50) 50 — NO SI — Nombre del 
+estado 
+ 
+Tabla: alerta 
+Campo Tipo Long
+. PK/FK Nul
+o Únic
+o Default Descripción 
+id_alerta INT — PK NO SI AUTO_INCREMEN
+T Identificador 
+único de la alerta 
+id_movil INT — FK→movi
+l NO NO — Móvil que generó 
+la alerta 
+id_tipo_mantenimient
+o INT — FK→t.m. NO NO — Tipo de 
+mantenimiento 
+que disparó 
+id_estado_alerta INT — FK→e.a. NO NO 1 Estado actual de la 
+alerta 
+km_disparo INT — — NO NO — Km al momento 
+de generarse 
+fecha_generacion DATETIM
+E — — NO NO — Fecha de 
+generación 
+automática 
+observaciones TEXT — — SI NO — Observaciones al 
+procesar/posterga
+r 
+id_usuario INT — FK→usu. SI NO — Usuario que 
+procesó (null si 
+pendiente) 
+fecha_procesamiento DATETIM
+E — — SI NO — Fecha de 
+procesamiento 
+ 
+Tabla: tipo_novedad 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_tipo_novedad INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+nombre VARCHAR(100) 100 — NO NO — Nombre del 
+tipo de 
+novedad 
+descripcion TEXT — — SI NO — Descripción 
+de la 
+categoría 
+ 
+Tabla: novedad 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 6
+5 
+ 
+id_novedad INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+id_movil INT — FK→movil NO NO — Móvil 
+asociado 
+id_tipo_novedad INT — FK→t.n. NO NO — Tipo/categoría 
+de la novedad 
+descripcion TEXT — — NO NO — Descripción 
+detallada del 
+evento 
+km_novedad INT — — NO NO — Km del móvil 
+al momento 
+del evento 
+fecha_hora DATETIME — — NO NO — Fecha y hora 
+del registro 
+id_usuario INT — FK→usu. NO NO — Usuario que 
+registró la 
+novedad 
+ 
+Tabla: registro_kilometraje 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_registro INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+id_movil INT — FK→movil NO NO — Móvil 
+actualizado 
+km_anterior INT — — NO NO — Kilometraje 
+previo 
+km_nuevo INT — — NO NO — Nuevo 
+kilometraje 
+reportado 
+fecha_hora DATETIME — — NO NO — Fecha y hora 
+de la 
+actualización 
+id_usuario INT — FK→usu. NO NO — Usuario que 
+realizó el 
+registro 
+ 
+Tabla: rol 
+Campo Tipo Long. PK/FK Nulo Único Default Descripción 
+id_rol INT — PK NO SI AUTO_INCREMENT Identificador 
+único 
+nombre VARCHAR(50) 50 — NO SI — Nombre del 
+rol 
+descripcion TEXT — — SI NO — Descripción 
+de permisos 
+ 
+Tabla: usuario 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Campo 
+Tipo 
+Long. 
+PK/FK 
+Nulo 
+Único 
+Default 
+id_usuario 
+Descripción 
+INT 
+— 
+PK 
+NO 
+SI 
+nombre 
+VARCHAR(100) 100 
+— 
+NO 
+AUTO_INCREMENT 
+NO 
+— 
+Identificador 
+único 
+Nombre del 
+usuario 
+apellido 
+VARCHAR(100) 
+100 
+— 
+NO 
+NO 
+username 
+VARCHAR(50) 
+50 
+— 
+NO 
+— 
+SI 
+— 
+Apellido del 
+usuario 
+Nombre de 
+usuario para 
+login 
+password 
+VARCHAR(255) 
+255 
+— 
+NO 
+NO 
+id_rol 
+INT 
+— 
+FK→rol 
+NO 
+— 
+NO 
+— 
+Contraseña 
+hasheada 
+(SHA-256) 
+Rol asignado 
+al usuario 
+activo 
+BOOLEAN 
+— 
+— 
+NO 
+NO 
+fecha_creacion DATETIME 
+— 
+— 
+NO 
+TRUE 
+NO 
+— 
+Indica 
+si 
+puede 
+acceder al 
+sistema 
+Fecha 
+de 
+creación del 
+usuario 
+13.2 Análisis de Normalización 
+Se demuestra a continuación que el modelo relacional propuesto cumple con las tres primeras 
+formas normales (1FN, 2FN, 3FN), de acuerdo con los principios establecidos por Codd (1970) y la 
+bibliografía de referencia (Silberschatz, Korth y Sudarshan, 2019; Kendall y Kendall, 2011). 
+Primera Forma Normal (1FN) 
+Todo atributo debe ser atómico (indivisible). No se permiten atributos multivaluados, compuestos 
+ni orden implícito. En el modelo SIGMAVEP, todos los atributos de las 13 tablas son atómicos. Se 
+destacan las siguientes decisiones de diseño: numero_interno y patente son campos separados (no 
+un campo compuesto "identificación"); marca y modelo son campos independientes; nombre y 
+apellido del usuario están separados; km_anterior y km_nuevo son valores enteros 
+independientes. Todas las tablas cumplen la 1FN. 
+Segunda Forma Normal (2FN) 
+La tabla debe estar en 1FN y todo atributo no clave debe depender funcionalmente de la clave 
+primaria completa. Dado que todas las tablas utilizan claves primarias simples (un solo campo id_* 
+AUTO_INCREMENT), no existen dependencias parciales. En consecuencia, toda tabla que cumple 
+la 1FN con clave primaria simple cumple automáticamente la 2FN. Adicionalmente, se verificó que 
+ninguna tabla requiere claves compuestas: un mismo móvil puede generar múltiples alertas del 
+mismo tipo a lo largo del tiempo, por lo que id_alerta debe ser independiente; el mismo 
+razonamiento aplica para servicio_realizado, novedad y registro_kilometraje. 
+PAGINA 
+6
+6 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 6
+7 
+ 
+Tercera Forma Normal (3FN) 
+La tabla debe estar en 2FN y ningún atributo no clave debe depender funcionalmente de otro 
+atributo no clave (no dependencias transitivas). Se analizaron las posibles dependencias transitivas 
+en cada tabla: en la tabla movil, el nombre del estado (por ejemplo, "En servicio") depende 
+funcionalmente de id_estado, no de id_movil; sin id_estado como FK apuntando a la tabla lookup 
+estado_movil, el nombre del estado sería un atributo no clave que depende de otro atributo no 
+clave, violando la 3FN. Por ello se creó la tabla estado_movil como tabla lookup. El mismo análisis 
+aplica para alerta, donde el nombre del estado_alerta depende de id_estado_alerta, y para 
+novedad, donde el nombre del tipo_novedad depende de id_tipo_novedad. En cada caso, la 
+existencia de tablas lookup elimina la dependencia transitiva. Adicionalmente, en la tabla movil, la 
+zona a la que pertenece un móvil no se almacena directamente (lo que crearía una dependencia 
+transitiva movil → dependencia → zona), sino que se accede por FK a través de la relación movil → 
+dependencia → zona. Todas las tablas cumplen la 3FN. 
+Tabla 1FN 2FN 3FN Observación 
+zona ✓ ✓ ✓ PK simple, sin 
+dependencias 
+transitivas 
+dependencia ✓ ✓ ✓ PK simple, zona 
+accesible por FK 
+estado_movil ✓ ✓ ✓ Tabla lookup 
+movil ✓ ✓ ✓ Campos atómicos, 
+zona por FK transitiva 
+tipo_mantenimiento ✓ ✓ ✓ PK simple, sin 
+dependencias 
+transitivas 
+servicio_realizado ✓ ✓ ✓ PK simple, 
+referencias por FK 
+estado_alerta ✓ ✓ ✓ Tabla lookup 
+alerta ✓ ✓ ✓ PK simple, nombres 
+por FK 
+tipo_novedad ✓ ✓ ✓ Tabla lookup 
+novedad ✓ ✓ ✓ PK simple, tipo 
+referenciado por FK 
+registro_kilometraje ✓ ✓ ✓ km_anterior y 
+km_nuevo 
+independientes 
+rol ✓ ✓ ✓ Tabla lookup 
+usuario ✓ ✓ ✓ nombre/apellido 
+atómicos, rol por FK 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+14. Presentación de Consultas SQL 
+Se presentan las consultas SQL más representativas del sistema, organizadas en cuatro categorías: 
+consultas básicas, consultas con JOIN, consultas agregadas y consultas de negocio. Además, se 
+incluyen ejemplos de inserción y borrado de registros. El script completo con las 47 operaciones 
+SQL se encuentra en el archivo 05_consultas.sql del repositorio GitHub. 
+14.1 Consultas Básicas 
+Las consultas básicas utilizan sentencias SELECT con cláusulas WHERE y ORDER BY para filtrar y 
+ordenar datos. Se incluyen 8 consultas que cubren: listado de móviles activos, filtrado por marca, 
+móviles con alto kilometraje, filtrado por año, tipos de mantenimiento con límite bajo, catálogo de 
+tipos de novedad, roles del sistema y usuarios activos. 
+Ejemplo — Móviles con más de 50.000 km: 
+SELECT id_movil, numero_interno, patente, marca, modelo, km_actual FROM movil WHERE 
+km_actual > 50000 AND activo = TRUE ORDER BY km_actual DESC; 
+14.2 Consultas con JOIN 
+Las consultas con JOIN combinan datos de múltiples tablas para proporcionar vistas completas. Se 
+incluyen 8 consultas que cubren: móviles con dependencia y zona, móviles con estado operativo, 
+alertas con detalle completo, novedades con usuario, servicios realizados con detalle, registros de 
+kilometraje con usuario, usuarios con rol y dependencias con zona. 
+Ejemplo — Alertas con detalle completo: 
+SELECT a.id_alerta, m.numero_interno, m.patente, tm.nombre AS tipo_mantenimiento, 
+ea.nombre AS estado_alerta, a.km_disparo, a.fecha_generacion FROM alerta a INNER JOIN movil 
+m ON a.id_movil = m.id_movil INNER JOIN tipo_mantenimiento tm ON a.id_tipo_mantenimiento = 
+tm.id_tipo_mantenimiento INNER JOIN estado_alerta ea ON a.id_estado_alerta = 
+ea.id_estado_alerta ORDER BY a.fecha_generacion DESC; 
+14.3 Consultas Agregadas 
+Las consultas agregadas utilizan funciones COUNT, AVG, SUM, MIN, MAX con GROUP BY para 
+obtener indicadores estadísticos. Se incluyen 10 consultas: cantidad de móviles por zona, por 
+estado, promedio de km por zona, cantidad de alertas por estado, novedades por tipo, móviles con 
+más alertas pendientes, servicios por tipo, registros de km por móvil, usuarios por rol y km 
+recorridos por zona. 
+Ejemplo — Cantidad de móviles por estado: 
+PAGINA 
+6
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+SELECT e.nombre AS estado, COUNT(m.id_movil) AS cantidad FROM estado_movil e INNER JOIN 
+movil m ON e.id_estado = m.id_estado WHERE m.activo = TRUE GROUP BY e.nombre ORDER BY 
+cantidad DESC; 
+14.4 Consultas de Negocio 
+Las consultas de negocio responden a las necesidades operativas del sistema. Se incluyen 10 
+consultas: móviles que requieren servicio, historial completo de un móvil (UNION ALL), alertas 
+pendientes por zona, móviles fuera de servicio con motivo, último servicio por móvil y tipo, móviles 
+con más novedades, panel de estado de flota, búsqueda por patente, historial de kilometraje y 
+móviles sin servicios registrados. 
+Ejemplo — Móviles que requieren servicio (alertas pendientes): 
+SELECT m.numero_interno, m.patente, m.km_actual, tm.nombre AS servicio_requerido, 
+(m.km_actual - a.km_disparo) AS km_excedido, d.nombre AS dependencia, z.nombre AS zona 
+FROM alerta a INNER JOIN movil m ON a.id_movil = m.id_movil INNER JOIN tipo_mantenimiento 
+tm ON a.id_tipo_mantenimiento = tm.id_tipo_mantenimiento INNER JOIN dependencia d ON 
+m.id_dependencia = d.id_dependencia INNER JOIN zona z ON d.id_zona = z.id_zona WHERE 
+a.id_estado_alerta = 1 ORDER BY a.fecha_generacion ASC; 
+14.5 Inserción y Borrado de Registros 
+Se incluyen ejemplos de operaciones de alta (INSERT), modificación (UPDATE) y baja (DELETE) de 
+registros. Las inserciones de la sección E se revierten en la sección F, de modo que la base de datos 
+queda en su estado original después de ejecutar el script completo. Esto permite re-ejecutar el 
+script sin errores de datos duplicados. Se demuestra: registro de kilometraje + actualización de 
+km_actual, generación de alerta, registro de novedad, procesamiento de alerta, registro de servicio 
+realizado y alta de nuevo móvil. 
+15. Definiciones de Comunicación 
+En esta sección se definen los aspectos de comunicación del sistema SIGMAVEP, incluyendo la 
+topología de red, los protocolos utilizados en cada capa del modelo OSI/TCP-IP, la comunicación 
+específica entre la aplicación Java y la base de datos MySQL mediante JDBC, las medidas de 
+seguridad implementadas y los estándares y normas aplicables. 
+15.1 Topología de Red Institucional 
+La infraestructura de red opera bajo una topología en estrella jerárquica con tres niveles: Core 
+(switch central Cisco Catalyst), Distribution (switches de zona Layer 2) y Access (PCs de escritorio). 
+PAGINA 
+6
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+La red es 100% local (LAN), sin conectividad a Internet. El firewall implementa una política "default 
+deny" que bloquea todo tráfico externo. 
+Figura 29 — Topología de Red Institucional. Fuente: Elaboración propia. 
+Direcionamiento IP: 
+Segmento 
+Rango de IP 
+Subred 
+Servidor 
+192.168.1.10 
+255.255.255.0 
+Descripción 
+Zona 1 - Rosario 
+Servidor MySQL central 
+192.168.1.101-103 
+255.255.255.0 
+PCs 
+operadores 
+supervisor 
+Zona 2 - Santa Fe 
+192.168.2.101-102 
+255.255.255.0 
+y 
+Zona 3 - Reconquista 
+PCs operadores 
+192.168.3.101-102 
+255.255.255.0 
+Medios de transmisión: 
+PCs operador y supervisor 
+Tramo 
+Medio 
+Velocidad 
+Core ↔ Distribution 
+Justificación 
+Fibra óptica multimodo 
+1 Gbps 
+Distancias inter-edificios, 
+inmunidad a interferencias 
+Distribution ↔ Access 
+UTP Cat 6 
+1 Gbps 
+Distancias cortas dentro 
+del edificio 
+Firewall ↔ Internet 
+— 
+BLOQUEADO 
+Sin conectividad externa 
+por política de seguridad 
+PAGINA 
+7
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+15.2 Protocolos de Comunicación 
+Nivel de Red — Protocolo IP (IPv4): El protocolo IP versión 4 es el encargado del direccionamiento 
+y enrutamiento de los paquetes entre las PCs cliente y el servidor. Cada dispositivo posee una 
+dirección IP estática asignada manualmente, sin servidor DHCP. Los paquetes IP transportan los 
+segmentos TCP desde la máquina origen hasta el servidor MySQL. 
+Nivel de Transporte — Protocolo TCP: TCP garantiza la entrega confiable y ordenada de los datos 
+mediante el mecanismo de three-way handshake y confirmaciones ACK. El puerto utilizado es el 
+3306 (puerto por defecto de MySQL). Esto es fundamental porque las operaciones de registro de 
+kilometraje, generación de alertas y registro de novedades no pueden tolerar la pérdida de datos. 
+Nivel de Enlace — Protocolo Ethernet (IEEE 802.3): Los switches operan en modo full-duplex a 1 
+Gbps. Cada trama Ethernet contiene las direcciones MAC de origen y destino, el EtherType (0x0800 
+para IPv4) y la carga útil que transporta el paquete IP. 
+Nivel de Aplicación — MySQL Protocol / JDBC: La aplicación Java utiliza la API JDBC (Java Database 
+Connectivity) como capa de abstracción sobre el MySQL Wire Protocol. El flujo es: 
+DriverManager.getConnection() 
+→ Connection 
+executeQuery()/executeUpdate() → ResultSet. 
+15.3 Modelo OSI y TCP/IP 
+→ PreparedStatement 
+→ 
+Figura 30 — Modelo OSI y TCP/IP aplicado a SIGMAVEP. Fuente: Elaboración propia. 
+Capa OSI 
+Capa TCP/IP 
+Componente SIGMAVEP 
+7. Aplicación 
+Aplicación 
+Java Swing (Vista) 
+Descripción 
+Interfaz 
+gráfica 
+operador 
+del 
+6. Presentación 
+Aplicación 
+JDBC API 
+Serialización de datos Java 
+↔ MySQL 
+5. Sesión 
+Aplicación 
+MySQL 
+Protocol 
+Connection 
+/ 
+4. Transporte 
+Transporte 
+TCP puerto 3306 
+Gestión de sesión JDBC 
+Transmisión confiable de 
+segmentos 
+3. Red 
+Internet 
+IPv4 (192.168.x.x) 
+Direccionamiento 
+enrutamiento 
+y 
+2. Enlace 
+Acceso a Red 
+Ethernet II (IEEE 802.3) 
+Frames, direcciones MAC, 
+switches 
+PAGINA 
+7
+1 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+1. Física 
+Acceso a Red 
+UTP Cat 6 / Fibra óptica 
+Señales eléctricas y pulsos 
+de luz 
+15.4 Comunicación Aplicación-Base de Datos 
+Figura 31 — Comunicación JDBC Aplicación-BD. Fuente: Elaboración propia. 
+Cadena 
+de 
+conexión 
+jdbc:mysql://192.168.1.10:3306/sigmavep?useSSL=false&characterEncoding=utf8mb4 
+Parámetro 
+Valor 
+Justificación 
+JDBC: 
+Host 
+192.168.1.10 
+Puerto 
+IP del servidor MySQL en la LAN 
+3306 
+Base de datos 
+Puerto estándar de MySQL 
+sigmavep 
+useSSL 
+Nombre de la BD del sistema 
+false 
+Red cerrada, no se requiere cifrado 
+SSL 
+characterEncoding 
+utf8mb4 
+Soporte de caracteres españoles 
+PAGINA 
+7
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+15.5 Seguridad de la Comunicación 
+Seguridad a nivel de Red: 
+Medida 
+Descripción 
+Red aislada (air-gapped) 
+Sin conectividad con Internet. Firewall con política 
+"default deny". 
+Segmentación por zona 
+Cada zona en subred diferente, limita alcance de 
+incidentes. 
+Filtrado MAC 
+Puertos deshabilitados 
+Solo dispositivos con MAC registrada pueden conectarse. 
+Puertos no utilizados en switches se deshabilitan. 
+Seguridad a nivel de Transporte: 
+Dado que la red institucional es completamente cerrada (air-gapped) y no tiene conectividad con 
+redes externas, se decidió no implementar cifrado SSL/TLS en la comunicación entre la aplicación 
+y la base de datos MySQL. Esta decisión se fundamenta en que el tráfico jamás sale del entorno 
+LAN controlado, por lo que el riesgo de interceptación es nulo. Si en el futuro la red se extendiera 
+o se habilitara acceso remoto, sería imperativo implementar SSL/TLS para proteger la 
+confidencialidad de los datos en tránsito. 
+Medida 
+Descripción 
+Bind address restringido 
+Seguridad a nivel de Aplicación: 
+MySQL escucha solo en 192.168.1.10, no en 0.0.0.0. 
+Medida 
+Descripción 
+Autenticación obligatoria 
+Todo acceso requiere login (CU-00). 
+Contraseñas hasheadas 
+SHA-256, nunca texto plano. 
+RBAC 
+PreparedStatements 
+Validación de entrada 
+Tres perfiles con permisos diferenciados. 
+Previene inyección SQL. 
+Controladores validan datos antes de enviar a BD. 
+Seguridad a nivel de Base de Datos: 
+Medida 
+Descripción 
+Usuario MySQL dedicado 
+sigmavep_user con permisos limitados (SELECT, INSERT, 
+UPDATE). 
+Permisos mínimos 
+No puede DROP, ALTER ni acceder a otras BD. 
+Backups automáticos 
+mysqldump diario almacenado en disco externo. 
+15.6 Estándares y Normas Aplicables 
+Estándar / Norma 
+Aplicación en SIGMAVEP 
+IEEE 802.3 (Ethernet) 
+Comunicaciones a nivel de enlace de datos 
+RFC 791 (IPv4) 
+Direccionamiento y enrutamiento de paquetes 
+RFC 793 (TCP) 
+Transporte confiable de datos 
+ISO/IEC 27001 
+Gestión de seguridad de la información 
+Ley 25.326 
+Protección de Datos Personales 
+PAGINA 
+7
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Ley 13.498 
+Administración Financiera de Santa Fe 
+Ley 25.188 
+Ética en el Ejercicio de la Función Pública 
+PAGINA 
+7
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+16. Introducción al AP4 
+El sistema SIGMAVEP (Sistema de Gestion del Mantenimiento Preventivo de Vehiculos Policiales) 
+es desarrollado en el marco de la materia Seminario de Practica de Informatica de la Licenciaturaen 
+Informatica de la Universidad Siglo 21.  
+El presente AP4 materializa la version integradora final del prototipo funcional en Java. Segun 
+Kendall y Kendall (2011), un prototipo es "un modelo operacional que incluye solo algunas 
+caracteristicas del sistema final", lo que permite validar la logica de negocio y la interaccion antes 
+de la implementacion completa del sistema productivo. En esta cuarta entrega, el prototipo 
+evoluciona desde la version anterior con interfaz textual por consola (Scanner + System.out) hacia 
+una interfaz grafica de escritorio con Java Swing y persistencia real en base de datos MySQL 
+mediante JDBC.  
+Las principales novedades respecto del AP3 son: la migracion de la interfaz de consola a Java Swing 
+con ventanas, paneles y dialogos graficos; la incorporacion de JDBC para la conexion y persistencia 
+de datos en MySQL; la aplicacion del patron de diseno Generic DAO con implementaciones JDBC 
+reales que reemplazan los ArrayList en memoria; la inclusion de una clase de configuracion de 
+conexion (ConexionMySQL) con un asistente grafico (SetupFrame) para la configuracion de la base 
+de datos; y la incorporacion de exportacion a archivos CSV mediante ArchivoUtil. Todas las 
+correcciones formuladas por la docente fueron atendidas: se profundizo en sintaxis Java, tipos de 
+datos, principios de POO (encapsulamiento, herencia, polimorfismo, abstraccion), declaracion y 
+creacion de objetos, y uso de constructores. 
+17. Presentacion del Desarrollo en Java  
+17.1 Tecnologias y herramientas utilizadas 
+Tecnologia 
+Rol en el proyecto 
+Java SE JDK 11+ 
+Lenguaje de programacion principal 
+Java Swing (Nimbus L&F;) 
+Interfaz grafica de escritorio con Look and Feel 
+personalizado 
+JDBC (mysql-connector-j-8.3.0) 
+MySQL 8.0+ 
+Conexion y persistencia en base de datos MySQL 
+Base de datos relacional para persistencia de datos 
+Maven (estructura de proyecto) 
+Estructura estandar src/main/java/com/sigmavep/... 
+java.time (LocalDate / LocalDateTime) Manejo de fechas y horas 
+java.security.MessageDigest / SHA-256 Hash irreversible de contrasenas 
+IntelliJ IDEA / NetBeans 
+IDE de desarrollo 
+PAGINA 
+7
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+17.2 Arquitectura del sistema: Patron MVC 
+Se adopto el patron de arquitectura Modelo-Vista-Controlador (MVC) como continuacion directa 
+del diseno realizado en el AP2. La separacion de responsabilidades facilita el mantenimiento, la 
+extensibilidad y la integracion con la base de datos MySQL. Las tres capas se organizan de la 
+siguiente manera:  
+ MODELO: Entidades del dominio que heredan de BaseEntity (clase abstracta). Incluye las 
+enumeraciones del paquete modelo.enumerado. No conoce ni Vista ni Controlador.  
+ VISTA: Clases Swing (JFrame, JPanel, JDialog) en el paquete vista. Muestran informacion y 
+recolectan entradas del usuario. Sin logica de negocio. Heredan de BaseFrame (clase 
+abstracta).  
+ CONTROLADOR: Clases en el paquete controlador que coordinan Vista y Modelo. 
+Implementan la interfaz Controller. MenuPrincipalControlador es el controlador central 
+que orquesta todos los modulos, y AuthControlador gestiona el flujo de autenticacion.  
+ DAO: Capa de acceso a datos con la interfaz generica BaseDAO y sus implementaciones 
+JDBC en dao.impl. Aisla completamente la logica de persistencia del resto del sistema. 
+PAGINA 
+7
+6 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 7
+7 
+ 
+ 
+17.3 Estructura de paquetes del proyecto  
+El proyecto SIGMAVEP v2.0 sigue la estructura estandar de Maven con el paquete base 
+com.sigmavep, organizado en las siguientes capas: 
+Paquete Clases Descripcion 
+com.sigmavep App.java Clase principal (metodo main), configura Look and 
+Feel e inicia la aplicacion 
+com.sigmavep.modelo. 
+entidad 
+14 clases BaseEntity (abstracta) + Movil, Alerta, Usuario, 
+Novedad, RegistroKilometraje, ServicioRealizado, 
+Dependencia, Zona, EstadoMovil, EstadoAlerta, 
+Rol, TipoMantenimiento, TipoNovedad 
+com.sigmavep.modelo. 
+enumerado 
+3 enums EstadoMovilEnum, EstadoAlertaEnum, RolEnum 
+com.sigmavep.dao BaseDAO.java Interfaz generica CRUD con tipo parametrizado T 
+com.sigmavep.dao.impl 14 DAOs Implementaciones JDBC de BaseDAO + 
+AuthDAOImpl (especializado) 
+com.sigmavep.controlador 3 clases Controller (interfaz), AuthControlador, 
+MenuPrincipalControlador 
+com.sigmavep.vista 13 clases BaseFrame (abstracta) + LoginFrame, 
+MenuPrincipalFrame, 
+MovilPanel, AlertaPanel, KilometrajePanel, 
+MantenimientoPanel, 
+NovedadPanel, FlotaPanel, ReportePanel, 
+UsuarioPanel, MovilDialog, 
+UsuarioDialog, SetupFrame, Estilo 
+com.sigmavep.exepcion 6 clases SIGMAVEPException (base) + 5 excepciones 
+derivadas 
+com.sigmavep.util 6 clases ConexionMySQL, HashUtil, Session, ValidadorUtil, 
+OrdenamientoUtil, ArchivoUtil (todas final con 
+constructor private) 
+ 
+ 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+18. Seleccion del Patron de Diseno y Justificacion 
+La consigna del AP4 requiere la seleccion y justificacion de un patron de diseno coherente con la 
+arquitectura definida en las entregas anteriores. En SIGMAVEP se aplican dos patrones de diseno 
+principales de forma complementaria: el patron MVC como patron arquitectonico y el patron 
+Generic DAO como patron de acceso a datos. Ambos trabajan en conjunto para garantizar la 
+separacion de responsabilidades, la escalabilidad y la facilidad de mantenimiento del Sistema. 
+18.1 Patron MVC (Modelo-Vista-Controlador) 
+El patron MVC separa la aplicacion en tres componentes interconectados: el Modelo que gestiona 
+los datos y la logica de negocio, la Vista que presenta la informacion al usuario, y el Controlador 
+que actua como intermediario procesando las entradas del usuario y coordinando las 
+actualizaciones entre Modelo y Vista. Segun Gamma et al. (1994), la separacion de 
+responsabilidades es un principio fundamental del diseno orientado a objetos que promueve la 
+cohesión y reduce el acoplamiento. 
+En SIGMAVEP v2.0, el patron MVC se materializa de la siguiente forma: las clases del paquete 
+modelo.entidad representan el Modelo (entidades del dominio con sus atributos, validaciones y 
+relaciones); las clases del paquete vista representan la Vista (componentes Java Swing que 
+muestran informacion y capturan la interaccion del usuario); y las clases del paquete controlador 
+representan el Controlador (orquestan la comunicacion entre Vista y Modelo, invocando los DAOs 
+para operaciones de persistencia y actualizando la Vista con los resultados). La interfaz Controller 
+define el contrato comun para todos los controladores con el metodo ejecutar().  
+La justificacion del patron MVC radica en que permite modificar la interfaz grafica (por ejemplo, 
+cambiar de Java Swing a JavaFX) sin afectar la logica de negocio, o cambiar el mecanismo de 
+persistencia (de ArrayList en memoria a JDBC/MySQL) sin modificar los controladores ni las vistas. 
+Esta flexibilidad fue demostrada en la migracion del AP3 al AP4: se reemplazaron las vistas de 
+consola por ventanas Swing y los DAOs en memoria por DAOs JDBC, y los controladores solo 
+requirieron ajustes minimos en la creacion de los DAOs. 
+PAGINA 
+7
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+18.2 Patron Generic DAO (Data Access Object) 
+El patron DAO abstrae el acceso a la fuente de datos detras de una interfaz, de modo que el codigo 
+de negocio no depende de los detalles de persistencia (SQL, JDBC, tipo de base de datos). La 
+variante Generic DAO utiliza genericos de Java (Generics) para definir un contrato CRUD comun 
+para todas las entidades, evitando la duplicacion de firmas de metodos en cada DAO especifico.  
+En SIGMAVEP, la interfaz BaseDAO define cinco operaciones genericas: insertar(T entidad), 
+actualizar(T entidad), eliminar(int id), buscarPorId(int id) y listarTodos(). Cada DAO concreto 
+implementa esta interfaz parametrizando T con la entidad correspondiente: por ejemplo, 
+MovilDAOImpl implements BaseDAO. Esto garantiza que todas las entidades compartan el mismo 
+contrato de persistencia mientras cada DAO proporciona su implementacion especifica de mapeo 
+objeto-relacional en los metodos mapear(ResultSet).  
+La justificacion del patron Generic DAO es triple: (1) elimina la duplicacion de firmas CRUD, ya que 
+la interfaz BaseDAO define una unica vez las operaciones comunes; (2) facilita la migracion entre 
+mecanismos de persistencia, como se demostro al pasar de ArrayList en memoria a JDBC MySQL 
+sin modificar los controladores; y (3) permite agregar nuevas entidades al sistema simplemente 
+creando una nueva clase que implemente BaseDAO, sin alterar el codigo existente, cumpliendo con 
+el principio Open/Closed de la programacion orientada a objetos. 
+18.3 Coherencia con la arquitectura definida 
+Ambos patrones son coherentes con la arquitectura definida en el AP2 y mantienen continuidad 
+con las decisiones de diseno tomadas en las entregas anteriores. El patron MVC ya habia sido 
+adoptado en el AP3 como patron arquitectonico, y el patron Generic DAO se introdujo como 
+interfaz BaseDAO con implementaciones en ArrayList. En el AP4, la unica modificacion fue 
+reemplazar las implementaciones en memoria por implementaciones JDBC, manteniendo intacta 
+la interfaz y, por ende, sin impacto en los controladores ni en las vistas. Esta continuidad demuestra 
+que la arquitectura fue correctamente disenada para facilitar la evolucion del sistema. 
+PAGINA 
+7
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19. Explicacion del Desarrollo en Java 
+19.1 Los cuatro pilares de la POO 
+19.1.1 Encapsulamiento 
+El encapsulamiento es el mecanismo por el cual los atributos de un objeto se ocultan del exterior y 
+solo pueden accederse o modificarse a traves de metodos publicos controlados (getters y setters). 
+Garantiza que el estado interno de un objeto nunca quede invalido por modificaciones externas. 
+En SIGMAVEP, todos los atributos de las entidades se declaran con el modificador private. El setter 
+de kmActual en Movil valida que el nuevo valor no sea negativo antes de asignarlo; si lo es, lanza 
+una IllegalArgumentException que aborta la operacion. El atributo id de BaseEntity se declara 
+protected para que las subclases puedan accederlo directamente, pero sigue siendo inaccesible 
+desde fuera de la jerarquia de herencia. 
+Figura 33 — Movil.java - atributos private con modificador de acceso private Fuente: Elaboración propia. 
+PAGINA 
+8
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 34 — BaseEntity.java - atributo protected int id con getter y setter publicos Fuente: Elaboración propia. 
+19.1.2 Herencia  
+La herencia permite que una clase nueva (subclase) adquiera los atributos y metodos de una clase 
+existente (superclase), evitando la duplicacion de codigo y estableciendo una jerarquia de tipos que 
+refleja relaciones del mundo real. En SIGMAVEP, la herencia se aplica en dos jerarquias principales: 
+la jerarquia de entidades, donde BaseEntity centraliza el atributo id y sus accesores, y todas las 
+entidades heredan de BaseEntity con extends; y la jerarquia de excepciones, donde 
+SIGMAVEPException hereda de Exception y las excepciones personalizadas heredan de 
+SIGMAVEPException. En la capa de vista, BaseFrame extiende JFrame y proporciona la 
+configuracion comun de ventana (icono, tamano, centrado), y todas las ventanas heredan de 
+BaseFrame. 
+PAGINA 
+8
+1 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 35 — BaseEntity.java - clase abstracta con atributo id y metodos comunes Fuente: Elaboración propia 
+Figura 36 — Movil.java - encabezado mostrando extends BaseEntity implements Comparable:  
+Elaboración propia 
+Figura 37 — BaseFrame.java - clase abstracta extends JFrame con constructor protected  
+Fuente: Elaboración propia 
+PAGINA 
+8
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.1.3 Polimorfismo 
+El polimorfismo permite que objetos de distintos tipos sean tratados de manera uniforme a traves 
+de un tipo comun, mientras cada uno ejecuta su propio comportamiento especifico. En SIGMAVEP 
+se aplican dos formas de polimorfismo: por sobrescritura y por interfaz.  
+POR SOBRESCRITURA: getDescripcionCorta() es abstracto en BaseEntity. Cada subclase lo 
+sobrescribe con @Override con su propio comportamiento. Movil devuelve su numero interno, 
+patente y estado; Alerta devuelve su tipo de mantenimiento y estado. Este es polimorfismo en 
+accion: el mismo mensaje getDescripcionCorta() produce resultados diferentes segun el tipo real 
+del objeto.  
+POR INTERFAZ: La interfaz BaseDAO define el contrato CRUD. Cada DAO concreto implementa la 
+interfaz con su tipo parametrizado, y el controlador puede tratar todos los DAOs a traves de la 
+interfaz generica. La interfaz Controller define el metodo ejecutar(), implementado por  
+AuthControlador y MenuPrincipalControlador. Comparable permite ordenar moviles por kmActual 
+usando el metodo compareTo() sobrescrito. 
+Figura 38 — Movil.java - getDescripcionCorta() con @Override y operadores ternarios Fuente: Elaboración 
+propia 
+Figura 39 — Alerta.java - getDescripcionCorta() con @Override, comportamiento diferente  
+Fuente: Elaboración propia 
+PAGINA 
+8
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 40 — BaseDAO.java - interfaz generica con tipo parametrizado T Fuente: Elaboración propia 
+19.1.4 Abstraccion 
+La abstraccion consiste en ocultar los detalles de implementacion y exponer solo la interfaz 
+necesaria para interactuar con un componente. En SIGMAVEP se aplica de tres formas: la clase 
+abstracta BaseEntity define el contrato minimo para todas las entidades (tener un id y poder 
+describirse con getDescripcionCorta()) pero no puede instanciarse directamente; la interfaz 
+BaseDAO<T> define el contrato CRUD sin revelar si la persistencia es en memoria, en JDBC o en 
+cualquier otro mecanismo; y la clase abstracta BaseFrame define la configuracion comun de las 
+ventanas Swing (icono, titulo, tamano, centrado) delegando en las subclases la construccion de la 
+interfaz especifica. 
+La abstraccion de BaseDAO es especialmente relevante para la consigna del AP4: cuando se 
+reemplazo la implementacion en ArrayList por JDBC/MySQL, los controladores no requirieron 
+ningun cambio porque dependian exclusivamente de la interfaz BaseDAO, no de su 
+implementacion concreta. Este es el beneficio practico de programar contra abstracciones en lugar 
+de implementaciones. 
+PAGINA 
+8
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 41 — BaseEntity.java - clase abstracta con metodo abstracto getDescripcionCorta 
+Fuente: Elaboración propia 
+PAGINA 
+8
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 42 — BaseDAO.java - interfaz generica CRUD completa Fuente: Elaboración propia 
+Figura 43 — BaseFrame.java - clase abstracta extends JFrame Fuente: Elaboración propia 
+PAGINA 
+8
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.2 Constructores e inicializacion de objetos 
+En Java el constructor es el mecanismo que se invoca al crear una nueva instancia con el operador 
+new. Su funcion es inicializar los atributos del objeto con valores coherentes antes de que cualquier 
+otro codigo pueda usar la instancia. En SIGMAVEP v2.0 el uso de constructores esta presente en 
+todas las capas del sistema: el modelo, la vista Swing y los controladores. 
+19.2.1 Constructores sobrecargados en las entidades del modelo 
+La entidad Movil ilustra los tres constructores mas comunes del sistema. El primero es el 
+constructor por defecto (sin parametros) que asigna activo=true, kmActual=0 y 
+fechaAlta=LocalDate.now(). El segundo es el constructor de alta que recibe los datos del formulario 
+Swing pero no el ID, ya que la base de datos lo asigna con AUTO_INCREMENT. El tercero es el 
+constructor completo con todos los campos incluido el ID, que se usa exclusivamente en los DAOs 
+para reconstruir objetos desde los ResultSet de JDBC. Todos los constructores de Movil llaman 
+super() o super(id) en su primera linea, respetando la cadena de inicializacion hacia BaseEntity. 
+PAGINA 
+8
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 44 — Movil.java - los tres constructores: vacio, de alta sin ID, de reconstruccion con ID 
+Fuente: Elaboración propia 
+PAGINA 
+8
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 45 — Alerta.java - los tres Fuente: Elaboración propia 
+19.2.2 Uso del constructor por defecto más setters 
+Cuando la creacion de un objeto requiere completar sus atributos de forma iterativa (por ejemplo, 
+al precargar un formulario de edicion), se usa el constructor por defecto seguido de setters. En 
+MenuPrincipalControlador, al editar un movil se recupera el objeto con buscarPorId(id) y luego se 
+actualizan sus campos con los nuevos valores del MovilDialog, utilizando los setters 
+correspondientes. 
+Figura 46 — MenuPrincipalControlador.java - metodo editarMovil(): buscarPorId(id) y setters 
+PAGINA 
+8
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Fuente: Elaboración propia 
+19.2.3 Uso del constructor parametrizado en la capa controlador 
+Al registrar un nuevo movil desde la interfaz Swing, el controlador crea el objeto directamente con 
+el constructor parametrizado de alta, pasandole los datos del MovilDialog. El objeto llega al DAO 
+con todos sus campos inicializados, con kmActual=0 y activo=true asignados internamente por el 
+constructor sin que el controlador necesite invocar setters para esos valores 
+Figura 47 — MenuPrincipalControlador.java - metodo nuevoMovil(): new Movil(...) con constructor 
+parametrizado 
+Fuente: Elaboración propia 
+PAGINA 
+9
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.2.4 Llamada al constructor de la superclase 
+Java exige que la primera sentencia de un constructor de subclase sea una llamada al constructor 
+de la superclase. En SIGMAVEP se hace explicito: los constructores sin ID llaman super() y los de 
+reconstruccion desde JDBC llaman super(id), para que el atributo protected id de BaseEntity quede 
+correctamente inicializado. En la capa de vista, BaseFrame extiende JFrame y su constructor llama 
+super(titulo), delegando el titulo al constructor de JFrame. 
+Figura 48 — BaseEntity.java - clase completa con los dos constructores Fuente: Elaboración propia 
+PAGINA 
+9
+1 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 49 — BaseFrame.java - constructor protected BaseFrame(String titulo) con super() 
+Fuente: Elaboración propia 
+19.2.5 Inicializacion de atributos static 
+En ConexionMySQL (declarada final) los atributos url, user, password, driver y configurado son 
+static porque pertenecen a la clase y no a ninguna instancia. Su inicializacion se realiza en un bloque 
+static que se ejecuta una sola vez al cargar la clase en la JVM, antes de que cualquier metodo pueda 
+invocar getConnection(). En MenuPrincipalFrame las constantes de modulo son public static final 
+String, inicializadas directamente en su declaracion. 
+Figura 50 — ConexionMySQL.java - atributos static y bloque static de inicializacion 
+PAGINA 
+9
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Fuente: Elaboración propia 
+19.3 Sintaxis Java utilizada 
+En esta seccion se describen las construcciones sintacticas del lenguaje Java empleadas en 
+SIGMAVEP v2.0, agrupadas por categoria. 
+19.3.1 Declaracion de paquetes e imports 
+Cada archivo Java comienza con la declaracion de su paquete que refleja la capa a la que pertenece: 
+com.sigmavep.modelo.entidad para las entidades, com.sigmavep.vista para la interfaz grafica 
+Swing, com.sigmavep.dao para la capa de acceso a datos, com.sigmavep.controlador para los 
+controladores, com.sigmavep.util para las utilidades, y com.sigmavep.exepcion para las 
+excepciones propias. A continuacion figuran las sentencias import. El uso de comodin (*) se limita 
+a paquetes con muchas clases relacionadas (java.sql.*, javax.swing.*) para no saturar el 
+encabezado. 
+19.3.2 Modificadores de acceso y de clase 
+Los atributos de las entidades se declaran private, accesibles solo via getters y setters public. En 
+BaseEntity el id es protected para que las subclases puedan acceder a el directamente. El 
+modificador abstract se aplica a BaseEntity y BaseFrame, impidiendo su instanciacion directa. El 
+modificador final se aplica a ConexionMySQL, HashUtil y OrdenamientoUtil, impidiendo su 
+extension. El modificador static se usa en atributos de configuracion de ConexionMySQL y en 
+constantes de modulo de MenuPrincipalFrame. 
+19.3.3 Estructuras de control 
+El sistema emplea las siguientes estructuras de control: if-else en validaciones (setKmActual() lanza 
+IllegalArgumentException si km menor a 0) y en logica de filtrado del controlador; switch en 
+MenuPrincipalControlador para despachar segun el modulo seleccionado; bucles for anidados que 
+implementan ordenamiento burbuja en OrdenamientoUtil; for-each en HashUtil para iterar el 
+byte[] del hash SHA-256 y en verificarAlertas() para iterar tipos de mantenimiento; y operador 
+ternario en getDescripcionCorta() de las entidades para manejar referencias posiblemente nulas. 
+PAGINA 
+9
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.3.4 Manejo de excepciones 
+De 
+ella 
+La jerarquia de excepciones chequeadas tiene como raiz a SIGMAVEPException (extends 
+Exception). 
+heredan: 
+AutenticacionException, 
+PatenteDuplicadaException, 
+KilometrajeInvalidoException, AlertaPendienteException y RegistroNoEncontradoException. Los 
+metodos de BaseDAO declaran throws SIGMAVEPException. Los DAOs usan try-with-resources 
+para garantizar cierre de recursos JDBC. El error MySQL 1062 (clave duplicada) se convierte en 
+PatenteDuplicadaException via e.getErrorCode() == 1062. El controlador captura excepciones 
+especificas antes de las genericas, garantizando que cada tipo de error reciba el tratamiento 
+adecuado. 
+Figura 51 — SIGMAVEPException.java - clase base de la jerarquia de excepciones 
+Fuente: Elaboración propia 
+Figura 52 — MovilDAOImpl.java - try-with-resources y catch SQLException con e.getErrorCode() 
+Fuente: Elaboración propia 
+PAGINA 
+9
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.3.5 Genericos (Generics) 
+La interfaz BaseDAO define el contrato CRUD de forma generica: T representa la entidad que 
+administra cada DAO. MovilDAOImpl implements BaseDAO obtiene firmas fuertemente tipadas sin 
+duplicar codigo. Las colecciones tambien usan genericos: List, ArrayList<>. El operador diamante en 
+new ArrayList<>() y new LinkedHashMap<>() permite al compilador inferir el tipo sin repetirlo, 
+reduciendo la verbosidad del codigo sin perder la seguridad de tipos en compilacion. 
+19.3.6 Anotacion @Override 
+La anotacion @Override se coloca antes de cada metodo que sobrescribe uno de la superclase o 
+implementa uno de una interfaz. Avisa al programador de su intencion (el compilador lanza error 
+si el metodo no existe en la jerarquia) y mejora la legibilidad. En SIGMAVEP aparece en 
+getDescripcionCorta(), toString(), compareTo() de Movil y todos los metodos CRUD de los DAOs. 
+19.3.7 Sintaxis Swing: ActionListener y expresiones lambda 
+La gestion de eventos en Swing requiere implementar ActionListener. Desde Java 8, al ser una 
+interfaz funcional, puede expresarse con lambda: e -> { ... }. En MenuPrincipalFrame el boton 
+btnLogout usa e -> { if (onCerrarSesion != null) onCerrarSesion.run(); }. Los botones de navegacion 
+usan e -> seleccionarModulo(modulo). Para hover se usa MouseAdapter (clase anonima) porque 
+tiene mas de un metodo abstracto y no es una interfaz funcional. 
+19.4 Tipos de datos utilizados 
+A continuacion se describen los tipos de datos presentes en SIGMAVEP v2.0, organizados por 
+categoria. 
+19.4.1 Tipos primitivos 
+Los tipos primitivos no son objetos; se almacenan en la pila y no necesitan new. El sistema usa 
+cuatro de los ocho tipos primitivos de Java: int para kilometraje, ano y identificadores numericos; 
+boolean para el flag activo de Movil y Usuario; double para calculos de promedio en reportes; y 
+char no se utiliza directamente (se prefiere String para caracteres individuales). Los primitivos se 
+eligen por eficiencia cuando no se necesita la funcionalidad de un objeto (null, metodos). 
+19.4.2 Clases envoltorio (Wrapper Classes) 
+Las clases envoltorio no se usan directamente como tipos de atributos en las entidades. El caso mas 
+visible es Integer.parseInt() en el controlador para convertir el texto del campo de kilometraje al 
+tipo primitivo int. Si el texto no es un numero valido lanza NumberFormatException, que se captura 
+con catch para mostrar un mensaje de error amigable al usuario. 
+19.4.3 Tipos referencia de la API estandar 
+Los tipos referencia mas utilizados son: String para todos los campos de texto (numero interno, 
+patente, marca, etc.); LocalDate para fechas sin hora (fechaAlta de Movil); LocalDateTime para 
+fechas con hora (fechaGeneracion y fechaProcesamiento de Alerta); y tipos de seguridad como 
+MessageDigest (java.security) para el calculo de hashes SHA-256. 
+PAGINA 
+9
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.4.4 Tipos referencia de la biblioteca Java Swing 
+En la capa de vista se utilizan los componentes Swing: JFrame (ventana principal), JPanel (paneles 
+de contenido), JTable con DefaultTableModel (tablas de datos), JTextField (campos de texto), 
+JComboBox para listas desplegables, JButton (botones), JPasswordField (campo de contrasena), 
+JLabel (etiquetas), JOptionPane (dialogos de mensaje), y CardLayout para la navegacion entre 
+paneles. Todos estos tipos son gestionados en la capa vista y no se filtran hacia los controladores 
+ni los modelos. 
+19.4.5 Enumeraciones (enum) 
+y 
+Las enumeraciones definen un conjunto cerrado de constantes con nombre, pudiendo tener 
+atributos 
+metodos propios. En SIGMAVEP hay tres en el paquete 
+com.sigmavep.modelo.enumerado: EstadoMovilEnum (EN_SERVICIO, FUERA_DE_SERVICIO, 
+EN_REPARACION), EstadoAlertaEnum (PENDIENTE, PROCESADA, POSTERGADA) y RolEnum 
+(ADMINISTRADOR, FINANZAS, SUPERVISOR). Cada enum tiene atributos privados (id, nombre), un 
+constructor enum que recibe ambos valores, y metodos getId() y getNombre(). 
+19.4.6 Tipos propios del dominio como atributos 
+Una ventaja de POO es poder usar las propias clases del dominio como tipos de atributos. Movil 
+tiene Dependencia y EstadoMovil como atributos. Alerta tiene Movil, TipoMantenimiento, 
+EstadoAlerta y Usuario. Esto modela las relaciones del dominio real de forma directa y expresiva, 
+evitando la necesidad de manejar identificadores sueltos y permitiendo la navegacion entre objetos 
+relacionados. 
+19.5 Declaracion y creacion de objetos en Java 
+En Java toda instancia de una clase se crea con el operador new, que reserva memoria en el heap, 
+llama al constructor elegido y devuelve una referencia al objeto. 
+PAGINA 
+9
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.5.1 Sintaxis general 
+El patron mas frecuente es declaracion y creacion en la misma linea: TipoClase var = new 
+TipoClase(). En AuthControlador la creacion de LoginFrame, AuthDAOImpl y AlertaDAOImpl en el 
+constructor es el ejemplo mas claro. Una variante es el objeto anonimo como argumento directo a 
+un metodo: setBorder(new EmptyBorder(8,8,8,8)) sin asignar a ninguna variable. 
+Figura 53 — AuthControlador.java - constructor con creaciones simultaneas de objetos 
+Fuente: Elaboración propia 
+19.5.2 Creacion con constructores parametrizados 
+Al registrar un nuevo movil, el controlador construye el objeto Movil con el constructor 
+parametrizado de alta, pasando los datos del MovilDialog. El objeto llega al DAO con estado 
+coherente: kmActual=0 y activo=true asignados internamente por el constructor. 
+PAGINA 
+9
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.5.3 Creacion de colecciones con operador diamante 
+El operador diamante permite al compilador inferir el tipo de la coleccion desde el contexto. El 
+patron en los DAOs es: List lista = new ArrayList<>(); luego un bucle while lee el ResultSet, construye 
+cada objeto con el constructor completo y llama lista.add(entidad); finalmente return lista. 
+19.5.4 Creacion de objetos en la capa DAO 
+Con Statement.RETURN_GENERATED_KEYS el DAO lee el ID asignado por AUTO_INCREMENT de 
+MySQL y lo asigna con entidad.setId(rs.getInt(1)). El objeto nacio sin ID en el controlador y tiene ID 
+al salir del DAO. Este objeto modificado se retorna al controlador para uso inmediato, como la 
+confirmacion al usuario via JOptionPane. 
+19.5.5 Creacion de componentes Swing 
+En la capa de vista los componentes graficos se crean en el metodo buildUI() o initUI(). El 
+CardLayout se crea una vez (cardLayout = new CardLayout()) y su referencia se usa repetidamente 
+para alternar entre paneles de modulo sin crear nuevas instancias de ventana al navegar entre 
+secciones. Los JComboBox se inicializan con arreglos literales de String. 
+19.5.6 Reglas aplicadas en el prototipo 
+ Los objetos de dominio se crean con el constructor parametrizado apropiado: de alta (sin 
+ID) en el controlador, de reconstruccion (con ID) en el DAO.  
+ No se crea un objeto de dominio con constructor vacio y luego se puebla campo a campo 
+en el controlador, salvo al precargar un formulario de edicion.  
+ Los componentes Swing se crean en buildUI() o initUI() de la vista, no de forma dispersa en 
+los listeners.  
+ Las colecciones siempre se crean con el operador diamante para aprovechar la inferencia 
+de tipos.  
+ Las clases de utilidad (ConexionMySQL, HashUtil, OrdenamientoUtil) son final con 
+constructor privado y solo tienen metodos static: no se instancian nunca. 
+PAGINA 
+9
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.6 Menu de seleccion y estructuras de control 
+En la version v2.0 con Java Swing, el menu de seleccion es visual: la clase MenuPrincipalFrame 
+presenta una barra lateral con botones de navegacion que utilizan CardLayout para alternar entre 
+paneles de modulo. El controlador MenuPrincipalControlador despacha las acciones segun el 
+modulo seleccionado usando un switch(modulo) que determina que panel activar y que datos 
+cargar. El control de acceso por roles (RBAC) se implementa en la interfaz: las opciones de 
+administracion solo se muestran y ejecutan si el rol del usuario es Administrador, verificado 
+mediante los metodos esAdministrador(), esSupervisor() y esFinanzas() de la clase Session. 
+Figura 54 — MenuPrincipalControlador.java - metodo inicializar() con switch(modulo) 
+Fuente: Elaboración propia 
+PAGINA 
+9
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 55 — MenuPrincipalFrame.java - barra lateral con botones de navegacion 
+Fuente: Elaboración propia 
+19.7 Manejo de excepciones 
+SIGMAVEP define una jerarquia propia de excepciones, todas derivadas de SIGMAVEPException 
+(checked exception). Esto permite capturar cualquier error del sistema con un solo bloque 
+catch(SIGMAVEPException e) o capturar excepciones especificas antes de la generica, garantizando 
+que cada tipo de error reciba el tratamiento adecuado.  
+Clase de excepcion 
+Cuando se lanza 
+SIGMAVEPException 
+Excepcion base de todas las excepciones del sistema (extends 
+Exception) 
+AutenticacionException 
+Credenciales invalidas, cuenta inactiva, intentos excedidos 
+KilometrajeInvalidoException 
+km nuevo menor que km actual, o kilometraje negativo 
+PatenteDuplicadaException 
+Patente o numero interno ya registrado en MySQL (error 
+1062) 
+RegistroNoEncontradoException Entidad no encontrada en la base de datos 
+AlertaPendienteException 
+Intento de desactivar movil con alertas pendientes 
+FLUJO: El DAO detecta el problema (por ejemplo, SQLException con errorCode 1062) y lanza la 
+excepcion propia correspondiente (PatenteDuplicadaException). El Controlador la captura con 
+catch especifico antes del catch generico (SIGMAVEPException) y decide si la convierte en mensaje 
+de error. La Vista lo muestra de forma amigable al usuario mediante JOptionPane. 
+PAGINA 
+1
+0
+0 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 
+1
+0
+1 
+ 
+Figura 56 — MovilDAOImpl.java - insertar() con try-with-resources y catch SQLException 
+Fuente: Elaboración propia 
+ 
+ 
+Figura 57 — AuthControlador.java - procesarLogin() con catch especifico antes del generico 
+Fuente: Elaboración propia 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.8 Algoritmos de ordenamiento y busqueda 
+OrdenamientoUtil implementa dos algoritmos clasicos como requisito de la consigna: el metodo 
+ordenarMovilesPorKm() implementa el algoritmo de burbuja (bubble sort) con bucles for anidados, 
+comparando pares de elementos adyacentes e intercambiandolos si estan en orden incorrecto, con 
+complejidad O(n2). El metodo buscarMovilPorPatente() implementa busqueda lineal, recorriendo 
+la coleccion secuencialmente hasta encontrar el primer elemento que cumple la condicion. Ambos 
+algoritmos operan sobre List y son utilizados en la generacion de reportes. 
+Figura 58 — OrdenamientoUtil.java - burbuja y busqueda lineal Fuente: Elaboración propia 
+PAGINA 
+1
+0
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+19.9 Seguridad: hash SHA-256 de contrasenas 
+HashUtil usa java.security.MessageDigest con SHA-256 para convertir la contrasena en un hash 
+irreversible de 64 caracteres hexadecimales. Nunca se almacena la contrasena en texto plano. Al 
+iniciar sesion, la contrasena ingresada se hashea y se compara con el hash almacenado en MySQL. 
+El metodo sha256() convierte el texto a bytes con StandardCharsets.UTF_8, obtiene el digest como 
+byte[] y recorre el arreglo con un bucle for-each para convertir cada byte a hexadecimal con 
+String.format("%02x", b). La clase HashUtil es final con constructor privado, lo que impide su 
+instanciacion y extension. 
+Figura 59 —HashUtil.java - metodo sha256() con MessageDigest y bucle for-each 
+Fuente: Elaboración propia 
+19.10 Motor de alertas 
+El motor de alertas transforma el mantenimiento reactivo en preventivo. Se ejecuta 
+automaticamente cada vez que el operador registra un nuevo kilometraje desde la interfaz Swing. 
+Para cada tipo de mantenimiento, calcula los kilometros recorridos desde el ultimo servicio y 
+genera una alerta si se alcanzo el limite definido. El calculo se realiza consultando en MySQL el 
+ultimo servicio realizado de ese tipo para ese movil, restando los km del servicio a los km actuales, 
+y comparando con el limite_km del tipo de mantenimiento. Si el resultado es mayor o igual al limite, 
+se crea un objeto Alerta con el constructor de alta (sin ID), se persiste en MySQL con 
+alertaDAO.insertar(), y se muestra una notificacion en la interfaz grafica. 
+EJEMPLO: Movil MOV001 tiene 45.000 km. Ultimo cambio de aceite: 35.000 km. Limite: 10.000 
+km. Calculo: 45.000 - 35.000 = 10.000 >= 10.000, entonces se genera alerta automaticamente. 
+PAGINA 
+1
+0
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+20. Persistencia y Consulta en Base de Datos MySQL 
+La consigna del AP4 requiere la implementacion de persistencia en una base de datos MySQL. En 
+esta seccion se describe como SIGMAVEP v2.0 establece conexiones, realiza consultas, actualiza 
+registros y presenta resultados en la interfaz, aplicando correctamente el manejo de excepciones. 
+20.1 Conexion a MySQL (ConexionMySQL) 
+La clase ConexionMySQL (declarada final, con constructor privado) gestiona la conexion a MySQL 
+mediante metodos estaticos. La configuracion se lee desde el archivo db.properties, buscandolo 
+primero en el directorio de trabajo actual (externo al JAR) y luego en el classpath (embebido en el 
+JAR). Si no se encuentra, utiliza valores por defecto (localhost:3306/sigmavep, root, sin 
+contrasena). Los atributos url, user, password, driver y configurado son static y se inicializan en un 
+bloque static que se ejecuta una vez al cargar la clase.  
+El metodo getConnection() carga el driver con Class.forName(driver) y obtiene una conexion con 
+DriverManager.getConnection(url, user, password). El metodo reconfigurar() permite cambiar la 
+configuracion en tiempo de ejecucion, probando la conexion antes de guardar los nuevos valores. 
+La clase SetupFrame proporciona una interfaz grafica para configurar la conexion, probarla y crear 
+la base de datos ejecutando el script embebido sigmavep_schema.sql si no existe. 
+Figura 60 — ConexionMySQL.java - atributos static, bloque static y metodo getConnection() 
+Fuente: Elaboración propia 
+PAGINA 
+1
+0
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 61 — ConexionMySQL.java - atributos static, bloque static y metodo getConnection() 
+Fuente: Elaboración propia 
+Figura 62 — SetupFrame.java - asistente de configuracion de base de datos Fuente: Elaboración propia 
+PAGINA 
+1
+0
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 63 — SetupFrame.java - asistente de configuracion de base de datos Fuente: Elaboración propia 
+PAGINA 
+1
+0
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 64 — SetupFrame.java - asistente de configuracion de base de datos Fuente: Elaboración propia 
+PAGINA 
+1
+0
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 65 — SetupFrame.java - asistente de configuracion de base de datos Fuente: Elaboración propia 
+20.2 Operaciones CRUD en los DAO 
+Cada DAO implementa las cinco operaciones definidas en BaseDAO usando JDBC directamente. A 
+continuacion se describe el patron comun utilizado en todas las implementaciones, ejemplificado 
+con MovilDAOImpl. 
+PAGINA 
+1
+0
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+20.2.1 Insertar 
+El metodo insertar() utiliza PreparedStatement con la sentencia INSERT y los valores del objeto. Se 
+usa Statement.RETURN_GENERATED_KEYS para obtener el ID asignado por AUTO_INCREMENT de 
+MySQL. Despues de executeUpdate(), se lee el ID generado con getGeneratedKeys() y se asigna al 
+objeto con entidad.setId(rs.getInt(1)). El recurso se cierra automaticamente con try-with-resources 
+Figura 66 — MovilDAOImpl.java - metodo insertar() con RETURN_GENERATED_KEYS 
+Fuente: Elaboración propia 
+20.2.2 Actualizar  
+El metodo actualizar() utiliza PreparedStatement con la sentencia UPDATE y los valores del objeto. 
+El ID se usa en la clausula WHERE para identificar el registro a modificar. Si el numero de filas 
+afectadas es 0, se lanza RegistroNoEncontradoException. Los recursos se cierran automaticamente. 
+PAGINA 
+1
+0
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 67 — MovilDAOImpl.java - metodo actualizar() con PreparedStatement Fuente: Elaboración propia 
+20.2.3 Eliminar  
+El metodo eliminar() realiza una eliminacion logica (soft delete) para Movil y Usuario, estableciendo 
+activo=false en la base de datos. Para las demas entidades (Alerta, RegistroKilometraje, Novedad, 
+ServicioRealizado) se realiza una eliminacion fisica (DELETE). La decision de usar soft delete para 
+moviles y usuarios responde a la necesidad de mantener la trazabilidad del historial. 
+Figura 68 — MovilDAOImpl.java - metodo eliminar() con soft delete (UPDATE activo=false) 
+Fuente: Elaboración propia 
+20.2.4 Buscar por ID  
+El metodo buscarPorId() ejecuta una consulta SELECT con filtro por ID. Si el ResultSet tiene un 
+resultado, se construye el objeto con el constructor completo (con ID) usando el metodo privado 
+mapear(ResultSet). Si no hay resultados, se lanza RegistroNoEncontradoException. 
+Figura 69 — MovilDAOImpl.java - metodo buscarPorId() con mapear(ResultSet) 
+Fuente: Elaboración propia 
+PAGINA 
+1
+1
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+20.2.5 Listar todos  
+El metodo listarTodos() ejecuta una consulta SELECT sin filtro, recorre el ResultSet con un bucle 
+while(rs.next()), construye cada objeto con el constructor completo y lo agrega a un ArrayList<> 
+usando el operador diamante. Finalmente retorna la lista completa. 
+Figura 70 — MovilDAOImpl.java - metodo listarTodos() con ArrayList y while(rs.next()) 
+Fuente: Elaboración propia 
+20.3 Manejo de excepciones en la interaccion con MySQL 
+Todas las operaciones JDBC estan protegidas por bloques try-with-resources que garantizan el 
+cierre automatico de Connection, PreparedStatement y ResultSet, incluso en caso de excepcion. 
+Las excepciones SQLException se capturan y convierten en excepciones propias del sistema, 
+manteniendo la causa original con el constructor SIGMAVEPException(mensaje, causa).  
+El caso mas notable es la deteccion de claves duplicadas en MySQL: cuando se intenta insertar un 
+movil con una patente ya existente, MySQL genera un SQLException con errorCode 1062. El DAO 
+detecta este codigo con e.getErrorCode() == 1062 y lanza PatenteDuplicadaException en su lugar, 
+proporcionando un mensaje de error especifico y significativo para el usuario. De forma similar, 
+cuando un UPDATE o DELETE no afecta ninguna fila, se lanza RegistroNoEncontradoException. 
+En la capa controlador, las excepciones se capturan en orden de especificidad: primero los catch 
+para excepciones propias (AutenticacionException, PatenteDuplicadaException, etc.) y luego un 
+catch generico para SIGMAVEPException. Esto permite mostrar mensajes diferenciados al usuario 
+segun el tipo de error, por ejemplo: "La patente ya esta registrada" para 
+PatenteDuplicadaException o "Error inesperado del sistema" para SIGMAVEPException generica. 
+PAGINA 
+1
+1
+1 
+ 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+ 
+PAGINA 
+1
+1
+2 
+ 
+20.4 Script de creacion de la base de datos 
+El script sigmavep_schema.sql crea la base de datos completa con trece tablas, restricciones de 
+integridad referencial, indices y datos de prueba. El script se encuentra embebido en el JAR en 
+src/main/resources/ y puede ser ejecutado automaticamente desde el SetupFrame si la base de 
+datos no existe. A continuacion se listan las tablas principales: 
+Tabla Tipo PK Restricciones / FK 
+Zona catalogo id_zona (PK) - 
+Estado_movil Catalogo id_estado (PK) - 
+Estado_alerta Catalogo id_estado_alerta 
+(PK) - 
+Tipo_mantenimiento Catalogo id_tipo_mantenimie 
+nto (PK) 
+CHECK limite_km > 0 
+Tipo_novedad Catalogo id_tipo_novedad 
+(PK) - 
+Rol Catalogo id_rol (PK) - 
+Dependencia Catalogo id_dependencia 
+(PK) 
+FK a zona 
+Usuario Entidad id_usuario (PK) FK a rol; UNIQUE username; 
+BOOLEAN activo 
+Móvil Entidad id_movil (PK) FK a dependencia, estado_movil; 
+UNIQUE patente, numero_interno; 
+BOOLEAN activo 
+Alerta Entidad id_alerta (PK) FK a movil, tipo_mantenimiento, 
+estado_alerta, usuario 
+Resgistro_kilometraje Entidad id_registro (PK) FK a movil, usuario 
+Servicio_realizado Entidad id_servicio (PK) FK a movil, tipo_mantenimiento, 
+usuario 
+novedad Entidad id_novedad (PK) FK a movil, tipo_novedad, usuario 
+21. Clases Abstractas e Interfaces 
+La consigna del AP4 requiere la inclusion pertinente de clases abstractas o interfaces. En SIGMAVEP 
+se aplican ambas: dos clases abstractas (BaseEntity y BaseFrame) y dos interfaces (BaseDAO y 
+Controller). Su uso es fundamental para lograr la abstraccion, el polimorfismo y la escalabilidad del 
+sistema. 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+21.1 Clase abstracta BaseEntity 
+BaseEntity es la raiz de la jerarquia de entidades del modelo. Se declara como public abstract class 
+con un atributo protected int id, dos constructores (vacio y con id), getters y setters para id, y el 
+metodo abstracto getDescripcionCorta() que obliga a cada subclase a proporcionar su propia 
+representacion textual corta. Ademas sobrescribe toString() para mostrar la descripcion corta. Al 
+ser abstracta, no puede instanciarse directamente, lo que fuerza a los desarrolladores a crear 
+subclases concretas que implementen el comportamiento especifico de cada entidad. 
+Las catorce entidades del sistema heredan de BaseEntity: Movil, Alerta, Usuario, Novedad, 
+RegistroKilometraje, ServicioRealizado, Dependencia, Zona, EstadoMovil, EstadoAlerta, Rol, 
+TipoMantenimiento y TipoNovedad. Todas implementan getDescripcionCorta() con @Override, 
+proporcionando una descripcion contextual de cada tipo de objeto. Este es el mecanismo central 
+de polimorfismo por sobrescritura en el sistema. 
+Figura 71 — BaseEntity.java - clase abstracta completa con metodo abstracto 
+Fuente: Elaboración propia 
+PAGINA 
+1
+1
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+21.2 Interfaz BaseDAO<T>  
+BaseDAO es la interfaz generica que define el contrato CRUD para todas las operaciones de 
+persistencia. Se declara como public interface BaseDAO con cinco metodos: insertar(T entidad), 
+actualizar(T entidad), eliminar(int id), buscarPorId(int id) y listarTodos(). El tipo parametrizado T 
+permite que cada DAO concreto especifique la entidad con la que trabaja, obteniendo firmas 
+fuertemente tipadas sin duplicar codigo. Todos los metodos declaran throws SIGMAVEPException 
+para forzar el manejo de excepciones en los controladores.  
+Trece DAOs implementan esta interfaz: MovilDAOImpl implements BaseDAO, AlertaDAOImpl 
+implements BaseDAO, y asi sucesivamente. AuthDAOImpl es la unica excepcion ya que gestiona la 
+autenticacion con un metodo especializado y no sigue el patron CRUD estandar. La interfaz permite 
+que los controladores dependan de la abstraccion (BaseDAO) y no de la implementacion concreta, 
+facilitando el cambio entre persistencia en memoria y JDBC. 
+Figura 72 — BaseDAO.java - interfaz generica completa con tipo parametrizado T 
+Fuente: Elaboración propia 
+PAGINA 
+1
+1
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+21.3 Clase abstracta BaseFrame 
+BaseFrame es la raiz de la jerarquia de ventanas en la capa vista. Se declara como public abstract 
+class BaseFrame extends JFrame con un constructor protected que recibe el titulo de la ventana, 
+llama super(titulo) para delegar al constructor de JFrame, y configura propiedades comunes: icono 
+de la aplicacion, operacion de cierre, tamano minimo y centrado en pantalla. Las subclases heredan 
+esta configuracion y solo deben implementar el metodo buildUI() que construye los componentes 
+especificos de cada Ventana. 
+Figura 73 — BaseFrame.java - clase abstracta extends JFrame con constructor protected 
+Fuente: Elaboración propia 
+21.4 Interfaz Controller 
+Controller es la interfaz que define el contrato comun para todos los controladores del sistema. Se 
+declara como public interface Controller con el metodo void ejecutar(). AuthControlador y 
+MenuPrincipalControlador implementan esta interfaz, proporcionando su propio flujo de 
+ejecucion. El metodo main de App invoca ejecutar() a traves de la interfaz, sin depender de la 
+PAGINA 
+1
+1
+5 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+implementacion concreta de cada controlador, aplicando el principio de programar contra 
+abstracciones. 
+22. Arreglos y ArrayList 
+La consigna del AP4 requiere la utilizacion complementaria de arreglos y de la clase ArrayList. En 
+SIGMAVEP v2.0 ambas estructuras se utilizan de forma complementaria en distintos contextos, 
+aprovechando las ventajas de cada una segun el caso de uso. 
+22.1 Utilizacion de arreglos nativos (tipo[]) 
+Los arreglos nativos de Java (tipo[]) se utilizan en SIGMAVEP en los siguientes contextos: 
+ main(String[] args): El metodo main de App recibe el arreglo de argumentos de la linea de 
+comandos. Esta es la firma obligatoria en Java para el punto de entrada de la aplicacion, 
+aunque en esta version no se procesen argumentos.  
+ HashUtil.sha256(): MessageDigest devuelve el hash SHA-256 como un arreglo de bytes 
+(byte[] hashBytes). Este arreglo se recorre con un bucle for-each para convertir cada byte 
+a su representacion hexadecimal con String.format("%02x", b), construyendo la cadena 
+hash final.  
+ JComboBox con arreglos literales: En MovilPanel y otros paneles Swing, los JComboBox se 
+inicializan con arreglos literales de String: new JComboBox<>(new String[]{"Todas"}) para 
+el combo de zonas y new JComboBox<>(new String[]{"Todos"}) para el combo de estados. 
+Estos arreglos proporcionan los elementos iniciales del combo que luego se actualizan 
+dinamicamente desde la base de datos. 
+22.2 Utilizacion de ArrayList 
+ArrayList es la estructura dinamica principal del sistema, utilizada en todos los DAOs para construir 
+las listas de resultados devueltas al controlador: 
+ Patron en los DAOs: Cada metodo listarTodos() sigue el patron: List lista = new 
+ArrayList<>(); while(rs.next()) { T entidad = mapear(rs); lista.add(entidad); } return lista;. El 
+operador diamante infiere el tipo, evitando la repeticion del generico en ambos lados.  
+ Listas en la vista: Los paneles Swing reciben List, List, etc. desde los controladores y los 
+iteran para popular las JTable con DefaultTableModel. La interfaz grafica no trabaja 
+directamente con arreglos nativos sino con las listas devueltas por los DAOs.  
+ OrdenamientoUtil: El metodo ordenarMovilesPorKm() recibe una List y la ordena in-place 
+usando el algoritmo de burbuja. Internamente accede a los elementos con lista.get(i) y los 
+intercambia con lista.set(i, elemento) 
+PAGINA 
+1
+1
+6 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+22.3 Uso complementario de ambas estructuras 
+La consigna enfatiza que arreglos y ArrayList deben usarse de forma complementaria, no 
+excluyente. En SIGMAVEP esto se cumple en los siguientes escenarios: 
+ Conversion arreglo a ArrayList: Los JComboBox se inicializan con arreglos literales de String 
+(new String[]{"Todas"}), pero al cargar los datos desde MySQL se construyen ArrayList 
+dinamicos que contienen los valores de la base de datos. El combo inicia con el arreglo fijo 
+y se actualiza con la lista dinamica.  
+ Arreglo de bytes en hash: HashUtil opera sobre byte[] (arreglo nativo) para el calculo 
+criptografico, pero el resultado final se almacena en un String, y las listas de usuarios se 
+gestionan con ArrayList en los DAOs. 
+ Arreglo de argumentos + ArrayList de datos: El metodo main recibe String[] args (arreglo 
+fijo de la JVM) mientras que todas las operaciones de negocio utilizan ArrayList para las 
+colecciones de entidades devueltas por los DAOs. 
+23. Uso de Archivos 
+Aunque la consigna indica que el uso de archivos es opcional, en SIGMAVEP se implementaron dos 
+funcionalidades que emplean archivos de forma pertinente, como practica recomendada previo al 
+EFIP I. 
+23.1 Exportacion CSV con ArchivoUtil 
+La clase ArchivoUtil (declarada final, constructor privado) proporciona el metodo estatico 
+exportarCSV(String nombreArchivo, List encabezados, List<List> filas) que genera un archivo CSV 
+separado por punto y coma. El metodo utiliza FileWriter y PrintWriter de java.io para escribir el 
+archivo en el directorio de trabajo actual. Primero escribe la fila de encabezados, luego itera las 
+filas con un bucle for-each y escribe cada fila uniendo los valores con ";". El manejo de excepciones 
+envuelve IOException en SIGMAVEPException para mantener la coherencia con la jerarquia del 
+sistema. 
+Esta funcionalidad se invoca desde ReportePanel cuando el usuario presiona el boton de 
+exportacion: el controlador obtiene los datos del reporte, construye las listas de encabezados y 
+filas, y llama a ArchivoUtil.exportarCSV(). El archivo generado puede abrirse con cualquier hoja de 
+calculo (Excel, LibreOffice Calc) para analisis posterior. 
+PAGINA 
+1
+1
+7 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 74 ArchivoUtil.java - metodo exportarCSV() con FileWriter y PrintWriter Fuente: Elaboración propia 
+23.2 Archivo de configuracion db.properties 
+ConexionMySQL lee la configuracion de la base de datos desde el archivo db.properties, que 
+contiene las propiedades db.host, db.port, db.name, db.user y db.password. El archivo se busca 
+primero en el directorio de trabajo actual (permite configuracion externa sin recompilar) y luego 
+en el classpath (embebido en el JAR como configuracion por defecto). La clase usa 
+java.io.FileInputStream para leer el archivo externo y ClassLoader.getResourceAsStream() para leer 
+el embebido. Si no se encuentra, utiliza valores por defecto. El SetupFrame permite crear o 
+modificar este archivo graficamente, probando la conexion antes de guardar los cambios. 
+Figura 75  — ConexionMySQL.java - metodo cargarConfiguracion() con FileInputStream y Properties 
+Fuente: Elaboración propia 
+PAGINA 
+1
+1
+8 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+24. Implementacion de los Casos de Uso 
+Los casos de uso fueron definidos y especificados en el AP2. El presente AP4 implementa la 
+totalidad de esos casos de uso en el prototipo Java Swing + JDBC MySQL, garantizando trazabilidad 
+completa entre diseno e implementacion. La tabla siguiente resume la implementacion de cada 
+caso de uso, indicando el controlador responsable y las validaciones principales. 
+CU 
+Nombre 
+Controlador 
+CU-01 Registrar kilometraje MenuPrincipal 
+Controlador 
+Validaciones Principales 
+km nuevo >= km actual, km >= 0, motor de 
+alertas 
+CU-02 Gestionar alertas 
+MenuPrincipal 
+Controlador 
+Estado valido, motivo de postergacion 
+obligatorio 
+CU-03 Registrar novedad 
+MenuPrincipal 
+Controlador 
+Tipo valido, km novedad, cambio de 
+estado del movil 
+CU-04 Consultar historial 
+MenuPrincipal 
+Controlador 
+Movil existente, busqueda por patente o 
+N interno 
+CU-05 Administrar 
+moviles 
+MenuPrincipa 
+lControlador 
+PatenteDuplicadaException, 
+AlertaPendienteException 
+CU-06 Tipos de  
+mantenimiento 
+MenuPrincipal 
+Controlador 
+Nombre unico, limite km > 0, integridad al 
+eliminar 
+CU-07 Gestionar usuarios 
+MenuPrincipal 
+Controlador 
+Username unico, SHA-256, contrasena >= 
+6 caracteres 
+CU-08 Generar reportes 
+MenuPrincipal 
+Controlador 
+Filtros por zona y estado, exportacion CSV 
+CU-09 Estado de flota 
+MenuPrincipal 
+Controlador 
+Filtro opcional por zona, estadisticas en 
+tiempo real 
+Todos los casos de uso definidos en el AP2 fueron implementados, cumpliendo el requisito de la 
+consigna. La trazabilidad es completa: cada CU tiene su controlador, su vista y sus DAOs con las 
+validaciones de negocio especificadas en el analisis. La migracion de consola a Swing y de ArrayList 
+a JDBC no altero la cobertura funcional del prototipo. 
+PAGINA 
+1
+1
+9 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+25. Datos de Prueba 
+El script sigmavep_schema.sql incluye datos de prueba (seed data) que permiten demostrar todos 
+los flujos del sistema de forma inmediata. Los datos se cargan automaticamente al ejecutar el script 
+desde el SetupFrame o al crear la base de datos por primera vez. 
+Entidad 
+Cantidad 
+Detalle 
+Zonas 
+4 
+Zona 1 - Rosario, Zona 2 - Santa Fe, Zona 3 - Reconquista, Zona 4 - Rafaela 
+Dependencias 
+8 
+2 por zona (Comisarias 1ra, 7ma / 1ra, 3ra / 1ra, 2da / 1ra, 4ta) 
+Tipos 
+de 
+mantenimiento 
+6 
+Aceite (10.000 km), Filtros (20.000 km), Alineacion (15.000 km), 
+Frenos (30.000 km), Neumaticos (40.000 km), Serv. general 
+(50.000 km) 
+Roles 
+3 
+Administrador, Finanzas, Supervisor 
+Usuarios 
+3 
+admin/admin123 
+(Admin), 
+finanzas/fin123 
+supervisor/super123 (Supervisor) 
+Móviles 
+10 
+(Finanzas), 
+Toyota Hilux, Ford Ranger, VW Amarok, Chevrolet S10; distintos 
+estados y kilometrajes 
+Alertas 
+4 
+4 
+2 pendientes, 1 procesada, 1 postergada 
+Servicios 
+realizados 
+Cambios de aceite, filtros y frenos en distintos moviles 
+Novedades 
+2 
+de 
+Fallas mecanicas en distintos moviles 
+Registros 
+4 
+km 
+Actualizaciones historicas de auditoria 
+Las credenciales de prueba son: usuario admin con contrasena admin123 (rol Administrador), 
+usuario finanzas con contrasena fin123 (rol Finanzas) y usuario supervisor con contrasena super123 
+PAGINA 
+1
+2
+0 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+(rol Supervisor). Todas las contrasenas estan almacenadas como hash SHA-256 en la base de datos, 
+nunca en texto plano. 
+Figura 76  — Captura de la ejecucion del prototipo - pantalla de login Fuente: Elaboración propia 
+PAGINA 
+1
+2
+1 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 77  — Captura de la ejecucion del prototipo - pantalla de moviles: Elaboración propia 
+Figura 78  — Captura de la ejecucion del prototipo - pantalla de kilometraje Fuente: Elaboración propia 
+PAGINA 
+1
+2
+2 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+Figura 79  — Captura de la ejecucion del prototipo - pantalla de reportes Fuente: Elaboración propia 
+26. Conclusion 
+El AP4 materializa la version integradora final del prototipo SIGMAVEP en codigo Java ejecutable, 
+evolucionando desde el prototipo de consola del AP3 hacia una aplicacion de escritorio completa 
+con interfaz grafica Java Swing y persistencia real en base de datos MySQL mediante JDBC. Se 
+implemento un prototipo funcional del sistema que cubre la totalidad de los casos de uso 
+especificados en el AP2, incluyendo la autenticacion con control de roles, el registro de kilometraje, 
+la gestion de alertas de mantenimiento preventivo, el registro de novedades, la administracion de 
+la flota y la generacion de reportes con exportacion a CSV.  
+Los cuatro pilares de la POO fueron aplicados de manera deliberada y coherente a lo largo de todo 
+el desarrollo. El ENCAPSULAMIENTO protege el estado interno de los objetos mediante atributos 
+private y setters con validacion de negocio, garantizando que ningun objeto quede en un estado 
+invalido. La HERENCIA elimina la duplicacion del manejo de identidad mediante BaseEntity, 
+simplifica el tratamiento de errores con la jerarquia de excepciones, y proporciona configuracion 
+comun en la capa vista a traves de BaseFrame. El POLIMORFISMO, tanto por sobrescritura 
+(getDescripcionCorta) como por interfaz (Controller, BaseDAO, Comparable), permite tratar 
+objetos de tipos distintos de forma uniforme. La ABSTRACCION en BaseEntity, BaseFrame, 
+BaseDAO y Controller define contratos que desacoplan las capas del sistema.  
+El patron de diseno Generic DAO demostro su valor practico al permitir la migracion de persistencia 
+en ArrayList a JDBC MySQL sin modificar los controladores ni las vistas. El patron MVC funciono 
+como hilo conductor desde el diseno hasta la implementacion, permitiendo el reemplazo completo 
+de la interfaz (de consola a Swing) y del mecanismo de persistencia (de ArrayList a JDBC) con 
+impacto minimo en las capas afectadas.  
+PAGINA 
+1
+2
+3 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+La conexion a MySQL se implemento con manejo robusto de excepciones: las SQLException se 
+capturan en los DAOs y se convierten en excepciones propias del dominio 
+(PatenteDuplicadaException, RegistroNoEncontradoException, etc.), manteniendo la causa original 
+y proporcionando mensajes especificos al usuario. Los recursos JDBC se gestionan con try-with
+resources, garantizando su cierre automatico incluso en caso de error.  
+La utilizacion complementaria de arreglos y ArrayList se cumplio en los contextos requeridos: 
+arreglos nativos para el hash SHA-256 (byte[]), los argumentos de main (String[]), y los elementos 
+iniciales de los JComboBox; ArrayList para las listas de resultados de los DAOs, el ordenamiento 
+burbuja y la construccion dinamica de las tablas Swing. El uso de archivos se implemento mediante 
+la exportacion CSV (ArchivoUtil) y el archivo de configuracion db.properties (ConexionMySQL). 
+La trazabilidad es completa: desde los requerimientos del AP1 hasta el codigo ejecutable del AP4, 
+todos los casos de uso especificados quedaron implementados y verificados en el prototipo con 
+conexion a base de datos MySQL. Las correcciones formuladas por la docente fueron atendidas en 
+su totalidad: se profundizo en sintaxis Java, tipos de datos, principios de POO, declaracion y 
+creacion de objetos, y uso de constructores. 
+PAGINA 
+1
+2
+4 
+MATEO RUIZ DIAZ – SIGLO21 --SIGMAVEP 
+27. Referencias 
+Apache Maven Project. (2024). Maven Getting Started Guide. Apache Software Foundation. 
+https://maven.apache.org/guides/getting-started/  
+Codd, E. F. (1970). A Relational Model of Data for Large Shared Data Banks. Communications of 
+the ACM, 13(6), 377-387.  
+Deitel, P. J., y Deitel, H. M. (2017). Java: How to program (11.a ed.). Pearson Education. 
+Gamma, E., Helm, R., Johnson, R., y Vlissides, J. (1994). Design patterns: Elements of reusable 
+object-oriented software. Addison-Wesley.  
+ISO 55000. (2014). Asset Management - Overview, Principles and Terminology. International 
+Organization for Standardization.  
+ISO/IEC 27001. (2022). Information Technology - Security Techniques - Information Security 
+Management Systems - Requirements. ISO.  
+Kendall, K. E., y Kendall, J. E. (2011). Analisis y diseno de sistemas (8.a ed.). Pearson Education.  
+Larman, C. (2004). Applying UML and patterns: An introduction to object-oriented analysis and 
+design and iterative development (3.a ed.). Prentice Hall.  
+Oracle Corporation. (2023). Java SE 11 API Specification. Oracle. 
+https://docs.oracle.com/en/java/se/11/docs/api/ 
+Oracle Corporation. (2023). The Java Tutorials: Creating a GUI with Swing. Oracle. 
+https://docs.oracle.com/javase/tutorial/uiswing/  
+Oracle Corporation. (2023). The Java Tutorials: JDBC Introduction. Oracle. 
+https://docs.oracle.com/javase/tutorial/jdbc/overview/  
+Pipino, L. L., Lee, Y. W., y Wang, R. Y. (2002). Data Quality Assessment. Communications of the 
+ACM, 45(4), 211-218.  
+Pressman, R. S. (2010). Software Engineering: A Practitioner's Approach (7.a ed.). McGraw-Hill.  
+Silberschatz, A., Korth, H. F., y Sudarshan, S. (2019). Database System Concepts (7.a ed.). 
+McGraw-Hill.  
+Sommerville, I. (2011). Ingenieria del software (9.a ed.). Pearson Educacion. Stallings, W. (2017). 
+Data and Computer Communications (10.a ed.). Pearson. 
+PAGINA 
+1
+2
+5 
