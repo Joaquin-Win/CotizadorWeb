@@ -179,18 +179,12 @@ class UsuarioController extends Controller
     }
 
     /**
-     * Elimina (soft delete) la cuenta de un usuario. Un administrador no puede
-     * eliminarse ni ser eliminado: responde 403.
+     * Eliminación de usuarios deshabilitada.
+     * Los usuarios deben desactivarse, no eliminarse.
      */
     public function destroy(string $id): RedirectResponse
     {
-        $usuario = User::findOrFail($id);
-        $this->abortSiAdmin($usuario);
-        abort_if($usuario->id === auth()->id(), 403, 'No podés eliminar tu propia cuenta.');
-
-        $usuario->delete();
-
-        return redirect()->route('admin.usuarios.index')->with('success', 'Usuario eliminado correctamente.');
+        abort(403, 'La eliminación de usuarios no está permitida. Usá la opción de desactivar.');
     }
 
     /**

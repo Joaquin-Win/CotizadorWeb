@@ -19,7 +19,7 @@ export default function PortalCotizador({ cliente, esAdmin }: Props) {
             <Head title={`Cotizador · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
-                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:gap-5 md:py-5">
+                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:items-start md:gap-5 md:py-5">
                     <PortalSidebar clienteId={cliente.id} nombre={nombre} cuit={cliente.cuit} tipo={cliente.tipoCliente?.nombre ?? null} active="cotizador" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">
@@ -38,7 +38,7 @@ export default function PortalCotizador({ cliente, esAdmin }: Props) {
                             </Link>
                         </div>
 
-                        <div className="portal-cotizador mt-4 min-w-0 overflow-x-clip rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
+                        <div className="portal-cotizador mt-4 min-w-0 overflow-y-auto overflow-x-clip rounded-xl border border-slate-200 bg-white p-4 shadow-sm md:p-6" style={{ maxHeight: 'calc(100vh - 100px)' }}>
                             <CotizadorWizard />
                         </div>
                     </main>

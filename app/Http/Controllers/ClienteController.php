@@ -20,7 +20,6 @@ class ClienteController extends Controller
         $clientes = Cliente::with(['tipoCliente', 'estado',
                 'usuarios' => fn ($q) => $q->select('id', 'cliente_id', 'name', 'email'),
             ])
-            ->whereHas('estado', fn ($q) => $q->where('codigo', 'ACTIVO'))
             ->withCount(['cotizaciones', 'pedidos'])
             ->latest()
             ->get();

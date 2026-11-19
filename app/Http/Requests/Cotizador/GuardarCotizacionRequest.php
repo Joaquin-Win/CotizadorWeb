@@ -2,7 +2,6 @@
 
 namespace App\Http\Requests\Cotizador;
 
-use App\Services\WhatsApp\SeguimientoCotizacionService;
 use Illuminate\Foundation\Http\FormRequest;
 
 /**
@@ -37,9 +36,16 @@ class GuardarCotizacionRequest extends FormRequest
                 'nullable',
                 'string',
                 'max:50',
+                // Acepta cualquier número argentino (con o sin +54, con o sin espacios/guiones).
+                // Mínimo 7 dígitos numéricos, máximo 15 (estándar E.164).
+                // La normalización para WhatsApp se realiza por separado en el seguimiento.
                 function (string $attribute, mixed $value, \Closure $fail) {
-                    if ($value && app(SeguimientoCotizacionService::class)->normalizarTelefono((string) $value) === null) {
-                        $fail('Ingresá un teléfono celular argentino válido (ej. 351 123 4567).');
+                    if (! $value) {
+                        return;
+                    }
+                    $digitos = preg_replace('/\D+/', '', $value) ?? '';
+                    if (strlen($digitos) < 7 || strlen($digitos) > 15) {
+                        $fail('Ingresá un teléfono válido con código de área (ej. 3482 586567 o +54 3482 586567).');
                     }
                 },
             ],

@@ -139,7 +139,7 @@ export default function PortalSidebar({ clienteId, nombre, cuit, tipo, active, e
                 </div>
             )}
 
-            <aside className="hidden w-64 shrink-0 flex-col gap-1 md:flex">
+            <aside className="hidden w-64 shrink-0 flex-col gap-1 md:flex sticky top-0 h-screen overflow-y-auto pb-4">
                 {esAdmin && (
                     <Link
                         href="/dashboard"

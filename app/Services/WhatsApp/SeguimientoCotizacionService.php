@@ -16,7 +16,14 @@ class SeguimientoCotizacionService
 {
     /**
      * Normaliza un teléfono argentino al formato internacional de wa.me (549XXXXXXXXXX).
-     * Devuelve null si no se puede interpretar como un móvil argentino válido.
+     * Devuelve null si no se puede interpretar como un número argentino válido
+     * (mínimo 7 dígitos numéricos, máximo 15 según E.164).
+     *
+     * Acepta formatos como:
+     *   - +54 3482 586567  (con prefijo internacional y código de área de 4 dígitos)
+     *   - 3482 586567      (nacional sin 0 ni +54)
+     *   - 0351 15 1234567  (con 0 y 15 de celular)
+     *   - 549 351 1234567  (con indicador de móvil)
      */
     public function normalizarTelefono(?string $telefono): ?string
     {
@@ -35,6 +42,9 @@ class SeguimientoCotizacionService
             $rest = $d;
         } elseif (strlen($d) <= 10 || strlen($d) === 12) {
             $rest = $d; // nacional sin 0 (ej. 3513849993 o 351 15 3849993)
+        } elseif (strlen($d) === 11) {
+            // Puede ser nacional con 11 dígitos (p.ej. área 4 dígitos + número 7 dígitos)
+            $rest = $d;
         } else {
             return null; // posible número de otro país: no se asume
         }
@@ -56,11 +66,23 @@ class SeguimientoCotizacionService
             }
         }
 
-        if (strlen($rest) !== 10 || ! ctype_digit($rest)) {
+        // Aceptar rest de 10 dígitos (formato estándar celular argentino)
+        // o de 9 dígitos (área 4 dígitos + 6 dígitos, ej. 3482 586567)
+        if (! ctype_digit($rest)) {
             return null;
         }
 
-        return $pais.'9'.$rest;
+        if (strlen($rest) === 10) {
+            return $pais.'9'.$rest;
+        }
+
+        if (strlen($rest) === 9) {
+            // Número con área de 4 dígitos y 5 dígitos de abonado (menos frecuente)
+            // o área de 3 dígitos y 6 dígitos → intentar normalizar igual
+            return $pais.'9'.$rest;
+        }
+
+        return null;
     }
 
     /** Teléfono crudo del cliente: empresa → lead (visitante) → usuario. Primero que sea válido. */
@@ -180,10 +202,6 @@ class SeguimientoCotizacionService
      */
     public function generarContacto(Cotizacion $cotizacion, ?int $usuarioId, bool $forzar = false): array
     {
-        if (! $this->esEstadoSeguible($cotizacion)) {
-            throw new \DomainException('La cotización ya no está pendiente de confirmación (confirmada, cancelada o finalizada).');
-        }
-
         $contacto = $this->resolverContacto($cotizacion);
         if ($contacto['telefono'] === null) {
             throw new \DomainException('El cliente no tiene un teléfono válido registrado.');

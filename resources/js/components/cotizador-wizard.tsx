@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { usePage } from '@inertiajs/react';
 import {
     Dialog,
@@ -543,6 +543,59 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
     const quitarBulto = (idx: number) =>
         setBultos((prev) => prev.filter((_, i) => i !== idx));
 
+    // ── Wizard por pasos ───────────────────────────────────────────────────────
+    // 0=datos, 1=origen, 2=destino, 3=carga, 4=adicionales (último confirma y calcula)
+    const [paso, setPaso] = useState<number>(() => {
+        // Si tiene empresa logueada, arrancamos directo en paso 1 (datos ya completos)
+        if (clienteEmpresa) return 1;
+        return 0;
+    });
+
+    const datosPersonalesCompletos = useMemo(() => {
+        if (usuarioLogueado) {
+            if (tieneCliente) return true;
+            const telOk = persona.telefono.replace(/\D/g, '').length >= 7;
+            return !!persona.nombre.trim() && !!persona.email.trim() && telOk;
+        }
+        const nombreOk   = !!persona.nombre.trim();
+        const apellidoOk = !!persona.apellido.trim();
+        const dniOk      = /^\d{7,8}$/.test(persona.dni.trim());
+        const telOk      = persona.telefono.replace(/\D/g, '').length >= 7;
+        const emailOk    = /^\S+@\S+\.\S+$/.test(persona.email.trim());
+        return nombreOk && apellidoOk && dniOk && telOk && emailOk;
+    }, [persona, usuarioLogueado, tieneCliente]);
+
+    const origenCompleto = useMemo(() =>
+        origenProvinciaId !== '' && modalidadOrigen !== '' &&
+        (!solicitaRetiro || origenLocalidadId !== ''),
+    [origenProvinciaId, modalidadOrigen, solicitaRetiro, origenLocalidadId]);
+
+    const destinoCompleto = useMemo(() =>
+        destinoProvinciaId !== '' && modalidadDestino !== '' &&
+        (modalidadDestino !== 'entrega_domicilio' || destinoLocalidadId !== ''),
+    [destinoProvinciaId, modalidadDestino, destinoLocalidadId]);
+
+    const cargaCompleta = useMemo(() =>
+        bultos.length > 0 && bultos.every((b) =>
+            b.tipo_bulto_id !== '' &&
+            Number(b.largo_cm) > 0 && Number(b.ancho_cm) > 0 &&
+            Number(b.alto_cm) > 0 && Number(b.peso_kg) > 0 &&
+            Number(b.cantidad) >= 1,
+        ),
+    [bultos]);
+
+    // Ref para scroll al nuevo paso
+    const pasoRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (paso > 0) {
+            setTimeout(() => {
+                pasoRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }, 80);
+        }
+    }, [paso]);
+
+    const confirmarPaso = () => setPaso((p) => p + 1);
+
     const actualizarBulto = (idx: number, campo: keyof BultoFormData, valor: string) => {
         setBultos((prev) => {
             const copia = [...prev];
@@ -572,7 +625,10 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
             if (!persona.apellido.trim()) errs['apellido_cliente'] = 'Ingresá tu apellido.';
             if (!/^\d{7,8}$/.test(persona.dni.trim())) errs['dni_cliente'] = 'Ingresá un DNI válido (7 u 8 números, sin puntos).';
         }
-        if (persona.telefono.replace(/\D/g, '').length < 8) errs['telefono_cliente'] = 'Ingresá un teléfono válido con código de área.';
+        // Validación de teléfono: acepta formatos argentinos con o sin +54.
+        // Extrae solo dígitos (ignora +, espacios, guiones) y verifica mínimo 7 dígitos.
+        const telDigitos = persona.telefono.replace(/\D/g, '');
+        if (telDigitos.length < 7) errs['telefono_cliente'] = 'Ingresá un teléfono válido con código de área (ej. 3482 586567 o +54 3482 586567).';
         if (!/^\S+@\S+\.\S+$/.test(persona.email.trim())) errs['email_cliente'] = 'Ingresá un correo electrónico válido.';
         bultos.forEach((b, i) => {
             if (!b.tipo_bulto_id) errs[`bultos.${i}.tipo_bulto_id`] = 'Seleccioná el tipo de bulto.';
@@ -778,364 +834,487 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                     {/* ── Formulario ── */}
                     <form
                         className="cot-form"
-                        onSubmit={(e) => { e.preventDefault(); void calcular(); }}
+                        onSubmit={(e) => { e.preventDefault(); }}
                         noValidate
                         id="cotizador-form"
                     >
-                        {/* ─── DATOS PERSONALES ─── */}
+                        {/* ─── PASO 0: DATOS PERSONALES ─── */}
                         <section className="cot-card" aria-labelledby="sec-personales">
                             <div className="cot-card__header">
                                 <span className="cot-card__icono cot-card__icono--adicional">👤</span>
                                 <h2 id="sec-personales" className="cot-card__titulo">Tus datos</h2>
-                                {usuarioLogueado && (
+                                {paso > 0 && (
+                                    <span className="cot-paso-confirmado-badge">✓ Completado</span>
+                                )}
+                                {paso > 0 && usuarioLogueado && (
                                     <span style={{
-                                        marginLeft: 'auto', fontSize: '0.75rem', fontWeight: 600,
+                                        marginLeft: '0.5rem', fontSize: '0.75rem', fontWeight: 600,
                                         padding: '2px 10px', borderRadius: 20,
                                         background: 'var(--color-primary, #2563eb)', color: '#fff',
                                     }}>
                                         ✓ Cuenta verificada
                                     </span>
                                 )}
+                                {paso > 0 && (
+                                    <button
+                                        type="button"
+                                        className="cot-btn-editar"
+                                        onClick={() => setPaso(0)}
+                                    >
+                                        Editar
+                                    </button>
+                                )}
                             </div>
-                            {usuarioLogueado && (
-                                <p style={{ margin: '0 0 8px', fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)', padding: '0 1rem' }}>
-                                    {tieneCliente
-                                        ? 'Los datos de tu empresa se completaron automáticamente y no pueden modificarse.'
-                                        : 'Tu nombre y correo se completaron automáticamente desde tu perfil y no pueden modificarse.'
-                                    }
-                                </p>
-                            )}
-                            <div className="cot-card__body">
-                                <div className="cot-row">
-                                    {([
-                                        // Si tiene cliente empresa: no mostramos apellido, CUIT reemplaza DNI
-                                        { campo: 'nombre',   err: 'nombre_cliente',   label: 'Razón social',                  type: 'text',  ac: 'organization', readonlyIfAuth: true,          hide: !tieneCliente },
-                                        { campo: 'nombre',   err: 'nombre_cliente',   label: 'Nombre',                        type: 'text',  ac: 'given-name',   readonlyIfAuth: true,          hide: tieneCliente  },
-                                        { campo: 'apellido', err: 'apellido_cliente', label: 'Apellido',                      type: 'text',  ac: 'family-name',  readonlyIfAuth: false,         hide: tieneCliente  },
-                                        { campo: 'dni',      err: 'dni_cliente',      label: tieneCliente ? 'CUIT' : 'DNI',   type: 'text',  ac: 'off',          readonlyIfAuth: tieneCliente,  hide: false         },
-                                        { campo: 'telefono', err: 'telefono_cliente', label: 'Teléfono (con código de área)', type: 'tel',   ac: 'tel',          readonlyIfAuth: tieneCliente,  hide: false         },
-                                        { campo: 'email',    err: 'email_cliente',    label: 'Correo electrónico',            type: 'email', ac: 'email',        readonlyIfAuth: true,          hide: false         },
-                                    ] as const).filter((f) => !f.hide).map(({ campo, err, label, type, ac, readonlyIfAuth }) => {
-                                        const isReadonly = !!usuarioLogueado && readonlyIfAuth;
-                                        return (
-                                            <div key={`${campo}-${label}`} className="cot-field">
-                                                <label htmlFor={`persona-${campo}-${label}`} className="cot-label">
-                                                    {label} <span className="cot-required">*</span>
-                                                    {isReadonly && (
-                                                        <span style={{ marginLeft: 6, fontSize: '0.7rem', color: 'var(--color-ink-400, #9ca3af)', fontWeight: 400 }}>
-                                                            (solo lectura)
-                                                        </span>
-                                                    )}
-                                                </label>
-                                                <input
-                                                    id={`persona-${campo}-${label}`}
-                                                    type={type}
-                                                    autoComplete={ac}
-                                                    inputMode={campo === 'dni' || campo === 'telefono' ? 'numeric' : undefined}
-                                                    className={clsx(
-                                                        'cot-input',
-                                                        erroresForm[err] && 'cot-input--error',
-                                                        isReadonly && 'cot-input--readonly',
-                                                    )}
-                                                    value={persona[campo as keyof typeof persona]}
-                                                    readOnly={isReadonly}
-                                                    onChange={isReadonly ? undefined : (e) => setPersona((p) => ({ ...p, [campo]: e.target.value }))}
-                                                />
-                                                {erroresForm[err] && <p className="cot-error">{erroresForm[err]}</p>}
-                                            </div>
-                                        );
-                                    })}
+
+                            {/* Resumen colapsado cuando el paso está confirmado */}
+                            {paso > 0 ? (
+                                <div className="cot-paso-resumen">
+                                    <span>{persona.nombre} {persona.apellido}</span>
+                                    {persona.email && <span> · {persona.email}</span>}
+                                    {persona.telefono && <span> · {persona.telefono}</span>}
                                 </div>
-                            </div>
+                            ) : (
+                                <>
+                                    {usuarioLogueado && (
+                                        <p style={{ margin: '0 0 8px', fontSize: '0.8125rem', color: 'var(--color-ink-600, #4b5563)', padding: '0 1rem' }}>
+                                            {tieneCliente
+                                                ? 'Los datos de tu empresa se completaron automáticamente y no pueden modificarse.'
+                                                : 'Tu nombre y correo se completaron automáticamente desde tu perfil y no pueden modificarse.'
+                                            }
+                                        </p>
+                                    )}
+                                    <div className="cot-card__body">
+                                        <div className="cot-row">
+                                            {([
+                                                { campo: 'nombre',   err: 'nombre_cliente',   label: 'Razón social',                  type: 'text',  ac: 'organization', readonlyIfAuth: true,          hide: !tieneCliente },
+                                                { campo: 'nombre',   err: 'nombre_cliente',   label: 'Nombre',                        type: 'text',  ac: 'given-name',   readonlyIfAuth: true,          hide: tieneCliente  },
+                                                { campo: 'apellido', err: 'apellido_cliente', label: 'Apellido',                      type: 'text',  ac: 'family-name',  readonlyIfAuth: false,         hide: tieneCliente  },
+                                                { campo: 'dni',      err: 'dni_cliente',      label: tieneCliente ? 'CUIT' : 'DNI',   type: 'text',  ac: 'off',          readonlyIfAuth: tieneCliente,  hide: false         },
+                                                { campo: 'telefono', err: 'telefono_cliente', label: 'Teléfono (con código de área)', type: 'tel',   ac: 'tel',          readonlyIfAuth: tieneCliente,  hide: false         },
+                                                { campo: 'email',    err: 'email_cliente',    label: 'Correo electrónico',            type: 'email', ac: 'email',        readonlyIfAuth: true,          hide: false         },
+                                            ] as const).filter((f) => !f.hide).map(({ campo, err, label, type, ac, readonlyIfAuth }) => {
+                                                const isReadonly = !!usuarioLogueado && readonlyIfAuth;
+                                                return (
+                                                    <div key={`${campo}-${label}`} className="cot-field">
+                                                        <label htmlFor={`persona-${campo}-${label}`} className="cot-label">
+                                                            {label} <span className="cot-required">*</span>
+                                                            {isReadonly && (
+                                                                <span style={{ marginLeft: 6, fontSize: '0.7rem', color: 'var(--color-ink-400, #9ca3af)', fontWeight: 400 }}>
+                                                                    (solo lectura)
+                                                                </span>
+                                                            )}
+                                                        </label>
+                                                        <input
+                                                            id={`persona-${campo}-${label}`}
+                                                            type={type}
+                                                            autoComplete={ac}
+                                                            inputMode={campo === 'dni' ? 'numeric' : campo === 'telefono' ? 'tel' : undefined}
+                                                            className={clsx(
+                                                                'cot-input',
+                                                                erroresForm[err] && 'cot-input--error',
+                                                                isReadonly && 'cot-input--readonly',
+                                                            )}
+                                                            value={persona[campo as keyof typeof persona]}
+                                                            readOnly={isReadonly}
+                                                            tabIndex={isReadonly ? -1 : undefined}
+                                                            onChange={isReadonly ? undefined : (e) => setPersona((p) => ({ ...p, [campo]: e.target.value }))}
+                                                        />
+                                                        {erroresForm[err] && <p className="cot-error">{erroresForm[err]}</p>}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    {/* Botón confirmar datos */}
+                                    <div className="cot-paso-footer">
+                                        <button
+                                            type="button"
+                                            className="cot-btn-confirmar-paso"
+                                            disabled={!datosPersonalesCompletos}
+                                            onClick={confirmarPaso}
+                                        >
+                                            Confirmar datos →
+                                        </button>
+                                        {!datosPersonalesCompletos && (
+                                            <p className="cot-paso-hint">Completá todos los campos para continuar.</p>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </section>
 
-                        {/* ─── ORIGEN ─── */}
-                        <section className="cot-card" aria-labelledby="sec-origen">
+                        {/* ─── PASO 1: ORIGEN ─── */}
+                        {paso >= 1 && (
+                        <section ref={paso === 1 ? pasoRef : undefined} className="cot-card cot-card--animado" aria-labelledby="sec-origen">
                             <div className="cot-card__header">
                                 <span className="cot-card__icono cot-card__icono--origen">📍</span>
                                 <h2 id="sec-origen" className="cot-card__titulo">Origen</h2>
-                            </div>
-                            <div className="cot-card__body">
-                                <div className="cot-row">
-                                    <SelectProvincia
-                                        id="origen-provincia"
-                                        label="Provincia"
-                                        value={origenProvinciaId}
-                                        provincias={provincias}
-                                        loading={loadingProvincias}
-                                        onChange={onOrigenProvinciaChange}
-                                        required
-                                    />
-                                    <SelectLocalidad
-                                        id="origen-localidad"
-                                        label="Localidad"
-                                        value={origenLocalidadId}
-                                        localidades={localidadesOrigen}
-                                        loading={loadingLocOrigen}
-                                        disabled={origenProvinciaId === ''}
-                                        onChange={setOrigenLocalidadId}
-                                        required={solicitaRetiro}
-                                    />
-                                </div>
-                                {erroresForm['origen.provincia_id'] && (
-                                    <p className="cot-error">{erroresForm['origen.provincia_id']}</p>
+                                {paso > 1 && <span className="cot-paso-confirmado-badge">✓ Confirmado</span>}
+                                {paso > 1 && (
+                                    <button type="button" className="cot-btn-editar" onClick={() => setPaso(1)}>
+                                        Editar
+                                    </button>
                                 )}
-                                {erroresForm['origen.localidad_id'] && (
-                                    <p className="cot-error">{erroresForm['origen.localidad_id']}</p>
-                                )}
-                                {/* Modalidad de origen — mutuamente excluyente */}
-                                <div className="cot-checks">
-                                    <p className="cot-label" style={{ marginBottom: '0.5rem' }}>
-                                        ¿Cómo entregás el pedido? <span className="cot-required">*</span>
-                                    </p>
-                                    <label htmlFor="modalidad-origen-retiro" className="cot-checkbox-label">
-                                        <input
-                                            id="modalidad-origen-retiro"
-                                            type="radio"
-                                            name="modalidad_origen"
-                                            className="cot-checkbox"
-                                            checked={modalidadOrigen === 'retiro_domicilio'}
-                                            onChange={() => setModalidadOrigen('retiro_domicilio')}
-                                        />
-                                        <span>Que lo retiren por mi domicilio (se cobra primera milla)</span>
-                                    </label>
-                                    <label htmlFor="modalidad-origen-deposito" className="cot-checkbox-label">
-                                        <input
-                                            id="modalidad-origen-deposito"
-                                            type="radio"
-                                            name="modalidad_origen"
-                                            className="cot-checkbox"
-                                            checked={modalidadOrigen === 'lleva_deposito'}
-                                            onChange={() => setModalidadOrigen('lleva_deposito')}
-                                        />
-                                        <span>Lo llevo yo al depósito (sin primera milla)</span>
-                                    </label>
-                                    {erroresForm['origen.modalidad'] && (
-                                        <p className="cot-error">{erroresForm['origen.modalidad']}</p>
-                                    )}
-                                </div>
-                                <DepositosInfo
-                                    id="depositos-origen"
-                                    localidades={localidadesOrigen}
-                                    texto={
-                                        modalidadOrigen === 'lleva_deposito'
-                                            ? 'Podés llevar el pedido a nuestro depósito en:'
-                                            : 'Depósitos de la empresa en esta provincia:'
-                                    }
-                                />
-                                {origenProvinciaId !== '' && !loadingLocOrigen &&
-                                    !localidadesOrigen.some((l) => l.tiene_deposito) && (
-                                        <p className="cot-error">
-                                            Todavía no tenemos depósito en esta provincia: la cotización se revisará personalmente.
-                                        </p>
-                                    )}
                             </div>
-                        </section>
 
-                        {/* ─── DESTINO ─── */}
-                        <section className="cot-card" aria-labelledby="sec-destino">
+                            {paso > 1 ? (
+                                <div className="cot-paso-resumen">
+                                    <span>{provincias.find((p) => p.id === origenProvinciaId)?.nombre ?? ''}</span>
+                                    {origenLocalidadId !== '' && <span> · {localidadesOrigen.find((l) => l.id === origenLocalidadId)?.nombre ?? ''}</span>}
+                                    <span> · {modalidadOrigen === 'retiro_domicilio' ? 'Retiro a domicilio' : 'Llevo al depósito'}</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="cot-card__body">
+                                        <div className="cot-row">
+                                            <SelectProvincia
+                                                id="origen-provincia"
+                                                label="Provincia"
+                                                value={origenProvinciaId}
+                                                provincias={provincias}
+                                                loading={loadingProvincias}
+                                                onChange={onOrigenProvinciaChange}
+                                                required
+                                            />
+                                            <SelectLocalidad
+                                                id="origen-localidad"
+                                                label="Localidad"
+                                                value={origenLocalidadId}
+                                                localidades={localidadesOrigen}
+                                                loading={loadingLocOrigen}
+                                                disabled={origenProvinciaId === ''}
+                                                onChange={setOrigenLocalidadId}
+                                                required={solicitaRetiro}
+                                            />
+                                        </div>
+                                        {erroresForm['origen.provincia_id'] && (
+                                            <p className="cot-error">{erroresForm['origen.provincia_id']}</p>
+                                        )}
+                                        {erroresForm['origen.localidad_id'] && (
+                                            <p className="cot-error">{erroresForm['origen.localidad_id']}</p>
+                                        )}
+                                        <div className="cot-checks">
+                                            <p className="cot-label" style={{ marginBottom: '0.5rem' }}>
+                                                ¿Cómo entregás el pedido? <span className="cot-required">*</span>
+                                            </p>
+                                            <label htmlFor="modalidad-origen-retiro" className="cot-checkbox-label">
+                                                <input
+                                                    id="modalidad-origen-retiro"
+                                                    type="radio"
+                                                    name="modalidad_origen"
+                                                    className="cot-checkbox"
+                                                    checked={modalidadOrigen === 'retiro_domicilio'}
+                                                    onChange={() => setModalidadOrigen('retiro_domicilio')}
+                                                />
+                                                <span>Que lo retiren por mi domicilio (se cobra primera milla)</span>
+                                            </label>
+                                            <label htmlFor="modalidad-origen-deposito" className="cot-checkbox-label">
+                                                <input
+                                                    id="modalidad-origen-deposito"
+                                                    type="radio"
+                                                    name="modalidad_origen"
+                                                    className="cot-checkbox"
+                                                    checked={modalidadOrigen === 'lleva_deposito'}
+                                                    onChange={() => setModalidadOrigen('lleva_deposito')}
+                                                />
+                                                <span>Lo llevo yo al depósito (sin primera milla)</span>
+                                            </label>
+                                            {erroresForm['origen.modalidad'] && (
+                                                <p className="cot-error">{erroresForm['origen.modalidad']}</p>
+                                            )}
+                                        </div>
+                                        <DepositosInfo
+                                            id="depositos-origen"
+                                            localidades={localidadesOrigen}
+                                            texto={
+                                                modalidadOrigen === 'lleva_deposito'
+                                                    ? 'Podés llevar el pedido a nuestro depósito en:'
+                                                    : 'Depósitos de la empresa en esta provincia:'
+                                            }
+                                        />
+                                        {origenProvinciaId !== '' && !loadingLocOrigen &&
+                                            !localidadesOrigen.some((l) => l.tiene_deposito) && (
+                                                <p className="cot-error">
+                                                    Todavía no tenemos depósito en esta provincia: la cotización se revisará personalmente.
+                                                </p>
+                                            )}
+                                    </div>
+                                    <div className="cot-paso-footer">
+                                        <button
+                                            type="button"
+                                            className="cot-btn-confirmar-paso"
+                                            disabled={!origenCompleto}
+                                            onClick={confirmarPaso}
+                                        >
+                                            Confirmar origen →
+                                        </button>
+                                        {!origenCompleto && (
+                                            <p className="cot-paso-hint">Seleccioná la provincia y la modalidad para continuar.</p>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </section>
+                        )}
+
+                        {/* ─── PASO 2: DESTINO ─── */}
+                        {paso >= 2 && (
+                        <section ref={paso === 2 ? pasoRef : undefined} className="cot-card cot-card--animado" aria-labelledby="sec-destino">
                             <div className="cot-card__header">
                                 <span className="cot-card__icono cot-card__icono--destino">🏁</span>
                                 <h2 id="sec-destino" className="cot-card__titulo">Destino</h2>
-                            </div>
-                            <div className="cot-card__body">
-                                <div className="cot-row">
-                                    <SelectProvincia
-                                        id="destino-provincia"
-                                        label="Provincia"
-                                        value={destinoProvinciaId}
-                                        provincias={provincias}
-                                        loading={loadingProvincias}
-                                        onChange={onDestinoProvinciaChange}
-                                        required
-                                    />
-                                    <SelectLocalidad
-                                        id="destino-localidad"
-                                        label="Localidad"
-                                        value={destinoLocalidadId}
-                                        localidades={localidadesDestino}
-                                        loading={loadingLocDestino}
-                                        disabled={destinoProvinciaId === ''}
-                                        onChange={setDestinoLocalidadId}
-                                        required={modalidadDestino === 'entrega_domicilio'}
-                                    />
-                                </div>
-                                {erroresForm['destino.provincia_id'] && (
-                                    <p className="cot-error">{erroresForm['destino.provincia_id']}</p>
+                                {paso > 2 && <span className="cot-paso-confirmado-badge">✓ Confirmado</span>}
+                                {paso > 2 && (
+                                    <button type="button" className="cot-btn-editar" onClick={() => setPaso(2)}>
+                                        Editar
+                                    </button>
                                 )}
-                                {erroresForm['destino.localidad_id'] && (
-                                    <p className="cot-error">{erroresForm['destino.localidad_id']}</p>
-                                )}
-                                {/* Modalidad de entrega — mutuamente excluyente */}
-                                <div className="cot-checks">
-                                    <p className="cot-label" style={{ marginBottom: '0.5rem' }}>
-                                        Modalidad de entrega <span className="cot-required">*</span>
-                                    </p>
-                                    <label htmlFor="modalidad-entrega-domicilio" className="cot-checkbox-label">
-                                        <input
-                                            id="modalidad-entrega-domicilio"
-                                            type="radio"
-                                            name="modalidad_destino"
-                                            className="cot-checkbox"
-                                            checked={modalidadDestino === 'entrega_domicilio'}
-                                            onChange={() => setModalidadDestino('entrega_domicilio')}
-                                        />
-                                        <span>Entrega a domicilio</span>
-                                    </label>
-                                    <label htmlFor="modalidad-retiro-sucursal" className="cot-checkbox-label">
-                                        <input
-                                            id="modalidad-retiro-sucursal"
-                                            type="radio"
-                                            name="modalidad_destino"
-                                            className="cot-checkbox"
-                                            checked={modalidadDestino === 'retiro_sucursal'}
-                                            onChange={() => setModalidadDestino('retiro_sucursal')}
-                                        />
-                                        <span>Retiro en sucursal</span>
-                                    </label>
-                                    {erroresForm['destino.modalidad'] && (
-                                        <p className="cot-error">{erroresForm['destino.modalidad']}</p>
-                                    )}
-                                </div>
-                                <DepositosInfo
-                                    id="depositos-destino"
-                                    localidades={localidadesDestino}
-                                    texto={
-                                        modalidadDestino === 'retiro_sucursal'
-                                            ? 'Retirás el pedido en nuestro depósito de:'
-                                            : 'Depósitos de la empresa en esta provincia:'
-                                    }
-                                />
-                                {destinoProvinciaId !== '' && !loadingLocDestino &&
-                                    !localidadesDestino.some((l) => l.tiene_deposito) && (
-                                        <p className="cot-error">
-                                            Todavía no tenemos depósito en esta provincia: la cotización se revisará personalmente.
-                                        </p>
-                                    )}
                             </div>
-                        </section>
 
-                        {/* ─── CARGA ─── */}
-                        <section className="cot-card" aria-labelledby="sec-carga">
+                            {paso > 2 ? (
+                                <div className="cot-paso-resumen">
+                                    <span>{provincias.find((p) => p.id === destinoProvinciaId)?.nombre ?? ''}</span>
+                                    {destinoLocalidadId !== '' && <span> · {localidadesDestino.find((l) => l.id === destinoLocalidadId)?.nombre ?? ''}</span>}
+                                    <span> · {modalidadDestino === 'entrega_domicilio' ? 'Entrega a domicilio' : 'Retiro en sucursal'}</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="cot-card__body">
+                                        <div className="cot-row">
+                                            <SelectProvincia
+                                                id="destino-provincia"
+                                                label="Provincia"
+                                                value={destinoProvinciaId}
+                                                provincias={provincias}
+                                                loading={loadingProvincias}
+                                                onChange={onDestinoProvinciaChange}
+                                                required
+                                            />
+                                            <SelectLocalidad
+                                                id="destino-localidad"
+                                                label="Localidad"
+                                                value={destinoLocalidadId}
+                                                localidades={localidadesDestino}
+                                                loading={loadingLocDestino}
+                                                disabled={destinoProvinciaId === ''}
+                                                onChange={setDestinoLocalidadId}
+                                                required={modalidadDestino === 'entrega_domicilio'}
+                                            />
+                                        </div>
+                                        {erroresForm['destino.provincia_id'] && (
+                                            <p className="cot-error">{erroresForm['destino.provincia_id']}</p>
+                                        )}
+                                        {erroresForm['destino.localidad_id'] && (
+                                            <p className="cot-error">{erroresForm['destino.localidad_id']}</p>
+                                        )}
+                                        <div className="cot-checks">
+                                            <p className="cot-label" style={{ marginBottom: '0.5rem' }}>
+                                                Modalidad de entrega <span className="cot-required">*</span>
+                                            </p>
+                                            <label htmlFor="modalidad-entrega-domicilio" className="cot-checkbox-label">
+                                                <input
+                                                    id="modalidad-entrega-domicilio"
+                                                    type="radio"
+                                                    name="modalidad_destino"
+                                                    className="cot-checkbox"
+                                                    checked={modalidadDestino === 'entrega_domicilio'}
+                                                    onChange={() => setModalidadDestino('entrega_domicilio')}
+                                                />
+                                                <span>Entrega a domicilio</span>
+                                            </label>
+                                            <label htmlFor="modalidad-retiro-sucursal" className="cot-checkbox-label">
+                                                <input
+                                                    id="modalidad-retiro-sucursal"
+                                                    type="radio"
+                                                    name="modalidad_destino"
+                                                    className="cot-checkbox"
+                                                    checked={modalidadDestino === 'retiro_sucursal'}
+                                                    onChange={() => setModalidadDestino('retiro_sucursal')}
+                                                />
+                                                <span>Retiro en sucursal</span>
+                                            </label>
+                                            {erroresForm['destino.modalidad'] && (
+                                                <p className="cot-error">{erroresForm['destino.modalidad']}</p>
+                                            )}
+                                        </div>
+                                        <DepositosInfo
+                                            id="depositos-destino"
+                                            localidades={localidadesDestino}
+                                            texto={
+                                                modalidadDestino === 'retiro_sucursal'
+                                                    ? 'Retirás el pedido en nuestro depósito de:'
+                                                    : 'Depósitos de la empresa en esta provincia:'
+                                            }
+                                        />
+                                        {destinoProvinciaId !== '' && !loadingLocDestino &&
+                                            !localidadesDestino.some((l) => l.tiene_deposito) && (
+                                                <p className="cot-error">
+                                                    Todavía no tenemos depósito en esta provincia: la cotización se revisará personalmente.
+                                                </p>
+                                            )}
+                                    </div>
+                                    <div className="cot-paso-footer">
+                                        <button
+                                            type="button"
+                                            className="cot-btn-confirmar-paso"
+                                            disabled={!destinoCompleto}
+                                            onClick={confirmarPaso}
+                                        >
+                                            Confirmar destino →
+                                        </button>
+                                        {!destinoCompleto && (
+                                            <p className="cot-paso-hint">Seleccioná la provincia y la modalidad de entrega para continuar.</p>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </section>
+                        )}
+
+                        {/* ─── PASO 3: CARGA ─── */}
+                        {paso >= 3 && (
+                        <section ref={paso === 3 ? pasoRef : undefined} className="cot-card cot-card--animado" aria-labelledby="sec-carga">
                             <div className="cot-card__header">
                                 <span className="cot-card__icono cot-card__icono--carga">📦</span>
                                 <h2 id="sec-carga" className="cot-card__titulo">Carga</h2>
+                                {paso > 3 && <span className="cot-paso-confirmado-badge">✓ Confirmado</span>}
+                                {paso > 3 && (
+                                    <button type="button" className="cot-btn-editar" onClick={() => setPaso(3)}>
+                                        Editar
+                                    </button>
+                                )}
                             </div>
-                            <div className="cot-card__body">
-                                {bultos.map((bulto, idx) => (
-                                    <div key={idx} className="cot-bulto">
-                                        <div className="cot-bulto__header">
-                                            <span className="cot-bulto__num">Bulto {idx + 1}</span>
-                                            {bultos.length > 1 && (
-                                                <button
-                                                    type="button"
-                                                    className="cot-btn-quitar"
-                                                    onClick={() => quitarBulto(idx)}
-                                                    aria-label={`Quitar bulto ${idx + 1}`}
-                                                >
-                                                    ✕
-                                                </button>
-                                            )}
-                                        </div>
 
-                                        {/* Tipo de bulto */}
-                                        <div className="cot-field">
-                                            <label htmlFor={`bulto-tipo-${idx}`} className="cot-label">
-                                                Tipo de bulto <span className="cot-required">*</span>
-                                            </label>
-                                            <select
-                                                id={`bulto-tipo-${idx}`}
-                                                className={clsx(
-                                                    'cot-select',
-                                                    erroresForm[`bultos.${idx}.tipo_bulto_id`] && 'cot-select--error',
-                                                )}
-                                                value={bulto.tipo_bulto_id}
-                                                onChange={(e) => actualizarBulto(idx, 'tipo_bulto_id', e.target.value)}
-                                            >
-                                                <option value="">Seleccioná un tipo</option>
-                                                {tiposBulto.map((t) => (
-                                                    <option key={t.id} value={t.id}>
-                                                        {t.nombre}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            {erroresForm[`bultos.${idx}.tipo_bulto_id`] && (
-                                                <p className="cot-error">{erroresForm[`bultos.${idx}.tipo_bulto_id`]}</p>
-                                            )}
-                                        </div>
-
-                                        {/* Dimensiones */}
-                                        <div className="cot-bulto__dims">
-                                            {(
-                                                [
-                                                    { campo: 'largo_cm', label: 'Largo (cm)', id: `bulto-largo-${idx}` },
-                                                    { campo: 'ancho_cm', label: 'Ancho (cm)', id: `bulto-ancho-${idx}` },
-                                                    { campo: 'alto_cm', label: 'Alto (cm)', id: `bulto-alto-${idx}` },
-                                                    { campo: 'peso_kg', label: 'Peso (kg)', id: `bulto-peso-${idx}` },
-                                                    { campo: 'cantidad', label: 'Cantidad', id: `bulto-cant-${idx}` },
-                                                ] as { campo: keyof BultoFormData; label: string; id: string }[]
-                                            ).map(({ campo, label, id }) => (
-                                                <div key={campo} className="cot-field">
-                                                    <label htmlFor={id} className="cot-label">
-                                                        {label} <span className="cot-required">*</span>
-                                                    </label>
-                                                    <input
-                                                        id={id}
-                                                        type="number"
-                                                        min="0"
-                                                        step={campo === 'cantidad' ? '1' : 'any'}
-                                                        className={clsx(
-                                                            'cot-input',
-                                                            erroresForm[`bultos.${idx}.${campo}`] && 'cot-input--error',
-                                                        )}
-                                                        value={bulto[campo]}
-                                                        onChange={(e) => actualizarBulto(idx, campo, e.target.value)}
-                                                        placeholder="0"
-                                                    />
-                                                    {erroresForm[`bultos.${idx}.${campo}`] && (
-                                                        <p className="cot-error">{erroresForm[`bultos.${idx}.${campo}`]}</p>
+                            {paso > 3 ? (
+                                <div className="cot-paso-resumen">
+                                    <span>{bultos.length} {bultos.length === 1 ? 'bulto' : 'bultos'}</span>
+                                    {bultos[0] && bultos[0].tipo_bulto_id !== '' && (
+                                        <span> · {tiposBulto.find((t) => String(t.id) === String(bultos[0].tipo_bulto_id))?.nombre ?? ''}</span>
+                                    )}
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="cot-card__body">
+                                        {bultos.map((bulto, idx) => (
+                                            <div key={idx} className="cot-bulto">
+                                                <div className="cot-bulto__header">
+                                                    <span className="cot-bulto__num">Bulto {idx + 1}</span>
+                                                    {bultos.length > 1 && (
+                                                        <button
+                                                            type="button"
+                                                            className="cot-btn-quitar"
+                                                            onClick={() => quitarBulto(idx)}
+                                                            aria-label={`Quitar bulto ${idx + 1}`}
+                                                        >
+                                                            ✕
+                                                        </button>
                                                     )}
                                                 </div>
-                                            ))}
-
-                                            {/* Valor declarado */}
-                                            <div className="cot-field">
-                                                <label htmlFor={`bulto-vd-${idx}`} className="cot-label">
-                                                    Valor declarado ($)
-                                                </label>
-                                                <input
-                                                    id={`bulto-vd-${idx}`}
-                                                    type="number"
-                                                    min="0"
-                                                    step="any"
-                                                    className="cot-input"
-                                                    value={bulto.valor_declarado ?? ''}
-                                                    onChange={(e) => actualizarBulto(idx, 'valor_declarado', e.target.value)}
-                                                    placeholder="Opcional"
-                                                />
+                                                <div className="cot-field">
+                                                    <label htmlFor={`bulto-tipo-${idx}`} className="cot-label">
+                                                        Tipo de bulto <span className="cot-required">*</span>
+                                                    </label>
+                                                    <select
+                                                        id={`bulto-tipo-${idx}`}
+                                                        className={clsx(
+                                                            'cot-select',
+                                                            erroresForm[`bultos.${idx}.tipo_bulto_id`] && 'cot-select--error',
+                                                        )}
+                                                        value={bulto.tipo_bulto_id}
+                                                        onChange={(e) => actualizarBulto(idx, 'tipo_bulto_id', e.target.value)}
+                                                    >
+                                                        <option value="">Seleccioná un tipo</option>
+                                                        {tiposBulto.map((t) => (
+                                                            <option key={t.id} value={t.id}>{t.nombre}</option>
+                                                        ))}
+                                                    </select>
+                                                    {erroresForm[`bultos.${idx}.tipo_bulto_id`] && (
+                                                        <p className="cot-error">{erroresForm[`bultos.${idx}.tipo_bulto_id`]}</p>
+                                                    )}
+                                                </div>
+                                                <div className="cot-bulto__dims">
+                                                    {(
+                                                        [
+                                                            { campo: 'largo_cm', label: 'Largo (cm)', id: `bulto-largo-${idx}` },
+                                                            { campo: 'ancho_cm', label: 'Ancho (cm)', id: `bulto-ancho-${idx}` },
+                                                            { campo: 'alto_cm',  label: 'Alto (cm)',  id: `bulto-alto-${idx}` },
+                                                            { campo: 'peso_kg',  label: 'Peso (kg)',  id: `bulto-peso-${idx}` },
+                                                            { campo: 'cantidad', label: 'Cantidad',   id: `bulto-cant-${idx}` },
+                                                        ] as { campo: keyof BultoFormData; label: string; id: string }[]
+                                                    ).map(({ campo, label, id }) => (
+                                                        <div key={campo} className="cot-field">
+                                                            <label htmlFor={id} className="cot-label">
+                                                                {label} <span className="cot-required">*</span>
+                                                            </label>
+                                                            <input
+                                                                id={id}
+                                                                type="number"
+                                                                min="0"
+                                                                step={campo === 'cantidad' ? '1' : 'any'}
+                                                                className={clsx(
+                                                                    'cot-input',
+                                                                    erroresForm[`bultos.${idx}.${campo}`] && 'cot-input--error',
+                                                                )}
+                                                                value={bulto[campo]}
+                                                                onChange={(e) => actualizarBulto(idx, campo, e.target.value)}
+                                                                placeholder="0"
+                                                            />
+                                                            {erroresForm[`bultos.${idx}.${campo}`] && (
+                                                                <p className="cot-error">{erroresForm[`bultos.${idx}.${campo}`]}</p>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                    <div className="cot-field">
+                                                        <label htmlFor={`bulto-vd-${idx}`} className="cot-label">
+                                                            Valor declarado ($)
+                                                        </label>
+                                                        <input
+                                                            id={`bulto-vd-${idx}`}
+                                                            type="number"
+                                                            min="0"
+                                                            step="any"
+                                                            className="cot-input"
+                                                            value={bulto.valor_declarado ?? ''}
+                                                            onChange={(e) => actualizarBulto(idx, 'valor_declarado', e.target.value)}
+                                                            placeholder="Opcional"
+                                                        />
+                                                    </div>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ))}
+                                        {erroresForm['bultos'] && (
+                                            <p className="cot-error">{erroresForm['bultos']}</p>
+                                        )}
+                                        <button
+                                            type="button"
+                                            className="cot-btn-agregar"
+                                            onClick={agregarBulto}
+                                            id="btn-agregar-bulto"
+                                        >
+                                            + Agregar otro bulto
+                                        </button>
                                     </div>
-                                ))}
-
-                                {/* Error global de bultos */}
-                                {erroresForm['bultos'] && (
-                                    <p className="cot-error">{erroresForm['bultos']}</p>
-                                )}
-
-                                <button
-                                    type="button"
-                                    className="cot-btn-agregar"
-                                    onClick={agregarBulto}
-                                    id="btn-agregar-bulto"
-                                >
-                                    + Agregar otro bulto
-                                </button>
-                            </div>
+                                    <div className="cot-paso-footer">
+                                        <button
+                                            type="button"
+                                            className="cot-btn-confirmar-paso"
+                                            disabled={!cargaCompleta}
+                                            onClick={confirmarPaso}
+                                        >
+                                            Confirmar carga →
+                                        </button>
+                                        {!cargaCompleta && (
+                                            <p className="cot-paso-hint">Completá los datos de todos los bultos para continuar.</p>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </section>
+                        )}
 
-                        {/* ─── ADICIONALES ─── */}
-                        <section className="cot-card" aria-labelledby="sec-adicionales">
+                        {/* ─── PASO 4: ADICIONALES + CALCULAR ─── */}
+                        {paso >= 4 && (
+                        <section ref={paso === 4 ? pasoRef : undefined} className="cot-card cot-card--animado" aria-labelledby="sec-adicionales">
                             <div className="cot-card__header">
                                 <span className="cot-card__icono cot-card__icono--adicional">⚙️</span>
                                 <h2 id="sec-adicionales" className="cot-card__titulo">Servicios adicionales</h2>
@@ -1156,24 +1335,25 @@ export default function CotizadorWizard({ popup }: { popup?: PopupConfig }) {
                                     />
                                 </div>
                             </div>
+                            {erroresForm['general'] && (
+                                <p className="cot-error" role="alert" style={{ padding: '0 1rem 0.5rem' }}>{erroresForm['general']}</p>
+                            )}
+                            <div className="cot-paso-footer">
+                                <button
+                                    type="button"
+                                    className="cot-btn-calcular"
+                                    disabled={cargando}
+                                    id="btn-calcular-cotizacion"
+                                    onClick={() => void calcular()}
+                                >
+                                    {cargando ? (
+                                        <span className="cot-btn-calcular__spinner" aria-hidden="true" />
+                                    ) : null}
+                                    {cargando ? 'Calculando…' : 'CALCULAR COTIZACIÓN'}
+                                </button>
+                            </div>
                         </section>
-
-                        {erroresForm['general'] && (
-                            <p className="cot-error" role="alert">{erroresForm['general']}</p>
                         )}
-
-                        {/* ─── BOTÓN CALCULAR ─── */}
-                        <button
-                            type="submit"
-                            className="cot-btn-calcular"
-                            disabled={cargando}
-                            id="btn-calcular-cotizacion"
-                        >
-                            {cargando ? (
-                                <span className="cot-btn-calcular__spinner" aria-hidden="true" />
-                            ) : null}
-                            {cargando ? 'Calculando…' : 'CALCULAR COTIZACIÓN'}
-                        </button>
                     </form>
 
                     {/* ── Resultado inline (precio estimado) ── */}

@@ -329,11 +329,13 @@
     cursor: default;
     border-color: var(--color-border, #e5e7eb);
     user-select: none;
+    pointer-events: none;
 }
 
 .cot-input--readonly:focus {
     box-shadow: none;
     border-color: var(--color-border, #e5e7eb);
+    outline: none;
 }
 
 /* Checkboxes */
@@ -343,6 +345,116 @@
     gap: 0.625rem 1.5rem;
     padding-top: 0.25rem;
 }
+
+/* ── Cotizador progresivo ──────────────────────────────────────────────────── */
+
+/* Aviso cuando los datos personales están incompletos */
+.cot-paso-bloqueado {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem;
+    padding: 1.25rem 1.5rem;
+    border-radius: 0.875rem;
+    border: 1.5px dashed var(--color-border, #cbd5e1);
+    background: var(--color-canvas, #f8fafc);
+    color: var(--color-ink-500, #64748b);
+    font-size: 0.9375rem;
+    margin-top: 0.25rem;
+}
+.cot-paso-bloqueado__icono { font-size: 1.5rem; line-height: 1; }
+.cot-paso-bloqueado__texto { margin: 0; }
+
+/* Contenedor animado del resto del formulario */
+.cot-resto {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    animation: cot-reveal 0.35s ease both;
+}
+
+@keyframes cot-reveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Card que aparece al avanzar un paso */
+.cot-card--animado {
+    animation: cot-reveal 0.3s ease both;
+}
+
+/* Footer de cada paso con botón de confirmar */
+.cot-paso-footer {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 1rem 1.25rem 1.25rem;
+    border-top: 1px solid var(--color-border, #e2e8f0);
+    margin-top: 0.5rem;
+}
+
+/* Botón de confirmar paso */
+.cot-btn-confirmar-paso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.5rem;
+    border-radius: 0.625rem;
+    border: none;
+    background: var(--color-primary, #2563eb);
+    color: #fff;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.15s, background 0.15s;
+}
+.cot-btn-confirmar-paso:hover:not(:disabled) { opacity: 0.9; }
+.cot-btn-confirmar-paso:disabled {
+    background: var(--color-border, #cbd5e1);
+    color: var(--color-ink-400, #94a3b8);
+    cursor: not-allowed;
+}
+
+/* Hint debajo del botón de confirmar */
+.cot-paso-hint {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: var(--color-ink-400, #94a3b8);
+}
+
+/* Resumen colapsado de un paso confirmado */
+.cot-paso-resumen {
+    padding: 0.625rem 1.25rem 0.875rem;
+    font-size: 0.875rem;
+    color: var(--color-ink-600, #475569);
+}
+.cot-paso-resumen span { margin-right: 0.1rem; }
+
+/* Badge verde de paso confirmado en el header */
+.cot-paso-confirmado-badge {
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 10px;
+    border-radius: 20px;
+    background: #dcfce7;
+    color: #15803d;
+}
+
+/* Botón editar en header de paso confirmado */
+.cot-btn-editar {
+    margin-left: 0.5rem;
+    padding: 2px 10px;
+    border-radius: 20px;
+    border: 1.5px solid var(--color-border, #cbd5e1);
+    background: transparent;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--color-ink-600, #475569);
+    cursor: pointer;
+    transition: background 0.15s;
+}
+.cot-btn-editar:hover { background: var(--color-canvas, #f8fafc); }
 
 .cot-checkbox-label {
     display: flex;

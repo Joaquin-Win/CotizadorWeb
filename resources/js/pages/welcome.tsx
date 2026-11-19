@@ -2,7 +2,6 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowRight, BadgePercent, Calculator, KeyRound, X } from 'lucide-react';
 import { useState } from 'react';
 
-import AppLogoIcon from '@/components/app-logo-icon';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -38,10 +37,7 @@ export default function Welcome() {
 
                 <main className="relative z-10 flex w-full max-w-2xl flex-col items-center text-center">
                     <div className="mb-6 flex items-center gap-3">
-                        <div className="flex size-12 items-center justify-center rounded-xl bg-primary shadow-lg shadow-primary/30">
-                            <AppLogoIcon className="size-7 fill-current text-white" />
-                        </div>
-                        <span className="text-xl font-semibold tracking-tight">{name}</span>
+                        <img src="/images/logo-set.png" alt="SET Logística" className="h-12 w-auto object-contain" />
                     </div>
 
                     <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-5xl">

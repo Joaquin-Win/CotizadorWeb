@@ -1,6 +1,5 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { ArrowLeft, KeyRound } from 'lucide-react';
-import AppLogoIcon from '@/components/app-logo-icon';
 import CotizadorWizard from '@/components/cotizador-wizard';
 import { Button } from '@/components/ui/button';
 import AppLayout from '@/layouts/app-layout';
@@ -29,10 +28,7 @@ export default function CotizadorIndex({ popup }: { popup?: PopupConfig }) {
                     <header className="border-b bg-background/80 backdrop-blur">
                         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
                             <Link href="/" className="flex items-center gap-2 font-semibold">
-                                <span className="flex size-8 items-center justify-center rounded-md bg-primary">
-                                    <AppLogoIcon className="size-5 fill-current text-white" />
-                                </span>
-                                <span>{name}</span>
+                                <img src="/images/logo-set.png" alt="SET Logística" className="h-8 w-auto object-contain" />
                             </Link>
                             <div className="flex items-center gap-2">
                                 <Button asChild variant="ghost" size="sm">

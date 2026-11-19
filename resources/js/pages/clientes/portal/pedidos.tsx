@@ -69,7 +69,7 @@ export default function PortalPedidos({ cliente, esAdmin, pedidos, cotizaciones 
             <Head title={`Pedidos · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
-                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:gap-5 md:py-5">
+                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:items-start md:gap-5 md:py-5">
                     <PortalSidebar clienteId={cliente.id} nombre={nombre} cuit={cliente.cuit} tipo={cliente.tipoCliente?.nombre ?? null} active="pedidos" esAdmin={esAdmin} />
 
                     <main className="min-w-0 flex-1">

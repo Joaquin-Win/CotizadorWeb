@@ -151,7 +151,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('notificaciones', [\App\Http\Controllers\Admin\NotificacionesController::class, 'vista'])->name('notificaciones');
 
         // Usuarios internos SET
-        Route::resource('usuarios', UsuarioController::class)->except(['show']);
+        Route::resource('usuarios', UsuarioController::class)->except(['show', 'destroy']);
         Route::put('usuarios/{usuario}/margenes', [UsuarioController::class, 'updateMargenes'])->name('admin.usuarios.margenes');
         Route::post('usuarios/{usuario}/toggle-activo', [UsuarioController::class, 'toggleActivo'])->name('admin.usuarios.toggle');
         Route::put('usuarios/{usuario}/estado', [UsuarioController::class, 'setEstado'])->name('admin.usuarios.estado');

@@ -384,9 +384,9 @@ export default function ClientesIndex({ clientes, tipos }: Props) {
                     <DialogHeader>
                         <DialogTitle>Inhabilitar cliente</DialogTitle>
                         <DialogDescription>
-                            ¿Seguro que quieres inhabilitar a {inhabilitar?.razon_social}? Dejará de
-                            verse en Clientes y no podrá entrar a la plataforma, salvo que tenga
-                            operaciones pendientes.
+                            ¿Seguro que quieres inhabilitar a {inhabilitar?.razon_social}? No podrá
+                            entrar a la plataforma, salvo que tenga operaciones pendientes. Seguirá
+                            visible en la lista con estado Inactivo.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter className="gap-2">

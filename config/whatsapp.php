@@ -31,8 +31,8 @@ return [
     // Plantilla del mensaje. Placeholders: {nombre} {codigo} {importe} {enlace}
     'mensaje_seguimiento' => env(
         'WHATSAPP_MENSAJE_SEGUIMIENTO',
-        '¡Hola, {nombre}! Te contactamos para consultar si pudiste revisar la cotización {codigo} por {importe}. '
-        .'Podés verla acá: {enlace}. Si tenés alguna duda o querés avanzar con el pedido, estamos a tu disposición. ¡Muchas gracias!'
+        '¡Hola, {nombre}! Te contactamos para hacer seguimiento de la cotización {codigo} por {importe}. '
+        .'Si tenés alguna duda o querés avanzar con el pedido, estamos a tu disposición. ¡Muchas gracias!'
     ),
 
     // Reservado para una futura integración oficial (no se usa en modo wa_me).

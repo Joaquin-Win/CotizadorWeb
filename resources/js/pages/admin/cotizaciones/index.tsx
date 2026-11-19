@@ -334,7 +334,7 @@ function FilaPendiente({
                             Revisar cotización
                         </Link>
                     </Button>
-                    {(seg === 'pendiente' || seg === 'contactado') && (
+                    {cot.telefono_disponible && (
                         <Button
                             variant="outline"
                             size="sm"

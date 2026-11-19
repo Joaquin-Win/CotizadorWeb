@@ -50,7 +50,7 @@ export default function PortalCotizacion({ cliente, esAdmin, cotizacion }: Props
             <Head title={`Cotización ${cotizacion.codigo} · ${nombre}`} />
 
             <div className="min-h-screen bg-[#F5F8FC] font-sans text-slate-800">
-                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:gap-5 md:py-5">
+                <div className="mx-auto flex max-w-[1600px] flex-col gap-4 px-4 py-4 md:flex-row md:items-start md:gap-5 md:py-5">
                     <PortalSidebar
                         clienteId={cliente.id}
                         nombre={nombre}

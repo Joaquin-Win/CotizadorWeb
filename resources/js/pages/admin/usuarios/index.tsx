@@ -7,7 +7,6 @@ import {
     FileSpreadsheet,
     Users,
     Search,
-    Trash2,
     Upload,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
@@ -319,21 +318,6 @@ export default function AdminUsuariosIndex({ usuarios, clientes = [], importacio
                                                 <Eye className="h-4 w-4" />
                                             </Link>
                                         </Button>
-                                        {usuario.rol_id !== 1 && (
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                title="Eliminar cuenta"
-                                                className="text-destructive hover:bg-destructive/10"
-                                                onClick={() => {
-                                                    if (confirm(`¿Eliminar la cuenta de ${usuario.name}? Esta acción no se puede deshacer.`)) {
-                                                        router.delete(`/admin/usuarios/${usuario.id}`, { preserveScroll: true });
-                                                    }
-                                                }}
-                                            >
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        )}
                                     </div>
                                 </div>
                             ))
