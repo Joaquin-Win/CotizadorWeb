@@ -23,6 +23,11 @@ use Illuminate\Support\Facades\Route;
 // ===========================================================
 Route::inertia('/', 'welcome')->name('home');
 
+// Webhook del bot de WhatsApp (YCloud). Sin CSRF: se autentica con la firma HMAC de YCloud.
+Route::post('webhooks/ycloud/whatsapp', \App\Http\Controllers\WhatsAppBotWebhookController::class)
+    ->withoutMiddleware([\Illuminate\Foundation\Http\Middleware\ValidateCsrfToken::class])
+    ->name('webhooks.ycloud.whatsapp');
+
 // API pública para selects del cotizador
 Route::prefix('api/publica')->name('api.')->group(function () {
     Route::get('provincias',                    [GeografiaController::class, 'provincias'])->name('provincias');
