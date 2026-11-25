@@ -35,6 +35,18 @@ return [
         .'Si tenés alguna duda o querés avanzar con el pedido, estamos a tu disposición. ¡Muchas gracias!'
     ),
 
+    // Bot de WhatsApp con IA: YCloud (coexistencia) + Gemini. Ver App\Jobs\ResponderWhatsAppBotJob.
+    'bot' => [
+        'ycloud_api_key' => env('YCLOUD_API_KEY'),
+        'ycloud_webhook_secret' => env('YCLOUD_WEBHOOK_SECRET'), // secreto whsec_... del endpoint, valida los webhooks
+        'numero' => env('WHATSAPP_BOT_NUMERO'), // número del bot en E.164, ej. +5493512340859
+        'gemini_api_key' => env('GEMINI_API_KEY'),
+        'gemini_modelo' => env('GEMINI_MODELO', 'gemini-2.5-flash'),
+        // Horas que el bot queda callado en una conversación después de derivar o de que una persona escriba desde la app.
+        'horas_modo_humano' => (int) env('WHATSAPP_BOT_HORAS_HUMANO', 24),
+        'mensaje_error' => 'Lamentamos el inconveniente técnico. Una persona de nuestro equipo te va a responder por este mismo chat, o escribinos a comercial@setlogistica.com',
+    ],
+
     // Reservado para una futura integración oficial (no se usa en modo wa_me).
     'cloud_api' => [
         'token' => env('WHATSAPP_CLOUD_TOKEN'),
